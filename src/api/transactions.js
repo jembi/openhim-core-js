@@ -200,7 +200,10 @@ export async function getTransactions(ctx) {
     filters = parseTransactionFilters(filters)
 
     // execute the query
-    let transactions = await TransactionModelAPI.find(filters, projectionFiltersObject)
+    let transactions = await TransactionModelAPI.find(
+      filters,
+      projectionFiltersObject
+    )
       .skip(filterSkip)
       .limit(parseInt(filterLimit, 10))
       .sort({'request.timestamp': -1})
@@ -264,13 +267,21 @@ export async function rerunTransactions(ctx) {
     filters = parseTransactionFilters(filters)
 
     const count = await TransactionModelAPI.count(filters).exec()
-    const pages = Math.floor(count/taskTransactionsLength)
+    const pages = Math.floor(count / taskTransactionsLength)
 
-    createRerunTasks(filters, batchSize, ctx.authenticated.email, 0, pages, pauseQueue, taskTransactionsLength)
+    createRerunTasks(
+      filters,
+      batchSize,
+      ctx.authenticated.email,
+      0,
+      pages,
+      pauseQueue,
+      taskTransactionsLength
+    )
 
     ctx.body = {
       success: true,
-      message: "Tasks created for bulk rerun of transactions" 
+      message: 'Tasks created for bulk rerun of transactions'
     }
   } catch (e) {
     utils.logAndSetResponse(
@@ -284,9 +295,17 @@ export async function rerunTransactions(ctx) {
 
 let transactionsToRerun, taskObject, task
 
-async function createRerunTasks(filters, batchSize, email, page, pages, pauseQueue, filterLimit) {
+async function createRerunTasks(
+  filters,
+  batchSize,
+  email,
+  page,
+  pages,
+  pauseQueue,
+  filterLimit
+) {
   transactionsToRerun = await TransactionModelAPI.find(filters, {_id: 1})
-    .skip(filterLimit*page)
+    .skip(filterLimit * page)
     .limit(parseInt(filterLimit, 10))
     .sort({'request.timestamp': -1})
     .exec()
@@ -296,7 +315,8 @@ async function createRerunTasks(filters, batchSize, email, page, pages, pauseQue
   transactionsToRerun = transactionsToRerun.map(trans => {
     return {
       tid: trans._id
-    }})
+    }
+  })
 
   taskObject = {}
   taskObject.remainingTransactions = transactionsToRerun.length
@@ -314,7 +334,15 @@ async function createRerunTasks(filters, batchSize, email, page, pages, pauseQue
   logger.info(`Rerun task with id ${task._id} created!`)
 
   if (page < pages) {
-    return createRerunTasks(filters, batchSize, email, ++page, pages, pauseQueue, filterLimit)
+    return createRerunTasks(
+      filters,
+      batchSize,
+      email,
+      ++page,
+      pages,
+      pauseQueue,
+      filterLimit
+    )
   } else {
     transactionsToRerun = null
     task = null
@@ -323,7 +351,7 @@ async function createRerunTasks(filters, batchSize, email, page, pages, pauseQue
   }
 }
 
-function parseTransactionFilters (filters) {
+function parseTransactionFilters(filters) {
   filters = Object.assign({}, filters)
 
   // parse date to get it into the correct format for querying
@@ -794,6 +822,5 @@ export async function removeTransaction(ctx, transactionId) {
 if (process.env.NODE_ENV === 'test') {
   exports.calculateTransactionBodiesByteLength =
     calculateTransactionBodiesByteLength
-  exports.createRerunTasks =
-    createRerunTasks
+  exports.createRerunTasks = createRerunTasks
 }

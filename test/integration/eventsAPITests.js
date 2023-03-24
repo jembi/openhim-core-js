@@ -18,7 +18,7 @@ import {config} from '../../src/config'
 config.authentication = config.get('authentication')
 config.tlsClientLookup = config.get('tlsClientLookup')
 
-const {SERVER_PORTS} = constants
+const {SERVER_PORTS, BASE_URL} = constants
 const {HTTP_BASE_URL: baseUrl} = constants
 
 describe('Events API Integration Tests', () => {
@@ -28,7 +28,7 @@ describe('Events API Integration Tests', () => {
   const mediatorPortPlus40 = constants.PORT_START + 40
   const mediatorPortPlus41 = constants.PORT_START + 41
   const mediatorPortPlus42 = constants.PORT_START + 42
-  let authDetails = {}
+  let rootCookie = ''
   let slowSpy
   let sandbox
 
@@ -156,8 +156,13 @@ describe('Events API Integration Tests', () => {
       httpPort: SERVER_PORTS.httpPort,
       apiPort: SERVER_PORTS.apiPort
     })
-    authDetails = await testUtils.getAuthDetails()
     await EventModel.deleteMany({})
+
+    rootCookie = await testUtils.authenticate(
+      request,
+      BASE_URL,
+      testUtils.rootUser
+    )
   })
 
   afterEach(async () => {
@@ -173,12 +178,9 @@ describe('Events API Integration Tests', () => {
       .auth('testApp', 'password')
       .expect(200)
 
-    const res = await request(constants.BASE_URL)
+    const res = await request(BASE_URL)
       .get(`/events/${+startTime}`)
-      .set('auth-username', testUtils.rootUser.email)
-      .set('auth-ts', authDetails.authTS)
-      .set('auth-salt', authDetails.authSalt)
-      .set('auth-token', authDetails.authToken)
+      .set('Cookie', rootCookie)
 
     res.body.should.have.property('events')
     res.body.events.length.should.be.exactly(6)
@@ -207,12 +209,9 @@ describe('Events API Integration Tests', () => {
       .auth('testApp', 'password')
       .expect(200)
 
-    const res = await request(constants.BASE_URL)
+    const res = await request(BASE_URL)
       .get(`/events/${+startTime}`)
-      .set('auth-username', testUtils.rootUser.email)
-      .set('auth-ts', authDetails.authTS)
-      .set('auth-salt', authDetails.authSalt)
-      .set('auth-token', authDetails.authToken)
+      .set('Cookie', rootCookie)
 
     res.body.should.have.property('events')
     res.body.events.length.should.be.exactly(6)
@@ -233,12 +232,9 @@ describe('Events API Integration Tests', () => {
       .auth('testApp', 'password')
       .expect(200)
 
-    const res = await request(constants.BASE_URL)
+    const res = await request(BASE_URL)
       .get(`/events/${+startTime}`)
-      .set('auth-username', testUtils.rootUser.email)
-      .set('auth-ts', authDetails.authTS)
-      .set('auth-salt', authDetails.authSalt)
-      .set('auth-token', authDetails.authToken)
+      .set('Cookie', rootCookie)
     res.body.should.have.property('events')
     res.body.events.length.should.be.exactly(6)
 
@@ -254,12 +250,9 @@ describe('Events API Integration Tests', () => {
       .auth('testApp', 'password')
       .expect(200)
 
-    const res = await request(constants.BASE_URL)
+    const res = await request(BASE_URL)
       .get(`/events/${+startTime}`)
-      .set('auth-username', testUtils.rootUser.email)
-      .set('auth-ts', authDetails.authTS)
-      .set('auth-salt', authDetails.authSalt)
-      .set('auth-token', authDetails.authToken)
+      .set('Cookie', rootCookie)
 
     res.body.should.have.property('events')
     res.body.events.length.should.be.exactly(6)
@@ -287,12 +280,9 @@ describe('Events API Integration Tests', () => {
       EventModel.countDocuments().then(c => c === 6)
     )
 
-    const res = await request(constants.BASE_URL)
+    const res = await request(BASE_URL)
       .get(`/events/${+startTime}`)
-      .set('auth-username', testUtils.rootUser.email)
-      .set('auth-ts', authDetails.authTS)
-      .set('auth-salt', authDetails.authSalt)
-      .set('auth-token', authDetails.authToken)
+      .set('Cookie', rootCookie)
 
     res.body.should.have.property('events')
     res.body.events.length.should.be.exactly(6)
@@ -325,12 +315,9 @@ describe('Events API Integration Tests', () => {
       EventModel.countDocuments().then(c => c === 6)
     )
 
-    const res = await request(constants.BASE_URL)
+    const res = await request(BASE_URL)
       .get(`/events/${+startTime}`)
-      .set('auth-username', testUtils.rootUser.email)
-      .set('auth-ts', authDetails.authTS)
-      .set('auth-salt', authDetails.authSalt)
-      .set('auth-token', authDetails.authToken)
+      .set('Cookie', rootCookie)
     res.body.should.have.property('events')
     res.body.events.length.should.be.exactly(6)
 

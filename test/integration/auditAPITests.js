@@ -16,16 +16,30 @@ import {config} from '../../src/config'
 describe('API Integration Tests', () => {
   const router = config.get('router')
   const api = config.get('api')
-  let authDetails
-  before(async () => {
-    await testUtils.setupTestUsers()
-    await promisify(server.start)({apiPort: SERVER_PORTS.apiPort})
 
-    authDetails = testUtils.getAuthDetails()
+  let rootCookie = '',
+    nonRootCookie = ''
+
+  before(async () => {
+    await promisify(server.start)({apiPort: SERVER_PORTS.apiPort})
+    await testUtils.setupTestUsers()
   })
 
   after(async () => {
     await Promise.all([promisify(server.stop)(), testUtils.cleanupTestUsers()])
+  })
+
+  beforeEach(async () => {
+    rootCookie = await testUtils.authenticate(
+      request,
+      BASE_URL,
+      testUtils.rootUser
+    )
+    nonRootCookie = await testUtils.authenticate(
+      request,
+      BASE_URL,
+      testUtils.nonRootUser
+    )
   })
 
   afterEach(async () => {
@@ -118,10 +132,7 @@ describe('API Integration Tests', () => {
       it('should add a audit and return status 201 - audit created', async () => {
         await request(BASE_URL)
           .post('/audits')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(auditData)
           .expect(201)
 
@@ -158,12 +169,13 @@ describe('API Integration Tests', () => {
       it('should only allow admin users to add audits', async () => {
         await request(BASE_URL)
           .post('/audits')
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', nonRootCookie)
           .send(auditData)
           .expect(403)
+      })
+
+      it('should allow only authenticated users to add audits and return 401 status', async () => {
+        await request(BASE_URL).post('/audits').send(auditData).expect(401)
       })
     })
 
@@ -173,10 +185,7 @@ describe('API Integration Tests', () => {
         await new AuditModel(auditData).save()
         const res = await request(BASE_URL)
           .get('/audits?filterPage=0&filterLimit=10&filters={}')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(200)
 
         res.body.length.should.equal(countBefore + 1)
@@ -195,10 +204,7 @@ describe('API Integration Tests', () => {
               filters
             )}`
           )
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(200)
 
         res.body.length.should.equal(countBefore + 1)
@@ -216,10 +222,7 @@ describe('API Integration Tests', () => {
               filters
             )}`
           )
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(400)
 
         res.statusCode.should.be.exactly(400)
@@ -240,10 +243,7 @@ describe('API Integration Tests', () => {
               filters
             )}`
           )
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(200)
 
         res.statusCode.should.be.exactly(200)
@@ -264,10 +264,7 @@ describe('API Integration Tests', () => {
               filters
             )}`
           )
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(400)
 
         res.statusCode.should.be.exactly(400)
@@ -278,10 +275,7 @@ describe('API Integration Tests', () => {
 
         await request(BASE_URL)
           .get('/audits?filterRepresentation=full')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(200)
 
         await testUtils.pollCondition(() =>
@@ -317,14 +311,15 @@ describe('API Integration Tests', () => {
         await new AuditModel(auditData).save()
         await request(BASE_URL)
           .get('/audits')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(200)
 
         const auditCount = await AuditModel.countDocuments()
         auditCount.should.eql(1)
+      })
+
+      it('should allow only authenticated users to get audits and return 401 status', async () => {
+        await request(BASE_URL).get('/audits').send(auditData).expect(401)
       })
     })
 
@@ -334,10 +329,7 @@ describe('API Integration Tests', () => {
         const auditId = audit._id
         const res = await request(BASE_URL)
           .get(`/audits/${auditId}`)
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(200)
 
         res.body.eventIdentification.eventDateTime.should.equal(
@@ -373,10 +365,7 @@ describe('API Integration Tests', () => {
         const auditId = audit._id
         await request(BASE_URL)
           .get(`/audits/${auditId}`)
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', nonRootCookie)
           .expect(403)
       })
 
@@ -385,10 +374,7 @@ describe('API Integration Tests', () => {
         const auditId = audit._id
         await request(BASE_URL)
           .get(`/audits/${auditId}`)
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(200)
 
         await testUtils.pollCondition(() =>
@@ -425,19 +411,13 @@ describe('API Integration Tests', () => {
       it('should fetch dropdown filter options - admin user', async () => {
         await request(BASE_URL)
           .post('/audits')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
           .send(auditData)
+          .set('Cookie', rootCookie)
           .expect(201)
 
         const res = await request(BASE_URL)
           .get('/audits-filter-options')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(200)
 
         res.body.eventType.length.should.equal(1)
@@ -450,11 +430,13 @@ describe('API Integration Tests', () => {
         await new AuditModel(auditData).save()
         await request(BASE_URL)
           .get('/audits-filter-options')
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', nonRootCookie)
           .expect(403)
+      })
+
+      it('should return 401 when user is not authenticated', async () => {
+        await new AuditModel(auditData).save()
+        await request(BASE_URL).get('/audits-filter-options').expect(401)
       })
     })
   })

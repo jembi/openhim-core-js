@@ -4,6 +4,8 @@ import Koa from 'koa'
 import bodyParser from 'koa-bodyparser'
 import cors from 'kcors'
 import route from 'koa-route'
+import session from 'koa-session'
+import compose from 'koa-compose'
 
 import * as about from './api/about'
 import * as audits from './api/audits'
@@ -25,14 +27,42 @@ import * as tasks from './api/tasks'
 import * as transactions from './api/transactions'
 import * as users from './api/users'
 import * as visualizers from './api/visualizers'
+import passport from './passport'
+import MongooseStore from './middleware/sessionStore'
 import {config} from './config'
 
 export function setupApp(done) {
-  // Create an instance of the koa-server and add a body-parser
+  // Create an instance of the koa-server
   const app = new Koa()
-  app.use(cors({allowMethods: 'GET,HEAD,PUT,POST,DELETE'}))
+
+  // Add cors options
+  app.use(cors({allowMethods: 'GET,HEAD,PUT,POST,DELETE', credentials: true}))
+
+  // Configure Sessions Middleware
+  app.keys = [config.api.sessionKey]
+  app.use(
+    session(
+      {
+        maxAge: config.api.maxAge || 7200000,
+        resave: false,
+        secure: true,
+        httpOnly: true,
+        sameSite: 'none',
+        store: new MongooseStore()
+      },
+      app
+    )
+  )
+
+  // Add a body-parser
   const limitMB = config.api.maxPayloadSizeMB || 16
   app.use(bodyParser({jsonLimit: limitMB * 1024 * 1024}))
+
+  app.use(passport.initialize())
+  app.use(passport.session())
+
+  // Passport load strategies: local basic
+  passport.loadStrategies()
 
   // Expose uptime server stats route before the auth middleware so that it is publicly accessible
   app.use(route.get('/heartbeat', heartbeat.getHeartbeat))
@@ -44,8 +74,20 @@ export function setupApp(done) {
   app.use(route.get('/token/:token', users.getUserByToken))
   app.use(route.put('/token/:token', users.updateUserByToken))
 
+  // Check of logged in user
+  app.use(route.get('/me', users.me))
+
   // Expose the authenticate route before the auth middleware so that it is publicly accessible
-  app.use(route.get('/authenticate/:username', users.authenticate))
+  // Local authentication
+  app.use(
+    route.post(
+      '/authenticate/local',
+      compose([passport.authenticate('local'), users.authenticate])
+    )
+  )
+  // @deprecated: Token authentication
+  app.use(route.get('/authenticate/:username', users.authenticateToken))
+
   // Authenticate the API request
   app.use(authentication.authenticate)
 
@@ -56,6 +98,9 @@ export function setupApp(done) {
       authentication.getEnabledAuthenticationTypes
     )
   )
+
+  // Logout route
+  app.use(route.get('/logout', users.logout))
 
   // Define the api routes
   app.use(route.get('/users', users.getUsers))

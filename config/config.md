@@ -41,6 +41,13 @@ The following config option are provided by the OpenHIM. All of these options ha
     "timeout": 60000
   },
   "api": {
+    // The session secret key used for the hashing of signed cookie (used to detect if the client modified the cookie)
+    // Signed cookie is another cookie of the same name with the .sig suffix appended
+    "sessionKey": "r8q,+&1LM3)CD*zAGpx1xm{NeQhc;#",
+    // The session max age is the session cookie expiration time (in milliseconds)
+    "maxAge": 7200000,
+    // The number of characters that will be used to generate a random salt for the encryption of passwords
+    "salt": 10,
     // The port that the OpenHIM API uses
     "port": 8080,
     // The protocol that the OpenHIM API uses
@@ -60,7 +67,11 @@ The following config option are provided by the OpenHIM. All of these options ha
     // A message to append to detail strings that have been truncated
     "truncateAppend": "\n[truncated ...]",
     // The types of authentication to use for the API
-    // Supported types are "token" and "basic"
+    // Supported types are "token" and "basic" and "local"
+    // * "local" means through the UI with hitting "/authentication/local" endpoint with username and password, 
+    // this will create a session for the user and set cookies in the browser.
+    // * "basic" means with basic auth either through browser or postman by giving also username and password.
+    // * [Deprecated] "token" means that a request should provide in the header an 'auth-token', 'auth-salt' and 'auth-ts' to be authenticated.
     "authenicationTypes": ["token"]
   },
   "rerun": {
