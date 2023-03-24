@@ -45,7 +45,7 @@ const MAX_BODY_MB = 1
 const MAX_BODY_SIZE = MAX_BODY_MB * 1024 * 1024
 
 describe('API Integration Tests', () => {
-  const {SERVER_PORTS} = constants
+  const {SERVER_PORTS, BASE_URL} = constants
   const LARGE_BODY = Buffer.alloc(MAX_BODY_SIZE, '1234567890').toString()
 
   const requestDoc = {
@@ -105,10 +105,11 @@ describe('API Integration Tests', () => {
 
   Object.freeze(transactionData)
 
-  let authDetails = {}
   let channel
   let channel2
   let channel3
+  let rootCookie = ''
+  let nonRootCookie = ''
 
   const channelDoc = {
     name: 'TestChannel1',
@@ -205,7 +206,16 @@ describe('API Integration Tests', () => {
   })
 
   beforeEach(async () => {
-    authDetails = testUtils.getAuthDetails()
+    rootCookie = await testUtils.authenticate(
+      request,
+      BASE_URL,
+      testUtils.rootUser
+    )
+    nonRootCookie = await testUtils.authenticate(
+      request,
+      BASE_URL,
+      testUtils.nonRootUser
+    )
   })
 
   afterEach(async () => {
@@ -222,12 +232,9 @@ describe('API Integration Tests', () => {
         td.channelID = channel._id
         td.request.body = ''
         td.response.body = LARGE_BODY
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/transactions')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(td)
           .expect(201)
 
@@ -243,12 +250,9 @@ describe('API Integration Tests', () => {
         const newTransactionData = Object.assign({}, transactionData, {
           channelID: channel._id
         })
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/transactions')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(newTransactionData)
           .expect(201)
 
@@ -279,12 +283,9 @@ describe('API Integration Tests', () => {
         const td = testUtils.clone(transactionData)
         td.channelID = channel._id
         td.request.body = LARGE_BODY
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/transactions')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(td)
           .expect(201)
 
@@ -301,12 +302,9 @@ describe('API Integration Tests', () => {
         td.channelID = channel._id
         td.request.body = LARGE_BODY
         td.response.body = LARGE_BODY
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/transactions')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(td)
           .expect(201)
 
@@ -327,12 +325,9 @@ describe('API Integration Tests', () => {
         td.routes[0].request.body = LARGE_BODY
 
         // When
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/transactions')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(td)
           .expect(201)
 
@@ -354,12 +349,9 @@ describe('API Integration Tests', () => {
         td.routes[0].response.body = LARGE_BODY
 
         // When
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/transactions')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(td)
           .expect(201)
 
@@ -381,12 +373,9 @@ describe('API Integration Tests', () => {
         td.orchestrations[0].request.body = LARGE_BODY
 
         // When
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/transactions')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(td)
           .expect(201)
 
@@ -408,12 +397,9 @@ describe('API Integration Tests', () => {
         td.orchestrations[0].response.body = LARGE_BODY
 
         // When
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/transactions')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(td)
           .expect(201)
 
@@ -429,12 +415,9 @@ describe('API Integration Tests', () => {
       })
 
       it('should only allow admin users to add transactions', async () => {
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/transactions')
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', nonRootCookie)
           .send(transactionData)
           .expect(403)
       })
@@ -443,12 +426,9 @@ describe('API Integration Tests', () => {
         const newTransactionData = Object.assign({}, transactionData, {
           channelID: channel._id
         })
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/transactions')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(newTransactionData)
           .expect(201)
 
@@ -513,12 +493,9 @@ describe('API Integration Tests', () => {
           }
         }
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .put(`/transactions/${transactionId}`)
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(updates)
           .expect(200)
 
@@ -561,12 +538,9 @@ describe('API Integration Tests', () => {
           clientID: '777777777777777777777777'
         }
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .put(`/transactions/${transactionId}`)
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(updates)
           .expect(200)
 
@@ -596,12 +570,9 @@ describe('API Integration Tests', () => {
           clientID: '777777777777777777777777'
         }
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .put(`/transactions/${transactionId}`)
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(updates)
           .expect(200)
 
@@ -645,12 +616,9 @@ describe('API Integration Tests', () => {
           }
         }
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .put(`/transactions/${transactionId}`)
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(updates)
           .expect(200)
 
@@ -680,12 +648,9 @@ describe('API Integration Tests', () => {
           }
         }
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .put(`/transactions/${transactionId}`)
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(updates)
           .expect(200)
 
@@ -717,12 +682,9 @@ describe('API Integration Tests', () => {
           }
         }
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .put(`/transactions/${transactionId}`)
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(updates)
           .expect(200)
 
@@ -756,12 +718,9 @@ describe('API Integration Tests', () => {
           ]
         }
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .put(`/transactions/${transactionId}`)
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(updates)
           .expect(200)
 
@@ -786,12 +745,9 @@ describe('API Integration Tests', () => {
 
         transactionId = result._id
         const updates = {}
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .put(`/transactions/${transactionId}`)
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', nonRootCookie)
           .send(updates)
           .expect(403)
       })
@@ -802,12 +758,9 @@ describe('API Integration Tests', () => {
         const countBefore = await TransactionModel.countDocuments({})
         countBefore.should.equal(0)
         await new TransactionModel(transactionData).save()
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .get('/transactions?filterPage=0&filterLimit=10&filters={}')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(200)
 
         res.body.length.should.equal(countBefore + 1)
@@ -839,12 +792,9 @@ describe('API Integration Tests', () => {
         params = encodeURI(params)
 
         await new TransactionModel(transactionData).save()
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .get(`/transactions?${params}`)
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(200)
 
         res.body.length.should.equal(1)
@@ -878,12 +828,9 @@ describe('API Integration Tests', () => {
 
         params = encodeURI(params)
         await new TransactionModel(transactionData).save()
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .get(`/transactions?${params}`)
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(200)
         res.body.length.should.equal(1)
       })
@@ -916,12 +863,9 @@ describe('API Integration Tests', () => {
 
         params = encodeURI(params)
 
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .get(`/transactions?${params}`)
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(200)
 
         res.body.length.should.equal(0)
@@ -938,12 +882,9 @@ describe('API Integration Tests', () => {
             _id: '111111111111111111111112'
           })
         ).save()
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .get('/transactions')
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', nonRootCookie)
           .expect(200)
 
         res.body.should.have.length(1)
@@ -962,12 +903,9 @@ describe('API Integration Tests', () => {
           })
         ).save()
 
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .get(`/transactions?filters={"channelID":"${channel._id}"}`)
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', nonRootCookie)
           .expect(200)
 
         res.body.should.have.length(1)
@@ -993,12 +931,9 @@ describe('API Integration Tests', () => {
           })
         ).save()
 
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .get(`/transactions?filterRepresentation=full`)
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', nonRootCookie)
           .expect(200)
 
         res.body.should.have.length(2)
@@ -1017,24 +952,18 @@ describe('API Integration Tests', () => {
             _id: '111111111111111111111112'
           })
         ).save()
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .get(`/transactions?filters={"channelID":"${tx2.channelID}"}`)
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', nonRootCookie)
           .expect(403)
       })
 
       it('should truncate transaction details if filterRepresentation is fulltruncate ', async () => {
         await new TransactionModel(transactionData).save()
 
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .get('/transactions?filterRepresentation=fulltruncate')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(200)
 
         res.body.length.should.equal(1)
@@ -1083,12 +1012,9 @@ describe('API Integration Tests', () => {
         }
         await new TransactionModel(transactionData).save()
 
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .get('/transactions?filterRepresentation=bulkrerun')
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', nonRootCookie)
           .expect(200)
 
         res.body.count.should.equal(1)
@@ -1097,12 +1023,9 @@ describe('API Integration Tests', () => {
       it('should fail to fetch transactions (intenal server error)', async () => {
         const stub = sinon.stub(TransactionModelAPI, 'find')
         stub.callsFake(() => Promise.reject())
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .get('/transactions')
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', nonRootCookie)
           .expect(500)
         stub.restore()
       })
@@ -1112,12 +1035,9 @@ describe('API Integration Tests', () => {
       it('should fetch a transaction by ID - admin user', async () => {
         const tx = await new TransactionModel(transactionData).save()
 
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .get(`/transactions/${tx._id}`)
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(200)
 
         ;(res !== null).should.be.true
@@ -1138,12 +1058,9 @@ describe('API Integration Tests', () => {
           Object.assign({}, transactionData, {channelID: channel2._id})
         ).save()
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .get(`/transactions/${tx._id}`)
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', nonRootCookie)
           .expect(403)
       })
 
@@ -1152,12 +1069,9 @@ describe('API Integration Tests', () => {
           Object.assign({}, transactionData, {channelID: channel._id})
         ).save()
 
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .get(`/transactions/${tx._id}`)
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', nonRootCookie)
           .expect(200)
 
         ;(res !== null).should.be.true
@@ -1180,12 +1094,9 @@ describe('API Integration Tests', () => {
           Object.assign({}, transactionData, {channelID: channel._id})
         ).save()
 
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .get(`/transactions/${tx._id}?filterRepresentation=fulltruncate`)
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(200)
 
         res.body.request.body.should.equal(`<HTTP body${TRUNCATE_APPEND}`)
@@ -1199,12 +1110,9 @@ describe('API Integration Tests', () => {
             clientID: '555555555555555555555556'
           })
         ).save()
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .post(`/bulkrerun`)
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send({
             batchSize: 1,
             filters: {}
@@ -1221,12 +1129,9 @@ describe('API Integration Tests', () => {
         ).save()
 
         await TaskModel.deleteMany({})
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .post(`/bulkrerun`)
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send({
             batchSize: 1,
             filters: {}
@@ -1242,12 +1147,9 @@ describe('API Integration Tests', () => {
       })
 
       it('should do bulk rerun for non-admin user', async () => {
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/bulkrerun')
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', nonRootCookie)
           .send({
             batchSize: 1,
             filters: {}
@@ -1256,12 +1158,9 @@ describe('API Integration Tests', () => {
       })
 
       it('should do bulk rerun on specific channel', async () => {
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/bulkrerun')
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', nonRootCookie)
           .send({
             batchSize: 1,
             filters: {
@@ -1272,12 +1171,9 @@ describe('API Integration Tests', () => {
       })
 
       it('should fail to do bulk rerun on rescrticted channel', async () => {
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/bulkrerun')
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', nonRootCookie)
           .send({
             batchSize: 1,
             filters: {
@@ -1290,12 +1186,9 @@ describe('API Integration Tests', () => {
       it('should fail to do bulk rerun (intenal server error)', async () => {
         const stub = sinon.stub(TransactionModelAPI, 'count')
         stub.callsFake(() => Promise.reject())
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/bulkrerun')
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', nonRootCookie)
           .send({
             batchSize: 1,
             filters: {}
@@ -1312,12 +1205,9 @@ describe('API Integration Tests', () => {
             clientID: '555555555555555555555555'
           })
         ).save()
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .get(`/transactions/clients/${tx.clientID}`)
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(200)
         res.body[0].clientID.should.equal(tx.clientID.toString())
       })
@@ -1330,12 +1220,9 @@ describe('API Integration Tests', () => {
           })
         ).save()
 
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .get(`/transactions/clients/${tx.clientID}`)
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', nonRootCookie)
           .expect(200)
         res.body.should.have.length(0)
       })
@@ -1348,12 +1235,9 @@ describe('API Integration Tests', () => {
           })
         ).save()
 
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .get(`/transactions/clients/${tx.clientID}`)
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', nonRootCookie)
           .expect(200)
 
         res.body[0].clientID.should.equal(tx.clientID.toString())
@@ -1368,12 +1252,9 @@ describe('API Integration Tests', () => {
           })
         ).save()
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .del(`/transactions/${tx._id}`)
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(200)
 
         const txFound = await TransactionModel.findById(tx._id)
@@ -1387,12 +1268,9 @@ describe('API Integration Tests', () => {
           })
         ).save()
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .del(`/transactions/${transactionId}`)
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', nonRootCookie)
           .expect(403)
       })
     })

@@ -14,7 +14,10 @@ import {config} from '../../src/config'
 
 describe('API Integration Tests', () => {
   const ORIGINAL_CERTIFICATE_MANAGEMENT = config.certificateManagement
-  const {SERVER_PORTS} = constants
+  const {SERVER_PORTS, BASE_URL} = constants
+
+  let rootCookie = '',
+    nonRootCookie = ''
 
   before(() => {
     config.certificateManagement = config.get('certificateManagement')
@@ -25,12 +28,11 @@ describe('API Integration Tests', () => {
   })
 
   describe('Keystore API Tests', () => {
-    let authDetails = {}
     let keystore
 
     before(async () => {
-      await testUtils.setupTestUsers()
       await promisify(server.start)({apiPort: SERVER_PORTS.apiPort})
+      await testUtils.setupTestUsers()
     })
 
     after(async () => {
@@ -39,8 +41,18 @@ describe('API Integration Tests', () => {
     })
 
     beforeEach(async () => {
-      authDetails = await testUtils.getAuthDetails()
       keystore = await testUtils.setupTestKeystore()
+
+      rootCookie = await testUtils.authenticate(
+        request,
+        BASE_URL,
+        testUtils.rootUser
+      )
+      nonRootCookie = await testUtils.authenticate(
+        request,
+        BASE_URL,
+        testUtils.nonRootUser
+      )
     })
 
     afterEach(async () => {
@@ -48,12 +60,9 @@ describe('API Integration Tests', () => {
     })
 
     it('Should fetch the current HIM server certificate', async () => {
-      const res = await request(constants.BASE_URL)
+      const res = await request(BASE_URL)
         .get('/keystore/cert')
-        .set('auth-username', testUtils.rootUser.email)
-        .set('auth-ts', authDetails.authTS)
-        .set('auth-salt', authDetails.authSalt)
-        .set('auth-token', authDetails.authToken)
+        .set('Cookie', rootCookie)
         .expect(200)
 
       res.body.data.should.be.exactly(keystore.cert.data)
@@ -61,22 +70,16 @@ describe('API Integration Tests', () => {
     })
 
     it('Should not allow a non-admin user to fetch the current HIM server certificate', async () => {
-      await request(constants.BASE_URL)
+      await request(BASE_URL)
         .get('/keystore/cert')
-        .set('auth-username', testUtils.nonRootUser.email)
-        .set('auth-ts', authDetails.authTS)
-        .set('auth-salt', authDetails.authSalt)
-        .set('auth-token', authDetails.authToken)
+        .set('Cookie', nonRootCookie)
         .expect(403)
     })
 
     it('Should fetch the current trusted ca certificates', async () => {
-      const res = await request(constants.BASE_URL)
+      const res = await request(BASE_URL)
         .get('/keystore/ca')
-        .set('auth-username', testUtils.rootUser.email)
-        .set('auth-ts', authDetails.authTS)
-        .set('auth-salt', authDetails.authSalt)
-        .set('auth-token', authDetails.authToken)
+        .set('Cookie', rootCookie)
         .expect(200)
 
       res.body.should.be.instanceof(Array).and.have.lengthOf(2)
@@ -85,22 +88,16 @@ describe('API Integration Tests', () => {
     })
 
     it('Should not allow a non-admin user to fetch the current trusted ca certificates', async () => {
-      await request(constants.BASE_URL)
+      await request(BASE_URL)
         .get('/keystore/ca')
-        .set('auth-username', testUtils.nonRootUser.email)
-        .set('auth-ts', authDetails.authTS)
-        .set('auth-salt', authDetails.authSalt)
-        .set('auth-token', authDetails.authToken)
+        .set('Cookie', nonRootCookie)
         .expect(403)
     })
 
     it('Should fetch a ca certificate by id', async () => {
-      const res = await request(constants.BASE_URL)
+      const res = await request(BASE_URL)
         .get(`/keystore/ca/${keystore.ca[0]._id}`)
-        .set('auth-username', testUtils.rootUser.email)
-        .set('auth-ts', authDetails.authTS)
-        .set('auth-salt', authDetails.authSalt)
-        .set('auth-token', authDetails.authToken)
+        .set('Cookie', rootCookie)
         .expect(200)
 
       res.body.should.have.property('commonName', keystore.ca[0].commonName)
@@ -108,12 +105,9 @@ describe('API Integration Tests', () => {
     })
 
     it('Should not allow a non-admin user to fetch a ca certificate by id', async () => {
-      await request(constants.BASE_URL)
+      await request(BASE_URL)
         .get('/keystore/ca/1234')
-        .set('auth-username', testUtils.nonRootUser.email)
-        .set('auth-ts', authDetails.authTS)
-        .set('auth-salt', authDetails.authSalt)
-        .set('auth-token', authDetails.authToken)
+        .set('Cookie', nonRootCookie)
         .expect(403)
     })
 
@@ -122,12 +116,9 @@ describe('API Integration Tests', () => {
         cert: fs.readFileSync('test/resources/server-tls/cert.pem').toString()
       }
 
-      await request(constants.BASE_URL)
+      await request(BASE_URL)
         .post('/keystore/cert')
-        .set('auth-username', testUtils.rootUser.email)
-        .set('auth-ts', authDetails.authTS)
-        .set('auth-salt', authDetails.authSalt)
-        .set('auth-token', authDetails.authToken)
+        .set('Cookie', rootCookie)
         .send(postData)
         .expect(201)
 
@@ -142,12 +133,9 @@ describe('API Integration Tests', () => {
         cert: fs.readFileSync('test/resources/server-tls/cert.pem').toString()
       }
 
-      await request(constants.BASE_URL)
+      await request(BASE_URL)
         .post('/keystore/cert')
-        .set('auth-username', testUtils.rootUser.email)
-        .set('auth-ts', authDetails.authTS)
-        .set('auth-salt', authDetails.authSalt)
-        .set('auth-token', authDetails.authToken)
+        .set('Cookie', rootCookie)
         .send(postData)
         .expect(201)
 
@@ -160,12 +148,9 @@ describe('API Integration Tests', () => {
     it("Should return a 400 if the server certificate isn't valid", async () => {
       const postData = {cert: 'junkjunkjunk'}
 
-      await request(constants.BASE_URL)
+      await request(BASE_URL)
         .post('/keystore/cert')
-        .set('auth-username', testUtils.rootUser.email)
-        .set('auth-ts', authDetails.authTS)
-        .set('auth-salt', authDetails.authSalt)
-        .set('auth-token', authDetails.authToken)
+        .set('Cookie', rootCookie)
         .send(postData)
         .expect(400)
     })
@@ -175,12 +160,9 @@ describe('API Integration Tests', () => {
         cert: fs.readFileSync('test/resources/server-tls/cert.pem').toString()
       }
 
-      await request(constants.BASE_URL)
+      await request(BASE_URL)
         .post('/keystore/cert')
-        .set('auth-username', testUtils.nonRootUser.email)
-        .set('auth-ts', authDetails.authTS)
-        .set('auth-salt', authDetails.authSalt)
-        .set('auth-token', authDetails.authToken)
+        .set('Cookie', nonRootCookie)
         .send(postData)
         .expect(403)
     })
@@ -191,12 +173,9 @@ describe('API Integration Tests', () => {
         cert: fs.readFileSync('test/resources/server-tls/cert.pem').toString()
       }
 
-      await request(constants.BASE_URL)
+      await request(BASE_URL)
         .post('/keystore/cert')
-        .set('auth-username', testUtils.rootUser.email)
-        .set('auth-ts', authDetails.authTS)
-        .set('auth-salt', authDetails.authSalt)
-        .set('auth-token', authDetails.authToken)
+        .set('Cookie', rootCookie)
         .send(postData)
         .expect(400)
     })
@@ -206,12 +185,9 @@ describe('API Integration Tests', () => {
         key: fs.readFileSync('test/resources/server-tls/key.pem').toString()
       }
 
-      await request(constants.BASE_URL)
+      await request(BASE_URL)
         .post('/keystore/key')
-        .set('auth-username', testUtils.rootUser.email)
-        .set('auth-ts', authDetails.authTS)
-        .set('auth-salt', authDetails.authSalt)
-        .set('auth-token', authDetails.authToken)
+        .set('Cookie', rootCookie)
         .send(postData)
         .expect(201)
 
@@ -224,12 +200,9 @@ describe('API Integration Tests', () => {
         key: fs.readFileSync('test/resources/server-tls/key.pem').toString()
       }
 
-      await request(constants.BASE_URL)
+      await request(BASE_URL)
         .post('/keystore/key')
-        .set('auth-username', testUtils.nonRootUser.email)
-        .set('auth-ts', authDetails.authTS)
-        .set('auth-salt', authDetails.authSalt)
-        .set('auth-token', authDetails.authToken)
+        .set('Cookie', nonRootCookie)
         .send(postData)
         .expect(403)
     })
@@ -239,12 +212,9 @@ describe('API Integration Tests', () => {
         cert: fs.readFileSync('test/resources/trust-tls/cert1.pem').toString()
       }
 
-      await request(constants.BASE_URL)
+      await request(BASE_URL)
         .post('/keystore/ca/cert')
-        .set('auth-username', testUtils.rootUser.email)
-        .set('auth-ts', authDetails.authTS)
-        .set('auth-salt', authDetails.authSalt)
-        .set('auth-token', authDetails.authToken)
+        .set('Cookie', rootCookie)
         .send(postData)
         .expect(201)
 
@@ -260,12 +230,9 @@ describe('API Integration Tests', () => {
         cert: fs.readFileSync('test/resources/trust-tls/cert1.pem').toString()
       }
 
-      await request(constants.BASE_URL)
+      await request(BASE_URL)
         .post('/keystore/ca/cert')
-        .set('auth-username', testUtils.rootUser.email)
-        .set('auth-ts', authDetails.authTS)
-        .set('auth-salt', authDetails.authSalt)
-        .set('auth-token', authDetails.authToken)
+        .set('Cookie', rootCookie)
         .send(postData)
         .expect(201)
 
@@ -278,12 +245,9 @@ describe('API Integration Tests', () => {
     it('Should respond with a 400 if one or more certs are invalid', async () => {
       const postData = {cert: 'junkjunkjunk'}
 
-      await request(constants.BASE_URL)
+      await request(BASE_URL)
         .post('/keystore/ca/cert')
-        .set('auth-username', testUtils.rootUser.email)
-        .set('auth-ts', authDetails.authTS)
-        .set('auth-salt', authDetails.authSalt)
-        .set('auth-token', authDetails.authToken)
+        .set('Cookie', rootCookie)
         .send(postData)
         .expect(400)
     })
@@ -293,12 +257,9 @@ describe('API Integration Tests', () => {
         cert: fs.readFileSync('test/resources/trust-tls/cert1.pem').toString()
       }
 
-      await request(constants.BASE_URL)
+      await request(BASE_URL)
         .post('/keystore/ca/cert')
-        .set('auth-username', testUtils.nonRootUser.email)
-        .set('auth-ts', authDetails.authTS)
-        .set('auth-salt', authDetails.authSalt)
-        .set('auth-token', authDetails.authToken)
+        .set('Cookie', nonRootCookie)
         .send(postData)
         .expect(403)
     })
@@ -308,12 +269,9 @@ describe('API Integration Tests', () => {
         cert: fs.readFileSync('test/resources/chain.pem').toString()
       }
 
-      await request(constants.BASE_URL)
+      await request(BASE_URL)
         .post('/keystore/ca/cert')
-        .set('auth-username', testUtils.rootUser.email)
-        .set('auth-ts', authDetails.authTS)
-        .set('auth-salt', authDetails.authSalt)
-        .set('auth-token', authDetails.authToken)
+        .set('Cookie', rootCookie)
         .send(postData)
         .expect(201)
 
@@ -328,23 +286,17 @@ describe('API Integration Tests', () => {
         cert: fs.readFileSync('test/resources/invalid-chain.pem').toString()
       }
 
-      await request(constants.BASE_URL)
+      await request(BASE_URL)
         .post('/keystore/ca/cert')
-        .set('auth-username', testUtils.rootUser.email)
-        .set('auth-ts', authDetails.authTS)
-        .set('auth-salt', authDetails.authSalt)
-        .set('auth-token', authDetails.authToken)
+        .set('Cookie', rootCookie)
         .send(postData)
         .expect(400)
     })
 
     it('Should remove a ca certificate by id', async () => {
-      await request(constants.BASE_URL)
+      await request(BASE_URL)
         .del(`/keystore/ca/${keystore.ca[0]._id}`)
-        .set('auth-username', testUtils.rootUser.email)
-        .set('auth-ts', authDetails.authTS)
-        .set('auth-salt', authDetails.authSalt)
-        .set('auth-token', authDetails.authToken)
+        .set('Cookie', rootCookie)
         .expect(200)
 
       keystore = await KeystoreModelAPI.findOne({})
@@ -352,22 +304,16 @@ describe('API Integration Tests', () => {
     })
 
     it('Should not allow a non-admin user to remove a ca certificate by id', async () => {
-      await request(constants.BASE_URL)
+      await request(BASE_URL)
         .del('/keystore/ca/1234')
-        .set('auth-username', testUtils.nonRootUser.email)
-        .set('auth-ts', authDetails.authTS)
-        .set('auth-salt', authDetails.authSalt)
-        .set('auth-token', authDetails.authToken)
+        .set('Cookie', nonRootCookie)
         .expect(403)
     })
 
     it('Should verify that a valid server cert and key match', async () => {
-      const res = await request(constants.BASE_URL)
+      const res = await request(BASE_URL)
         .get('/keystore/validity')
-        .set('auth-username', testUtils.rootUser.email)
-        .set('auth-ts', authDetails.authTS)
-        .set('auth-salt', authDetails.authSalt)
-        .set('auth-token', authDetails.authToken)
+        .set('Cookie', rootCookie)
         .expect(200)
 
       res.body.valid.should.be.exactly(true)
@@ -377,12 +323,9 @@ describe('API Integration Tests', () => {
       keystore.key = await fs.readFileSync('test/resources/trust-tls/key1.pem')
       await keystore.save()
 
-      const res = await request(constants.BASE_URL)
+      const res = await request(BASE_URL)
         .get('/keystore/validity')
-        .set('auth-username', testUtils.rootUser.email)
-        .set('auth-ts', authDetails.authTS)
-        .set('auth-salt', authDetails.authSalt)
-        .set('auth-token', authDetails.authToken)
+        .set('Cookie', rootCookie)
         .expect(200)
 
       res.body.valid.should.be.exactly(false)
@@ -392,12 +335,9 @@ describe('API Integration Tests', () => {
       keystore.key = 'junkjunkjunk'
       await keystore.save()
 
-      await request(constants.BASE_URL)
+      await request(BASE_URL)
         .get('/keystore/validity')
-        .set('auth-username', testUtils.rootUser.email)
-        .set('auth-ts', authDetails.authTS)
-        .set('auth-salt', authDetails.authSalt)
-        .set('auth-token', authDetails.authToken)
+        .set('Cookie', rootCookie)
         .expect(400)
     })
 
@@ -407,12 +347,9 @@ describe('API Integration Tests', () => {
       keystore.passphrase = 'password'
       await keystore.save()
 
-      const res = await request(constants.BASE_URL)
+      const res = await request(BASE_URL)
         .get('/keystore/validity')
-        .set('auth-username', testUtils.rootUser.email)
-        .set('auth-ts', authDetails.authTS)
-        .set('auth-salt', authDetails.authSalt)
-        .set('auth-token', authDetails.authToken)
+        .set('Cookie', rootCookie)
         .expect(200)
 
       res.body.valid.should.be.exactly(true)
@@ -424,12 +361,9 @@ describe('API Integration Tests', () => {
       keystore.passphrase = undefined
       await keystore.save()
 
-      const res = await request(constants.BASE_URL)
+      const res = await request(BASE_URL)
         .get('/keystore/validity')
-        .set('auth-username', testUtils.rootUser.email)
-        .set('auth-ts', authDetails.authTS)
-        .set('auth-salt', authDetails.authSalt)
-        .set('auth-token', authDetails.authToken)
+        .set('Cookie', rootCookie)
         .expect(200)
 
       res.body.valid.should.be.exactly(false)

@@ -12,7 +12,7 @@ import * as server from '../../src/server'
 import * as testUtils from '../utils'
 import {ClientModelAPI} from '../../src/model/clients'
 
-const {SERVER_PORTS} = constants
+const {SERVER_PORTS, BASE_URL} = constants
 
 describe('API Integration Tests', () => {
   describe('Clients REST Api Testing', () => {
@@ -27,11 +27,12 @@ describe('API Integration Tests', () => {
         '23:37:6A:5E:A9:13:A4:8C:66:C5:BB:9F:0E:0D:68:9B:99:80:10:FC'
     }
 
-    let authDetails = {}
+    let rootCookie = '',
+      nonRootCookie = ''
 
     before(async () => {
-      await testUtils.setupTestUsers()
       await promisify(server.start)({apiPort: SERVER_PORTS.apiPort})
+      await testUtils.setupTestUsers()
     })
 
     after(async () => {
@@ -40,7 +41,16 @@ describe('API Integration Tests', () => {
     })
 
     beforeEach(async () => {
-      authDetails = await testUtils.getAuthDetails()
+      rootCookie = await testUtils.authenticate(
+        request,
+        BASE_URL,
+        testUtils.rootUser
+      )
+      nonRootCookie = await testUtils.authenticate(
+        request,
+        BASE_URL,
+        testUtils.nonRootUser
+      )
     })
 
     afterEach(async () => {
@@ -49,12 +59,9 @@ describe('API Integration Tests', () => {
 
     describe('*addClient', () => {
       it('should add client to db and return status 201 - client created', async () => {
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/clients')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(testAppDoc)
           .expect(201)
         const client = await ClientModelAPI.findOne({
@@ -80,21 +87,15 @@ describe('API Integration Tests', () => {
         const clientNoToken2 = Object.assign({}, testAppDoc)
         clientNoToken2.clientID = 'test2'
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/clients')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(clientNoToken1)
           .expect(201)
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/clients')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(clientNoToken2)
           .expect(201)
 
@@ -113,35 +114,26 @@ describe('API Integration Tests', () => {
         clientNoToken2.clientID = 'test2'
         clientNoToken2.customTokenID = 'test'
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/clients')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(clientNoToken1)
           .expect(201)
 
         const client1 = await ClientModelAPI.findOne({clientID: 'test1'})
         should(client1.customTokenID).equal('test')
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/clients')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(clientNoToken2)
           .expect(400)
       })
 
       it('should only allow an admin user to add a client', async () => {
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/clients')
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', nonRootCookie)
           .send(testAppDoc)
           .expect(403)
       })
@@ -151,12 +143,9 @@ describe('API Integration Tests', () => {
         await client.save()
         const conflict = await Object.assign({}, testAppDoc)
         conflict.clientID = 'PoC'
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/clients')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(conflict)
           .expect(409)
       })
@@ -165,12 +154,9 @@ describe('API Integration Tests', () => {
         const clientWithConflict = Object.assign({}, testAppDoc)
         clientWithConflict.clientID = 'PoC'
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/clients')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(clientWithConflict)
           .expect(400)
       })
@@ -194,12 +180,9 @@ describe('API Integration Tests', () => {
       })
 
       it('should get client by clientId and return status 200', async () => {
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .get(`/clients/${clientId}`)
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(200)
         res.body.clientID.should.equal('testClient')
         res.body.clientDomain.should.equal('www.zedmusic-unique.co.zw')
@@ -216,21 +199,15 @@ describe('API Integration Tests', () => {
           customTokenID: 'test'
         }
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .put(`/clients/${clientId}`)
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(updates)
           .expect(200)
 
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .get(`/clients/${clientId}`)
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(200)
 
         should.not.exist(res.body.customTokenID)
@@ -238,32 +215,23 @@ describe('API Integration Tests', () => {
       })
 
       it('should return status 404 if not found', async () => {
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .get('/clients/000000000000000000000000')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(404)
       })
 
       it('should not allow a non admin user to fetch a client', async () => {
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .get(`/clients/${clientId}`)
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', nonRootCookie)
           .expect(403)
       })
 
       it('should allow a non admin user to fetch a limited view of a client', async () => {
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .get(`/clients/${clientId}/clientName`)
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', nonRootCookie)
           .expect(200)
         res.body.name.should.equal('OpenHIE NodeJs')
 
@@ -286,12 +254,9 @@ describe('API Integration Tests', () => {
 
       it('should return client with specified clientDomain', async () => {
         await new ClientModelAPI(clientTest).save()
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .get('/clients/domain/www.zedmusic-unique.co.zw')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(200)
         res.body.clientID.should.equal('Zambia_OpenHIE_Instance')
         res.body.clientDomain.should.equal('www.zedmusic-unique.co.zw')
@@ -304,12 +269,9 @@ describe('API Integration Tests', () => {
       })
 
       it('should not allow a non admin user to fetch a client by domain', async () => {
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .get('/clients/domain/www.zedmusic-unique.co.zw')
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', nonRootCookie)
           .expect(403)
       })
     })
@@ -355,12 +317,9 @@ describe('API Integration Tests', () => {
           })
         ).save()
 
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .get('/clients')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(200)
 
         res.body.length.should.equal(4)
@@ -371,12 +330,9 @@ describe('API Integration Tests', () => {
       })
 
       it('should not allow a non admin user to fetch all clients', async () => {
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .get('/clients')
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', nonRootCookie)
           .expect(403)
       })
     })
@@ -402,12 +358,9 @@ describe('API Integration Tests', () => {
           name: 'Devil_may_Cry'
         }
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .put(`/clients/${client._id}`)
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(updates)
           .expect(200)
 
@@ -427,12 +380,9 @@ describe('API Integration Tests', () => {
           customTokenID: 'test'
         }
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .put(`/clients/${client._id}`)
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(updates)
           .expect(200)
 
@@ -448,12 +398,9 @@ describe('API Integration Tests', () => {
           customTokenID: null
         }
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .put(`/clients/${client._id}`)
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(updates)
           .expect(200)
 
@@ -469,12 +416,9 @@ describe('API Integration Tests', () => {
           passwordHash: null
         }
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .put(`/clients/${client._id}`)
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(updates)
           .expect(200)
 
@@ -493,12 +437,9 @@ describe('API Integration Tests', () => {
           name: 'Devil_may_Cry'
         }
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .put(`/clients/${client._id}`)
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(updates)
           .expect(200)
 
@@ -512,12 +453,9 @@ describe('API Integration Tests', () => {
 
       it('should not allow a non admin user to update a client', async () => {
         const updates = {}
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .put('/clients/000000000000000000000000')
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', nonRootCookie)
           .send(updates)
           .expect(403)
       })
@@ -525,12 +463,9 @@ describe('API Integration Tests', () => {
       it('should reject a client that conflicts with a role', async () => {
         const client = await new ClientModelAPI(testAppDoc).save()
         const conflict = {clientID: 'PoC'}
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .put(`/clients/${client._id}`)
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(conflict)
           .expect(409)
       })
@@ -549,12 +484,9 @@ describe('API Integration Tests', () => {
 
         const client = await new ClientModelAPI(docTestRemove).save()
         const countBefore = await ClientModelAPI.countDocuments()
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .del(`/clients/${client._id}`)
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(200)
 
         const countAfter = await ClientModelAPI.countDocuments()
@@ -566,12 +498,9 @@ describe('API Integration Tests', () => {
       })
 
       it('should not allow a non admin user to remove a client', async () => {
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .del('/clients/000000000000000000000000')
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', nonRootCookie)
           .expect(403)
       })
     })

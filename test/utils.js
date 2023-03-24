@@ -20,7 +20,9 @@ import {
   MetricModel,
   UserModel,
   METRIC_TYPE_HOUR,
-  METRIC_TYPE_DAY
+  METRIC_TYPE_DAY,
+  createUser,
+  updateTokenUser
 } from '../src/model'
 import {config, encodeMongoURI} from '../src/config'
 
@@ -36,25 +38,29 @@ export const rootUser = {
   firstname: 'Admin',
   surname: 'User',
   email: 'root@jembi.org',
+  password: 'password',
+  groups: ['HISP', 'admin'],
+
+  // @deprecated
   passwordAlgorithm: 'sha512',
   passwordHash:
     '669c981d4edccb5ed61f4d77f9fcc4bf594443e2740feb1a23f133bdaf80aae41804d10aa2ce254cfb6aca7c497d1a717f2dd9a794134217219d8755a84b6b4e',
-  passwordSalt: '22a61686-66f6-483c-a524-185aac251fb0',
-  groups: ['HISP', 'admin']
+  passwordSalt: '22a61686-66f6-483c-a524-185aac251fb0'
 }
-// password is 'password'
 
 export const nonRootUser = {
   firstname: 'Non',
   surname: 'Root',
   email: 'nonroot@jembi.org',
+  password: 'password',
+  groups: ['group1', 'group2'],
+
+  // @deprecated
   passwordAlgorithm: 'sha512',
   passwordHash:
     '669c981d4edccb5ed61f4d77f9fcc4bf594443e2740feb1a23f133bdaf80aae41804d10aa2ce254cfb6aca7c497d1a717f2dd9a794134217219d8755a84b6b4e',
-  passwordSalt: '22a61686-66f6-483c-a524-185aac251fb0',
-  groups: ['group1', 'group2']
+  passwordSalt: '22a61686-66f6-483c-a524-185aac251fb0'
 }
-// password is 'password'
 
 export function secureSocketTest(portOrOptions, data, waitForResponse = true) {
   const options = {}
@@ -123,11 +129,68 @@ export async function pollCondition(pollPredicate, pollBreak = 20) {
   }
 }
 
-export function setupTestUsers() {
-  return Promise.all([
-    new UserModel(rootUser).save(),
-    new UserModel(nonRootUser).save()
-  ])
+export async function setupTestUsers() {
+  const res = await Promise.all([createUser(rootUser), createUser(nonRootUser)])
+
+  const errors = res
+    .filter(r => r.error)
+    .map(r => (r.error.message ? r.error.message : r.error))
+
+  if (errors.length > 0) {
+    throw new Error('Error creating test users:\n' + errors.join('\n'))
+  }
+
+  return res
+}
+
+export async function setupTestUsersWithToken() {
+  try {
+    const root = await new UserModel(rootUser).save()
+    const nonRoot = await new UserModel(nonRootUser).save()
+
+    // Add token passports @deprecated
+    const res = await Promise.all([
+      updateTokenUser({...rootUser, id: root.id}),
+      updateTokenUser({...nonRootUser, id: nonRoot.id})
+    ])
+
+    const errors = res
+      .filter(r => r.error)
+      .map(r => (r.error.message ? r.error.message : r.error))
+
+    if (errors.length > 0) {
+      throw new Error('Error creating test users:\n' + errors.join('\n'))
+    }
+
+    return res
+  } catch (err) {
+    throw new Error('Error creating test users:\n' + err)
+  }
+}
+
+export function getCookie(encodedCookies) {
+  let decodedCookies = ''
+
+  if (Array.isArray(encodedCookies) && encodedCookies.length > 0) {
+    for (let cookie of encodedCookies) {
+      let ca = cookie.split(';')
+      if (ca.length > 0) {
+        decodedCookies += ca[0] + ';'
+      }
+    }
+  }
+  return decodedCookies
+}
+
+export const authenticate = async (request, BASE_URL, user) => {
+  const {email, password} = user
+
+  const authResult = await request(BASE_URL)
+    .post('/authenticate/local')
+    .send({username: email, password: password})
+    .expect(200)
+
+  return getCookie(authResult.headers['set-cookie'])
 }
 
 export function getAuthDetails() {
