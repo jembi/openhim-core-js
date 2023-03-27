@@ -73,7 +73,20 @@ The following config option are provided by the OpenHIM. All of these options ha
     // * "basic" means with basic auth either through browser or postman by giving also username and password.
     // * "openid" means with a third party authentication provider (e.g. keycloak).
     // * [Deprecated] "token" means that a request should provide in the header an 'auth-token', 'auth-salt' and 'auth-ts' to be authenticated.
-    "authenicationTypes": ["token"]
+    "authenicationTypes": ["token"],
+    // Keycloak configuration needed for the authentication
+    "keycloak": {
+      // Keycloak realm url link
+      "url": "http://localhost:9088/realms/platform-realm",
+      // Callback URL used by Keycloak (should be the same callback URL specified in keycloak realm)
+      "callbackUrl": "http://localhost:9000",
+      // CLient ID specified in the realm of Keycloak
+      "clientId": "openhim-oauth",
+      // Client secret specified in the realm of Keycloak
+      "clientSecret": "tZKfEbWf0Ka5HBNZwFrdSyQH2xT1sNMR",
+      // Scopes to be requested from keycloak
+      "scope": "openid email profile offline_access roles"
+    }
   },
   "rerun": {
     // The port that the transaction re-run processor runs on, this port is
