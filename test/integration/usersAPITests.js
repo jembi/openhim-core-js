@@ -64,7 +64,7 @@ describe('API Integration Tests', () => {
       firstname: 'keycloak',
       surname: 'test',
       email: 'test@keycloak.net',
-      provider: 'keycloak',
+      provider: 'openid',
       // For testing purposes
       token: 'leTgbOItS7y9vqqPldK6ARXtAA3wokejd',
       tokenType: 'newUser',

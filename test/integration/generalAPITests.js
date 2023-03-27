@@ -134,7 +134,7 @@ describe('API Integration Tests', () => {
       groups: ['HISP', 'admin']
     }
     const keycloakProfileUser = {
-      iss: config.api.keycloak.url,
+      iss: config.api.openid.url,
       sub: 'profile-user',
       aud: 'client-id',
       exp: 1911281975,
@@ -150,7 +150,7 @@ describe('API Integration Tests', () => {
       }
     }
     const keycloakProfileInfo = {
-      iss: config.api.keycloak.url,
+      iss: config.api.openid.url,
       sub: 'profile-123456789',
       aud: 'client-id',
       exp: 1911281975,
@@ -164,7 +164,7 @@ describe('API Integration Tests', () => {
       }
     }
     const keycloakProfileInfoWithoutEmail = {
-      iss: config.api.keycloak.url,
+      iss: config.api.openid.url,
       sub: 'profile-2123456789',
       aud: 'client-id',
       exp: 1911281975,
@@ -176,7 +176,7 @@ describe('API Integration Tests', () => {
       resource_access: {}
     }
     const keycloakProfileUserExist = {
-      iss: config.api.keycloak.url,
+      iss: config.api.openid.url,
       sub: 'profile-3123456789',
       aud: 'client-id',
       exp: 1911281975,
@@ -320,7 +320,7 @@ describe('API Integration Tests', () => {
         .expect(200)
 
       authResult.body.should.have.property('user')
-      authResult.body.user.should.have.property('provider', 'keycloak')
+      authResult.body.user.should.have.property('provider', 'openid')
       authResult.body.user.should.have.property('groups')
       authResult.body.user.groups[0].should.equal(
         keycloakProfileUserExist['resource_access']['client-id'].roles[0]
@@ -409,8 +409,7 @@ describe('API Integration Tests', () => {
 
       const passport = await PassportModelAPI.findOne({
         protocol: 'openid',
-        identifier: keycloakProfileInfo.sub,
-        provider: 'keycloak'
+        identifier: keycloakProfileInfo.sub
       })
 
       passport.should.have.property('tokens')

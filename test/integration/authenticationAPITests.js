@@ -23,7 +23,7 @@ const {SERVER_PORTS, BASE_URL} = constants
 
 describe('API Integration Tests', () => {
   const keycloakProfileInfo = {
-    iss: config.api.keycloak.url,
+    iss: config.api.openid.url,
     sub: '123456789',
     aud: 'client-id',
     exp: 1911281975,
@@ -240,7 +240,7 @@ describe('API Integration Tests', () => {
         .expect(200)
 
       authResult.body.should.have.property('user')
-      authResult.body.user.should.have.property('provider', 'keycloak')
+      authResult.body.user.should.have.property('provider', 'openid')
       authResult.body.user.should.have.property('groups')
       authResult.body.user.groups[0].should.equal(
         keycloakProfileInfo['resource_access']['client-id'].roles[0]
