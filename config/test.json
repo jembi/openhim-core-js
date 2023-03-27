@@ -27,7 +27,7 @@
     "truncateSize": 10,
     "truncateAppend": "\n[truncated ...]",
     "authenticationTypes": ["token", "basic", "local", "openid"],
-    "keycloak": {
+    "openid": {
       "url": "http://localhost:10000/realms/realm",
       "callbackUrl": "http://localhost:10010",
       "clientId": "client-id",

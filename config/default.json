@@ -43,7 +43,7 @@
     "truncateSize": 15000,
     "truncateAppend": "\n[truncated ...]",
     "authenticationTypes": ["basic", "local", "token", "openid"],
-    "keycloak": {
+    "openid": {
       "url": "http://localhost:9088/realms/platform-realm",
       "callbackUrl": "http://localhost:9000",
       "clientId": "openhim-oauth",

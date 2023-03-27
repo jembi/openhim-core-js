@@ -28,7 +28,7 @@ const UserSchema = new Schema({
   /* --- ----------- --- */
   provider: {
     type: String,
-    enum: ['keycloak', 'local', 'token'], // token is deprecated
+    enum: ['openid', 'local', 'token'], // token is deprecated
     default: 'local'
   },
   groups: [String],

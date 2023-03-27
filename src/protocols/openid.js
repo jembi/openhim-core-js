@@ -20,7 +20,7 @@ function parseJwt(token) {
 function constructUserInfo(profile, accessToken) {
   let user = {}
 
-  const {clientId} = config.api.keycloak
+  const {clientId} = config.api.openid
   const {sub, resource_access} = parseJwt(accessToken)
 
   if (resource_access && resource_access[`${clientId}`]) {
@@ -42,7 +42,7 @@ function constructUserInfo(profile, accessToken) {
     ? profile.name.familyName
     : profile.username
 
-  user.provider = 'keycloak'
+  user.provider = 'openid'
 
   // In case the user was created before
   user.token = null
@@ -67,7 +67,14 @@ function createOrUpdateUser(user) {
   })
 }
 
-export const login = async (req, profile, accessToken, tokens, next) => {
+export const login = async (
+  req,
+  issuer,
+  profile,
+  accessToken,
+  tokens,
+  next
+) => {
   const {user, identifier} = constructUserInfo(profile, accessToken)
 
   // If an email was not available in the profile, we don't
@@ -76,7 +83,7 @@ export const login = async (req, profile, accessToken, tokens, next) => {
   if (!user.email) {
     return next(
       new Error(
-        'Trying to login with Keycloak, but email was not provided in the profile'
+        'Trying to login with openid, but email was not provided in the profile'
       ),
       false
     )
@@ -85,13 +92,13 @@ export const login = async (req, profile, accessToken, tokens, next) => {
   const newPassport = {
     accessToken,
     tokens,
-    provider: 'keycloak',
+    issuer,
     identifier: identifier,
     protocol: 'openid'
   }
 
   PassportModelAPI.findOne({
-    provider: 'keycloak',
+    issuer,
     protocol: 'openid',
     identifier: identifier
   })

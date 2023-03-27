@@ -37,7 +37,7 @@ const handlePassportError = function (err, user, next) {
  *
  */
 passport.loadStrategies = function () {
-  const {keycloak} = config.api
+  const {openid: openidConfig} = config.api
 
   let strategies = {
     local: {
@@ -50,18 +50,16 @@ passport.loadStrategies = function () {
       strategy: passportCustom.Strategy
     },
     openid: {
-      name: 'Keycloak',
-      protocol: 'openid',
       strategy: passportOpenid.Strategy,
       options: {
-        issuer: keycloak.url,
-        authorizationURL: `${keycloak.url}/protocol/openid-connect/auth`,
-        tokenURL: `${keycloak.url}/protocol/openid-connect/token`,
-        userInfoURL: `${keycloak.url}/protocol/openid-connect/userinfo`,
-        clientID: keycloak.clientId,
-        clientSecret: keycloak.clientSecret,
-        callbackURL: keycloak.callbackUrl,
-        scope: keycloak.scope,
+        issuer: openidConfig.url,
+        authorizationURL: `${openidConfig.url}/protocol/openid-connect/auth`,
+        tokenURL: `${openidConfig.url}/protocol/openid-connect/token`,
+        userInfoURL: `${openidConfig.url}/protocol/openid-connect/userinfo`,
+        clientID: openidConfig.clientId,
+        clientSecret: openidConfig.clientSecret,
+        callbackURL: openidConfig.callbackUrl,
+        scope: openidConfig.scope,
         sessionKey: 'openid_session_key',
         passReqToCallback: true,
         profile: true,
@@ -147,6 +145,7 @@ passport.loadStrategies = function () {
               if (isAuthenticationTypeEnabled(key)) {
                 return await openid.login(
                   req,
+                  issuer,
                   profile,
                   accessToken,
                   tokens,

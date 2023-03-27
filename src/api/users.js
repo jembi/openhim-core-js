@@ -183,11 +183,11 @@ export async function userPasswordResetRequest(ctx, email) {
       return
     }
 
-    if (user.provider === 'keycloak') {
-      ctx.body = `User was provided by Keycloak. Could not be updated.`
+    if (user.provider === 'openid') {
+      ctx.body = `User authenticated by OpenID Connect provider. Could not be updated.`
       ctx.status = 403
       logger.info(
-        `Tried to request password reset for a user provided by Keycloak: ${email}`
+        `Tried to request password reset for a user authenticated by OpenID Connect provider: ${email}`
       )
       return
     }
@@ -302,11 +302,11 @@ export async function updateUserByToken(ctx, token) {
       return
     }
 
-    if (userDataExpiry.provider === 'keycloak') {
-      ctx.body = `User was provided by Keycloak. Could not be updated.`
+    if (userDataExpiry.provider === 'openid') {
+      ctx.body = `User authenticated by OpenID Connect provider. Could not be updated.`
       ctx.status = 403
       logger.info(
-        `Tried to request update by token for a user provided by Keycloak: ${token}`
+        `Tried to request update by token for a user authenticated by OpenID Connect provider: ${token}`
       )
       return
     }
@@ -584,11 +584,11 @@ export async function updateUser(ctx, email) {
       return
     }
 
-    if (userDetails.provider === 'keycloak') {
-      ctx.body = `User was provided by Keycloak. Could not be updated.`
+    if (userDetails.provider === 'openid') {
+      ctx.body = `User authenticated by OpenID Connect provider. Could not be updated.`
       ctx.status = 403
       logger.info(
-        `Tried to request update for a user provided by Keycloak via API: ${email}`
+        `Tried to request update for a user authenticated by OpenID Connect provider: ${email}`
       )
       return
     }
