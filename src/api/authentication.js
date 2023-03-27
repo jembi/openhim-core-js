@@ -100,7 +100,7 @@ async function authenticateRequest(ctx) {
   let user = null
 
   // First attempt local or openid authentication if enabled
-  if (user == null && ctx.req.user) {
+  if (ctx.req.user) {
     user = ctx.req.user
   }
   // Otherwise try token based authentication if enabled (@deprecated)
@@ -134,7 +134,7 @@ function handleAuditResponse(err) {
 
 export async function authenticate(ctx, next) {
   try {
-    // Authenticate Request either by basic or local
+    // Authenticate Request either by basic or local or token
     const user = await authenticateRequest(ctx)
 
     if (ctx.isAuthenticated()) {
