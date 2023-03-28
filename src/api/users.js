@@ -184,10 +184,10 @@ export async function userPasswordResetRequest(ctx, email) {
     }
 
     if (user.provider === 'openid') {
-      ctx.body = `User authenticated by OpenID Connect provider. Could not be updated.`
+      ctx.body = `User supplied by OpenID Connect provider. Cannot request password reset.`
       ctx.status = 403
       logger.info(
-        `Tried to request password reset for a user authenticated by OpenID Connect provider: ${email}`
+        `Tried to request password reset for a user supplied by OpenID Connect provider: ${email}`
       )
       return
     }
@@ -303,10 +303,10 @@ export async function updateUserByToken(ctx, token) {
     }
 
     if (userDataExpiry.provider === 'openid') {
-      ctx.body = `User authenticated by OpenID Connect provider. Could not be updated.`
+      ctx.body = `User supplied by OpenID Connect provider. Could not be updated.`
       ctx.status = 403
       logger.info(
-        `Tried to request update by token for a user authenticated by OpenID Connect provider: ${token}`
+        `Tried to request update by token for a user supplied by OpenID Connect provider: ${token}`
       )
       return
     }
@@ -583,15 +583,6 @@ export async function updateUser(ctx, email) {
       ctx.status = 404
       return
     }
-
-    if (userDetails.provider === 'openid') {
-      ctx.body = `User authenticated by OpenID Connect provider. Could not be updated.`
-      ctx.status = 403
-      logger.info(
-        `Tried to request update for a user authenticated by OpenID Connect provider: ${email}`
-      )
-      return
-    }
   } catch (e) {
     utils.logAndSetResponse(
       ctx,
@@ -601,7 +592,7 @@ export async function updateUser(ctx, email) {
     )
   }
 
-  const {_doc: userData} = new UserModelAPI(ctx.request.body)
+  let {_doc: userData} = new UserModelAPI(ctx.request.body)
   const {password} = ctx.request.body
 
   // @deprecated
@@ -626,6 +617,15 @@ export async function updateUser(ctx, email) {
 
   if (userData._id) {
     delete userData._id
+  }
+
+  if (userDetails.provider === 'openid') {
+    userData = {
+      msisdn: userData.msisdn,
+      dailyReport: userData.dailyReport,
+      weeklyReport: userData.weeklyReport,
+      settings: userData.settings
+    }
   }
 
   try {

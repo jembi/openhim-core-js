@@ -538,22 +538,27 @@ describe('API Integration Tests', () => {
         user.should.have.property('email', updates.email)
       })
 
-      it('should prevent an update of a keycloak user', async () => {
+      it('should prevent the update of a certain fields of a keycloak user', async () => {
         const authUser = testUtils.rootUser
         const cookie = await testUtils.authenticate(request, BASE_URL, authUser)
 
         const updates = {
+          email: 'test@jembi.net',
           firstname: 'key',
           surname: 'cloak',
-          msisdn: '27123456789',
-          password: 'password-updated'
+          msisdn: '27123456789'
         }
 
         await request(BASE_URL)
           .put('/users/test@keycloak.net')
           .set('Cookie', cookie)
           .send(updates)
-          .expect(403)
+          .expect(200)
+
+        const user = await UserModelAPI.findOne({email: 'test@keycloak.net'})
+        user.should.have.property('firstname', keycloakUser.firstname)
+        user.should.have.property('surname', keycloakUser.surname)
+        user.should.have.property('msisdn', updates.msisdn)
       })
 
       it('should return a not found error', async () => {
