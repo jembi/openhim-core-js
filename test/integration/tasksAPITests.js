@@ -17,7 +17,7 @@ import {TransactionModelAPI} from '../../src/model/transactions'
 const {ObjectId} = Types
 
 describe('API Integration Tests', () => {
-  const {SERVER_PORTS} = constants
+  const {SERVER_PORTS, BASE_URL} = constants
 
   describe('Tasks REST Api testing', () => {
     const task1 = new TaskModelAPI({
@@ -282,7 +282,8 @@ describe('API Integration Tests', () => {
       }
     })
 
-    let authDetails = {}
+    let rootCookie = '',
+      nonRootCookie = ''
 
     before(async () => {
       await TaskModelAPI.deleteMany({})
@@ -303,6 +304,19 @@ describe('API Integration Tests', () => {
       await promisify(server.start)({apiPort: SERVER_PORTS.apiPort})
     })
 
+    beforeEach(async () => {
+      rootCookie = await testUtils.authenticate(
+        request,
+        BASE_URL,
+        testUtils.rootUser
+      )
+      nonRootCookie = await testUtils.authenticate(
+        request,
+        BASE_URL,
+        testUtils.nonRootUser
+      )
+    })
+
     after(async () => {
       await promisify(server.stop)()
       await testUtils.cleanupTestUsers()
@@ -316,10 +330,6 @@ describe('API Integration Tests', () => {
       if (mongoCollection) {
         mongoCollection.drop()
       }
-    })
-
-    beforeEach(() => {
-      authDetails = testUtils.getAuthDetails()
     })
 
     describe('*getTasks()', () => {
@@ -342,12 +352,9 @@ describe('API Integration Tests', () => {
 
         params = encodeURI(params)
 
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .get(`/tasks?${params}`)
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(200)
 
         res.body.length.should.be.eql(3)
@@ -374,12 +381,9 @@ describe('API Integration Tests', () => {
 
         params = encodeURI(params)
 
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .get(`/tasks?${params}`)
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(200)
 
         res.body.length.should.be.eql(1)
@@ -396,12 +400,9 @@ describe('API Integration Tests', () => {
           ]
         }
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/tasks')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(newTask)
           .expect(201)
 
@@ -434,12 +435,9 @@ describe('API Integration Tests', () => {
           ]
         }
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/tasks')
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', nonRootCookie)
           .send(newTask)
           .expect(201)
 
@@ -471,12 +469,9 @@ describe('API Integration Tests', () => {
         ]
         const newTask = {tids}
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/tasks')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(newTask)
           .expect(201)
 
@@ -516,14 +511,13 @@ describe('API Integration Tests', () => {
           ]
         }
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/tasks')
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', nonRootCookie)
           .send(newTask)
           .expect(403)
+
+        await request(BASE_URL).post('/tasks').send(newTask).expect(401)
       })
 
       it('should NOT add a new task if there are transactions linked to disabled channels', async () => {
@@ -536,12 +530,9 @@ describe('API Integration Tests', () => {
           ]
         }
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/tasks')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(newTask)
           .expect(400)
       })
@@ -556,12 +547,9 @@ describe('API Integration Tests', () => {
           ]
         }
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/tasks')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(newTask)
           .expect(400)
       })
@@ -576,12 +564,9 @@ describe('API Integration Tests', () => {
           paused: true
         }
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/tasks')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(newTask)
           .expect(201)
 
@@ -635,12 +620,9 @@ describe('API Integration Tests', () => {
         await retry2.save()
         await retry3.save()
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/tasks')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(newTask)
           .expect(201)
         const results = await AutoRetryModelAPI.find()
@@ -672,12 +654,9 @@ describe('API Integration Tests', () => {
 
         params = encodeURI(params)
 
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .get(`/tasks/aaa908908bbb98cc1d0809ee?${params}`)
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(200)
 
         res.body.should.have.property('_id', 'aaa908908bbb98cc1d0809ee')
@@ -704,12 +683,9 @@ describe('API Integration Tests', () => {
 
         params = encodeURI(params)
 
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .get(`/tasks/bbb777777bbb66cc5d4444ee?${params}`)
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(200)
 
         res.body.should.have.property('_id', 'bbb777777bbb66cc5d4444ee')
@@ -757,12 +733,9 @@ describe('API Integration Tests', () => {
 
         params = encodeURI(params)
 
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .get(`/tasks/bbb777777bbb66cc5d4444ee?${params}`)
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(200)
 
         res.body.should.have.property('_id', 'bbb777777bbb66cc5d4444ee')
@@ -817,12 +790,9 @@ describe('API Integration Tests', () => {
 
         params = encodeURI(params)
 
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .get(`/tasks/bbb777777bbb66cc5d4444ee?${params}`)
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(200)
 
         res.body.should.have.property('_id', 'bbb777777bbb66cc5d4444ee')
@@ -838,12 +808,9 @@ describe('API Integration Tests', () => {
           completed: '2014-06-18T13:30:00.929Z'
         }
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .put('/tasks/aaa777777bbb66cc5d4444ee')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(updates)
           .expect(200)
         const task = await TaskModelAPI.findOne({
@@ -856,25 +823,24 @@ describe('API Integration Tests', () => {
       it('should not allow a non admin user to update a task', async () => {
         const updates = {}
 
-        request(constants.BASE_URL)
+        request(BASE_URL)
           .put('/tasks/890aaS0b93ccccc30dddddd0')
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', nonRootCookie)
           .send(updates)
           .expect(403)
+
+        request(BASE_URL)
+          .put('/tasks/890aaS0b93ccccc30dddddd0')
+          .send(updates)
+          .expect(401)
       })
     })
 
     describe('*removeTask(taskId)', () => {
       it('should remove a specific task by ID', async () => {
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .del('/tasks/aaa777777bbb66cc5d4444ee')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(200)
 
         const task = await TaskModelAPI.find({
@@ -884,13 +850,14 @@ describe('API Integration Tests', () => {
       })
 
       it('should not only allow a non admin user to remove a task', async () => {
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .del('/tasks/890aaS0b93ccccc30dddddd0')
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', nonRootCookie)
           .expect(403)
+
+        await request(BASE_URL)
+          .del('/tasks/890aaS0b93ccccc30dddddd0')
+          .expect(401)
       })
     })
   })

@@ -11,7 +11,7 @@ import * as testUtils from '../utils'
 import {VisualizerModelAPI} from '../../src/model/visualizer'
 
 describe('API Integration Tests', () => {
-  const {SERVER_PORTS} = constants
+  const {SERVER_PORTS, BASE_URL} = constants
 
   describe('Visualizers REST API testing', () => {
     const visObj = {
@@ -72,7 +72,8 @@ describe('API Integration Tests', () => {
       ]
     }
 
-    let authDetails = {}
+    let rootCookie = '',
+      nonRootCookie = ''
 
     before(async () => {
       await Promise.all([
@@ -89,8 +90,17 @@ describe('API Integration Tests', () => {
       ])
     })
 
-    beforeEach(() => {
-      authDetails = testUtils.getAuthDetails()
+    beforeEach(async () => {
+      rootCookie = await testUtils.authenticate(
+        request,
+        BASE_URL,
+        testUtils.rootUser
+      )
+      nonRootCookie = await testUtils.authenticate(
+        request,
+        BASE_URL,
+        testUtils.nonRootUser
+      )
     })
 
     afterEach(() => VisualizerModelAPI.deleteMany({}))
@@ -107,12 +117,9 @@ describe('API Integration Tests', () => {
 
         await Promise.all([vis1.save(), vis2.save()])
 
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .get('/visualizers')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(200)
 
         res.body.should.be.an.Array()
@@ -123,22 +130,16 @@ describe('API Integration Tests', () => {
       })
 
       it('should return a 403 response if the user is not an admin', async () => {
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .get('/visualizers')
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', nonRootCookie)
           .expect(403)
       })
 
       it('should return an empty array if there are no visualizers', async () => {
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .get('/visualizers')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(200)
 
         res.body.should.be.an.Array()
@@ -158,12 +159,9 @@ describe('API Integration Tests', () => {
 
         await Promise.all([vis1.save(), vis2.save()])
 
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .get(`/visualizers/${vis1._id}`)
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(200)
 
         res.body.should.be.an.Object()
@@ -171,22 +169,16 @@ describe('API Integration Tests', () => {
       })
 
       it('should return a 403 response if the user is not an admin', async () => {
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .get('/visualizers/111111111111111111111111')
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', nonRootCookie)
           .expect(403)
       })
 
       it('should return 404 with message if no visualizers match the _id', async () => {
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .get('/visualizers/111111111111111111111111')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(404)
 
         res.text.should.equal(
@@ -197,12 +189,9 @@ describe('API Integration Tests', () => {
 
     describe('*addVisualizer()', () => {
       it('should add a visualizer and return a 201 response', async () => {
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/visualizers')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(Object.assign({}, visObj))
           .expect(201)
 
@@ -210,23 +199,17 @@ describe('API Integration Tests', () => {
       })
 
       it('should return a 403 response if the user is not an admin', async () => {
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/visualizers')
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', nonRootCookie)
           .send(Object.assign({}, visObj))
           .expect(403)
       })
 
       it('should return 404 if no request object is sent', async () => {
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .post('/visualizers')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send()
           .expect(404)
 
@@ -246,12 +229,9 @@ describe('API Integration Tests', () => {
 
         vis1.save()
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .put(`/visualizers/${vis1._id}`)
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(visUpdate)
           .expect(200)
 
@@ -262,23 +242,17 @@ describe('API Integration Tests', () => {
       })
 
       it('should return a 403 response if the user is not an admin', async () => {
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .put('/visualizers/111111111111111111111111')
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', nonRootCookie)
           .send(Object.assign({}, visObj))
           .expect(403)
       })
 
       it('should return 404 if no request object is sent', async () => {
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .put('/visualizers/111111111111111111111111')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send()
           .expect(404)
         res.text.should.equal(
@@ -287,12 +261,9 @@ describe('API Integration Tests', () => {
       })
 
       it('should return 404 if no visualizers match the _id', async () => {
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .put('/visualizers/111111111111111111111111')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(Object.assign({}, visObj))
           .expect(404)
         res.text.should.equal(
@@ -313,34 +284,25 @@ describe('API Integration Tests', () => {
 
         await Promise.all([vis1.save(), vis2.save()])
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .del(`/visualizers/${vis1._id}`)
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(200)
         const visualizers = await VisualizerModelAPI.find()
         visualizers.length.should.be.exactly(1)
       })
 
       it('should return a 403 response if the user is not an admin', async () => {
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .delete('/visualizers/111111111111111111111111')
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', nonRootCookie)
           .expect(403)
       })
 
       return it("should return a 404 when the visualizer doesn't exist", async () => {
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .delete('/visualizers/111111111111111111111111')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(404)
       })
     })
