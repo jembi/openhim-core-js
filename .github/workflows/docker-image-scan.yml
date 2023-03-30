@@ -6,6 +6,9 @@ jobs:
   scan-images:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
       - name: Build an image from Dockerfile
         run: |
           docker build -t jembi/openhim-core:${{ github.sha }} .
