@@ -6,10 +6,14 @@ jobs:
   scan-images:
     runs-on: ubuntu-latest
     steps:
+      - name: Build an image from Dockerfile
+        run: |
+          docker build -t jembi/openhim-core:${{ github.sha }} .
+
       - name: Run trivy vulnerability scanner for the OpenHIM core image
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: jembi/openhim-core:latest
+          image-ref: jembi/openhim-core:${{ github.sha }}
           format: 'sarif'
           output: 'trivy-results.sarif'
         
