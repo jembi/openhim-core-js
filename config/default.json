@@ -42,7 +42,14 @@
     "maxPayloadSizeMB": 50,
     "truncateSize": 15000,
     "truncateAppend": "\n[truncated ...]",
-    "authenticationTypes": ["basic", "local", "token"]
+    "authenticationTypes": ["basic", "local", "token", "openid"],
+    "openid": {
+      "url": "http://localhost:9088/realms/platform-realm",
+      "callbackUrl": "http://localhost:9000",
+      "clientId": "openhim-oauth",
+      "clientSecret": "tZKfEbWf0Ka5HBNZwFrdSyQH2xT1sNMR",
+      "scope": "openid email profile offline_access roles"
+    }
   },
   "rerun": {
     "httpPort": 7786,
