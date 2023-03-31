@@ -2,7 +2,7 @@ name: Scan latest docker image
 
 on:
   schedule:
-    - cron: '*/5 * * * *'
+    - cron: '0 5 * * *'
 
 jobs:
   scan-images:
