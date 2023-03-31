@@ -74,17 +74,17 @@ The following config option are provided by the OpenHIM. All of these options ha
     // * "openid" means with a third party authentication provider (e.g. keycloak).
     // * [Deprecated] "token" means that a request should provide in the header an 'auth-token', 'auth-salt' and 'auth-ts' to be authenticated.
     "authenicationTypes": ["token"],
-    // Openid configuration needed for the authentication
+    // Openid connect provider configuration needed for the authentication
     "openid": {
-      // Keycloak realm url link
+      // Openid connect provider realm url link
       "url": "http://localhost:9088/realms/platform-realm",
-      // Callback URL used by Keycloak (should be the same callback URL specified in keycloak realm)
+      // Callback URL used by openid connect provider (should be the same callback URL specified in realm)
       "callbackUrl": "http://localhost:9000",
-      // CLient ID specified in the realm of Keycloak
+      // CLient ID specified in the realm
       "clientId": "openhim-oauth",
-      // Client secret specified in the realm of Keycloak
+      // Client secret specified in the realm
       "clientSecret": "tZKfEbWf0Ka5HBNZwFrdSyQH2xT1sNMR",
-      // Scopes to be requested from keycloak
+      // Scopes to be requested from Openid connect provider
       "scope": "openid email profile offline_access roles"
     }
   },
