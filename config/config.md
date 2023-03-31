@@ -74,8 +74,8 @@ The following config option are provided by the OpenHIM. All of these options ha
     // * "openid" means with a third party authentication provider (e.g. keycloak).
     // * [Deprecated] "token" means that a request should provide in the header an 'auth-token', 'auth-salt' and 'auth-ts' to be authenticated.
     "authenicationTypes": ["token"],
-    // Keycloak configuration needed for the authentication
-    "keycloak": {
+    // Openid configuration needed for the authentication
+    "openid": {
       // Keycloak realm url link
       "url": "http://localhost:9088/realms/platform-realm",
       // Callback URL used by Keycloak (should be the same callback URL specified in keycloak realm)
