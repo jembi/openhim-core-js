@@ -4,9 +4,8 @@ import cookie from 'cookie'
 import http from 'http'
 import https from 'https'
 import logger from 'winston'
-import net from 'net'
-import tls from 'tls'
 import zlib from 'zlib'
+import {Kafka, logLevel} from 'kafkajs'
 
 import * as events from '../middleware/events'
 import * as messageStore from '../middleware/messageStore'
@@ -174,8 +173,103 @@ function handleServerError(ctx, err, route) {
   }
 }
 
+function constructOptionsObject(ctx, route, keystore) {
+  const options = {
+    method: ctx.request.method,
+    headers: ctx.request.header,
+    agent: false,
+    rejectUnauthorized: true,
+    key: keystore.key,
+    cert: keystore.cert.data
+  }
+
+  if (route.type === 'http') {
+    options.hostname = route.host
+    options.port = route.port
+  }
+
+  if (route.type === 'kafka') {
+    options.brokers = route.brokers
+    options.topic = route.topic
+  }
+
+  if (route.cert != null) {
+    options.ca = keystore.ca.id(route.cert).data
+  }
+
+  if (ctx.request.querystring) {
+    options.path += `?${ctx.request.querystring}`
+  }
+
+  if (
+    options.headers &&
+    options.headers.authorization &&
+    !route.forwardAuthHeader
+  ) {
+    delete options.headers.authorization
+  }
+
+  if (route.username && route.password) {
+    options.auth = `${route.username}:${route.password}`
+  }
+
+  if (options.headers && options.headers.host) {
+    delete options.headers.host
+  }
+  return options
+}
+
+function matchCodeOfPrimaryResponse(ctx, route) {
+  if (route.statusCodesCheck) {
+    const codes = route.statusCodesCheck.split(',')
+
+    for (const code of codes) {
+      if (code.includes('*') && `${ctx.response.status}`[0] === code[0]) {
+        return true
+      } else if (Number(code) === `${ctx.response.status}`) {
+        return true
+      }
+    }
+
+    return false
+  }
+  return true
+}
+
+function storingNonPrimaryRouteResp(ctx, route, options, path) {
+  try {
+    if ((route != null ? route.name : undefined) == null) {
+      route = {name: route.name}
+    }
+
+    if ((route != null ? route.response : undefined) == null) {
+      route.response = {
+        status: 500,
+        timestamp: ctx.requestTimestamp
+      }
+    }
+
+    if ((route != null ? route.request : undefined) == null) {
+      route.request = {
+        host: options.hostname,
+        port: options.port,
+        path,
+        headers: ctx.request.header,
+        querystring: ctx.request.querystring,
+        method: ctx.request.method,
+        timestamp: ctx.requestTimestamp
+      }
+    }
+
+    return messageStore.storeNonPrimaryResponse(ctx, route, () => {})
+  } catch (err) {
+    return logger.error(err)
+  }
+}
+
 function sendRequestToRoutes(ctx, routes, next) {
-  const promises = []
+  const firstPromises = [],
+    secondaryPromises = []
   let promise = {}
   ctx.timer = new Date()
 
@@ -187,50 +281,21 @@ function sendRequestToRoutes(ctx, routes, next) {
     )
   }
 
-  return utils.getKeystore((err, keystore) => {
+  return utils.getKeystore(async (err, keystore) => {
     if (err) {
       return err
     }
-    for (const route of Array.from(routes)) {
-      if (!isRouteEnabled(route)) {
-        continue
-      }
+
+    const routesToRunAfterPrimary = routes.filter(
+      r => r.waitPrimaryResponse && !r.primary
+    )
+    const routesToRunSimultaneously = routes.filter(
+      r => !routesToRunAfterPrimary.includes(r)
+    )
+
+    for (const route of Array.from(routesToRunSimultaneously)) {
       const path = getDestinationPath(route, ctx.path)
-      const options = {
-        hostname: route.host,
-        port: route.port,
-        path,
-        method: ctx.request.method,
-        headers: ctx.request.header,
-        agent: false,
-        rejectUnauthorized: true,
-        key: keystore.key,
-        cert: keystore.cert.data
-      }
-
-      if (route.cert != null) {
-        options.ca = keystore.ca.id(route.cert).data
-      }
-
-      if (ctx.request.querystring) {
-        options.path += `?${ctx.request.querystring}`
-      }
-
-      if (
-        options.headers &&
-        options.headers.authorization &&
-        !route.forwardAuthHeader
-      ) {
-        delete options.headers.authorization
-      }
-
-      if (route.username && route.password) {
-        options.auth = `${route.username}:${route.password}`
-      }
-
-      if (options.headers && options.headers.host) {
-        delete options.headers.host
-      }
+      const options = constructOptionsObject(ctx, route, keystore)
 
       if (route.primary) {
         ctx.primaryRoute = route
@@ -278,41 +343,40 @@ function sendRequestToRoutes(ctx, routes, next) {
         ).then(routeObj => {
           logger.info(`Storing non primary route responses ${route.name}`)
 
-          try {
-            if ((routeObj != null ? routeObj.name : undefined) == null) {
-              routeObj = {name: route.name}
-            }
-
-            if ((routeObj != null ? routeObj.response : undefined) == null) {
-              routeObj.response = {
-                status: 500,
-                timestamp: ctx.requestTimestamp
-              }
-            }
-
-            if ((routeObj != null ? routeObj.request : undefined) == null) {
-              routeObj.request = {
-                host: options.hostname,
-                port: options.port,
-                path,
-                headers: ctx.request.header,
-                querystring: ctx.request.querystring,
-                method: ctx.request.method,
-                timestamp: ctx.requestTimestamp
-              }
-            }
-
-            return messageStore.storeNonPrimaryResponse(ctx, routeObj, () => {})
-          } catch (err) {
-            return logger.error(err)
-          }
+          return storingNonPrimaryRouteResp(ctx, routeObj, options, path)
         })
       }
 
-      promises.push(promise)
+      firstPromises.push(promise)
     }
 
-    Promise.all(promises)
+    await Promise.all(firstPromises).catch(err => {
+      logger.error(err)
+    })
+
+    for (const route of Array.from(routesToRunAfterPrimary)) {
+      const path = getDestinationPath(route, ctx.path)
+      const options = constructOptionsObject(ctx, route, keystore)
+
+      logger.info(`executing non primary: ${route.name}`)
+
+      if (route.waitPrimaryResponse && matchCodeOfPrimaryResponse(ctx, route)) {
+        promise = buildNonPrimarySendRequestPromise(
+          ctx,
+          route,
+          options,
+          path
+        ).then(routeObj => {
+          logger.info(`Storing non primary route responses ${route.name}`)
+
+          return storingNonPrimaryRouteResp(ctx, routeObj, options, path)
+        })
+
+        secondaryPromises.push(promise)
+      }
+    }
+
+    Promise.all(secondaryPromises)
       .then(() => {
         logger.info(
           `All routes completed for transaction: ${ctx.transactionId}`
@@ -457,9 +521,8 @@ function sendRequest(ctx, route, options) {
     ctx.orchestrations.push(buildOrchestration(response))
   }
 
-  if (route.type === 'tcp' || route.type === 'mllp') {
-    logger.info('Routing socket request')
-    return sendSocketRequest(ctx, route, options)
+  if (route.type === 'kafka') {
+    return sendKafkaRequest(ctx, route, options)
   } else {
     logger.info('Routing http(s) request')
     return sendHttpRequest(ctx, route, options)
@@ -483,6 +546,30 @@ function obtainCharset(headers) {
     return matches[1]
   }
   return 'utf-8'
+}
+
+// Customize Kafka logs
+function kafkaLogger() {
+  const toWinstonLogLevel = level => {
+    switch (level) {
+      case logLevel.ERROR:
+      case logLevel.NOTHING:
+        return 'error'
+      case logLevel.WARN:
+        return 'warn'
+      case logLevel.INFO:
+        return 'info'
+      case logLevel.DEBUG:
+        return 'debug'
+    }
+  }
+  return ({level, log}) => {
+    const {message, ...extra} = log
+    logger[toWinstonLogLevel(level)]({
+      message,
+      extra
+    })
+  }
 }
 
 /*
@@ -582,79 +669,77 @@ function sendHttpRequest(ctx, route, options) {
 }
 
 /*
- * A promise returning function that send a request to the given route using sockets and resolves
+ * A promise returning function that send a request to the given route using kafka producer and resolves
  * the returned promise with a response object of the following form: ()
  *   response =
  *    status: <200 if all work, else 500>
- *    body: <the received data from the socket>
+ *    body: <the received data from kafka>
  *    timestamp: <the time the response was recieved>
- *
- * Supports both normal and MLLP sockets
  */
-function sendSocketRequest(ctx, route, options) {
+function sendKafkaRequest(ctx, route) {
   return new Promise((resolve, reject) => {
-    const mllpEndChar = String.fromCharCode(0o034)
-
-    const requestBody = ctx.body
-    const response = {}
-
-    let method = net
-    if (route.secured) {
-      method = tls
-    }
-
-    options = {
-      host: options.hostname,
-      port: options.port,
-      rejectUnauthorized: options.rejectUnauthorized,
-      key: options.key,
-      cert: options.cert,
-      ca: options.ca
-    }
-
-    const client = method.connect(options, () => {
-      logger.info(
-        `Opened ${route.type} connection to ${options.host}:${options.port}`
-      )
-      if (route.type === 'tcp') {
-        return client.end(requestBody)
-      } else if (route.type === 'mllp') {
-        return client.write(requestBody)
-      } else {
-        return logger.error(`Unkown route type ${route.type}`)
-      }
-    })
-
-    const bufs = []
-    client.on('data', chunk => {
-      bufs.push(chunk)
-      if (route.type === 'mllp' && chunk.toString().indexOf(mllpEndChar) > -1) {
-        logger.debug('Received MLLP response end character')
-        return client.end()
-      }
-    })
-
-    client.on('error', err => reject(err))
-
+    const kafkaBrokers = route.brokers.replace(/"/g, '').split(',')
     const timeout =
       route.timeout != null ? route.timeout : +config.router.timeout
-    client.setTimeout(timeout, () => {
-      client.destroy(new Error(`Request took longer than ${timeout}ms`))
+
+    const kafka = new Kafka({
+      brokers: kafkaBrokers,
+      clientId: 'openhim',
+      requestTimeout: timeout,
+      logLevel: logLevel.INFO,
+      logCreator: kafkaLogger
     })
 
-    client.on('end', () => {
-      logger.info(
-        `Closed ${route.type} connection to ${options.host}:${options.port}`
-      )
+    const topic = route.topic
+    const producer = kafka.producer()
 
-      if (route.secured && !client.authorized) {
-        return reject(new Error('Client authorization failed'))
-      }
-      response.body = Buffer.concat(bufs)
-      response.status = 200
-      response.timestamp = new Date()
-      return resolve(response)
-    })
+    const message = {
+      method: ctx.request.method,
+      path: ctx.request.url,
+      headers: ctx.request.headers,
+      body: ctx.body.toString()
+    }
+
+    const response = {
+      headers: {},
+      status: 400,
+      timestamp: +new Date()
+    }
+
+    producer
+      .connect()
+      .then((onfulfilled, onrejected) => {
+        if (onrejected) {
+          reject('Error connecting to kafka', onrejected)
+          return
+        }
+        return producer.send({
+          topic,
+          messages: [{value: JSON.stringify(message)}]
+        })
+      })
+      .then((onfulfilled, onrejected) => {
+        if (onrejected) {
+          reject('Error sending messages to kafka', onrejected)
+          return
+        }
+        response.body = JSON.stringify(onfulfilled)
+        response.status = 200
+        response.timestamp = +new Date()
+        producer.disconnect()
+      })
+      .then((onfulfilled, onrejected) => {
+        if (onrejected) {
+          reject('Error disconnecting from kafka', onrejected)
+          return
+        }
+
+        resolve(response)
+      })
+      .catch(e => {
+        producer.disconnect()
+        reject(e)
+      })
   })
 }
 

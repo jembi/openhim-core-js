@@ -12,14 +12,24 @@ const RouteDef = {
     type: String,
     required: true
   },
+  type: {
+    type: String,
+    default: 'http',
+    enum: ['http', 'kafka']
+  },
+  cert: Schema.Types.ObjectId,
+  status: {
+    type: String,
+    default: 'enabled',
+    enum: ['enabled', 'disabled']
+  },
+  // HTTP route definition
   secured: Boolean,
   host: {
-    type: String,
-    required: true
+    type: String
   },
   port: {
     type: Number,
-    required: true,
     min: 0,
     max: 65536
   },
@@ -28,21 +38,17 @@ const RouteDef = {
   primary: Boolean,
   username: String,
   password: String,
-  type: {
-    type: String,
-    default: 'http',
-    enum: ['http', 'tcp', 'mllp']
-  },
-  cert: Schema.Types.ObjectId,
-  status: {
-    type: String,
-    default: 'enabled',
-    enum: ['enabled', 'disabled']
-  },
   forwardAuthHeader: {
     type: Boolean,
     default: false
-  }
+  },
+  waitPrimaryResponse: Boolean,
+  statusCodesCheck: String,
+  // Kafka route definition
+  brokers: {
+    type: String
+  },
+  topic: String
 }
 
 // Channel alerts
