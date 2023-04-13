@@ -85,6 +85,20 @@ export function setupApp(done) {
       compose([passport.authenticate('local'), users.authenticate])
     )
   )
+  // Openid authentication
+  app.use(
+    route.post(
+      '/authenticate/openid',
+      compose([
+        (ctx, next) => {
+          ctx.request.query = ctx.request.body
+          return next()
+        },
+        passport.authenticate('openidconnect'),
+        users.authenticate
+      ])
+    )
+  )
   // @deprecated: Token authentication
   app.use(route.get('/authenticate/:username', users.authenticateToken))
 

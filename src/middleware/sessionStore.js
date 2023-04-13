@@ -1,4 +1,4 @@
-import {connectionAPI} from '../config'
+import {config, connectionAPI} from '../config'
 import {Schema} from 'mongoose'
 
 /**
@@ -45,6 +45,17 @@ class MongooseStore {
       await session.findByIdAndUpdate(id, record, {upsert: true, safe: true})
     }
     return data
+  }
+
+  // This function is required by 'passport-openidconnect'
+  verify = async function (req, handle, next) {
+    var state = {handle}
+    var ctx = {
+      maxAge: config.api.maxAge,
+      issued: ''
+    }
+
+    return next(null, ctx, state)
   }
 
   static create() {

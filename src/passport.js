@@ -5,9 +5,12 @@ import passport from 'koa-passport'
 import * as passportLocal from 'passport-local'
 import * as passportHttp from 'passport-http'
 import * as passportCustom from 'passport-custom'
+import * as passportOpenid from 'passport-openidconnect'
+import MongooseStore from './middleware/sessionStore'
 import {isAuthenticationTypeEnabled} from './api/authentication'
-import {local, basic, token} from './protocols'
+import {local, basic, token, openid} from './protocols'
 import {UserModelAPI} from './model'
+import {config} from './config'
 
 const disabledAuthTypeError = strat =>
   new Error(
@@ -30,11 +33,13 @@ const handlePassportError = function (err, user, next) {
 }
 
 /**
- * Load Strategies: Local and Basic
+ * Load Strategies: Local, Basic and Openid
  *
  */
 passport.loadStrategies = function () {
-  var strategies = {
+  const {openid: openidConfig} = config.api
+
+  let strategies = {
     local: {
       strategy: passportLocal.Strategy
     },
@@ -43,8 +48,24 @@ passport.loadStrategies = function () {
     },
     token: {
       strategy: passportCustom.Strategy
+    },
+    openid: {
+      strategy: passportOpenid.Strategy,
+      options: {
+        issuer: openidConfig.url,
+        authorizationURL: `${openidConfig.url}/protocol/openid-connect/auth`,
+        tokenURL: `${openidConfig.url}/protocol/openid-connect/token`,
+        userInfoURL: `${openidConfig.url}/protocol/openid-connect/userinfo`,
+        clientID: openidConfig.clientId,
+        clientSecret: openidConfig.clientSecret,
+        callbackURL: openidConfig.callbackUrl,
+        scope: openidConfig.scope,
+        sessionKey: 'openid_session_key',
+        passReqToCallback: true,
+        profile: true,
+        store: new MongooseStore()
+      }
     }
-    // TODO: Add openid
   }
 
   _.each(
@@ -103,6 +124,42 @@ passport.loadStrategies = function () {
               )
             }
           })
+        )
+      } else if (key === 'openid') {
+        Strategy = strat.strategy
+        passport.use(
+          'openidconnect',
+          new Strategy(
+            strat.options,
+            async (
+              req,
+              issuer,
+              profile,
+              context,
+              idToken,
+              accessToken,
+              refreshToken,
+              tokens,
+              next
+            ) => {
+              if (isAuthenticationTypeEnabled(key)) {
+                return await openid.login(
+                  req,
+                  issuer,
+                  profile,
+                  accessToken,
+                  tokens,
+                  (err, user) => handlePassportError(err, user, next)
+                )
+              } else {
+                return handlePassportError(
+                  disabledAuthTypeError(key),
+                  false,
+                  next
+                )
+              }
+            }
+          )
         )
       }
     }, passport)

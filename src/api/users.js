@@ -39,9 +39,7 @@ export function me(ctx) {
 }
 
 export async function authenticate(ctx) {
-  if (!ctx.req.user) {
-    utils.logAndSetResponse(ctx, 404, `Could not be authenticaticated`, 'info')
-  } else {
+  if (ctx.req.user) {
     ctx.body = {
       result: 'User authenticated successfully',
       user: ctx.req.user
@@ -173,10 +171,9 @@ export async function userPasswordResetRequest(ctx, email) {
   }
 
   try {
-    const user = await UserModelAPI.findOneAndUpdate(
-      {email: utils.caseInsensitiveRegex(email)},
-      updateUserTokenExpiry
-    )
+    const user = await UserModelAPI.findOne({
+      email: utils.caseInsensitiveRegex(email)
+    })
     if (!user) {
       ctx.body = `Tried to request password reset for invalid email address: ${email}`
       ctx.status = 404
@@ -185,6 +182,17 @@ export async function userPasswordResetRequest(ctx, email) {
       )
       return
     }
+
+    if (user.provider === 'openid') {
+      ctx.body = `User supplied by OpenID Connect provider. Cannot request password reset.`
+      ctx.status = 403
+      logger.info(
+        `Tried to request password reset for a user supplied by OpenID Connect provider: ${email}`
+      )
+      return
+    }
+
+    await UserModelAPI.findByIdAndUpdate(user.id, updateUserTokenExpiry)
 
     const {consoleURL} = config.alerts
     const setPasswordLink = `${consoleURL}/#!/set-password/${token}`
@@ -293,6 +301,15 @@ export async function updateUserByToken(ctx, token) {
       ctx.status = 410
       return
     }
+
+    if (userDataExpiry.provider === 'openid') {
+      ctx.body = `User supplied by OpenID Connect provider. Could not be updated.`
+      ctx.status = 403
+      logger.info(
+        `Tried to request update by token for a user supplied by OpenID Connect provider: ${token}`
+      )
+      return
+    }
   } catch (error) {
     utils.logAndSetResponse(
       ctx,
@@ -340,7 +357,10 @@ export async function updateUserByToken(ctx, token) {
       logger.warn(
         'Token authentication strategy is deprecated. Please consider using Local or Basic authentication.'
       )
-      ;({user, error} = await updateTokenUser(userUpdateObj))
+      ;({user, error} = await updateTokenUser({
+        ...userUpdateObj,
+        provider: 'token'
+      }))
       // Other providers
     } else {
       ;({user, error} = await apiUpdateUser(userUpdateObj))
@@ -424,6 +444,8 @@ export async function addUser(ctx) {
       delete userData.passwordSalt
       delete userData.passwordAlgorithm
       delete userData.password
+
+      userData.provider = password ? 'local' : 'token'
     }
 
     const user = new UserModelAPI(userData)
@@ -570,7 +592,7 @@ export async function updateUser(ctx, email) {
     )
   }
 
-  const {_doc: userData} = new UserModelAPI(ctx.request.body)
+  let {_doc: userData} = new UserModelAPI(ctx.request.body)
   const {password} = ctx.request.body
 
   // @deprecated
@@ -597,6 +619,15 @@ export async function updateUser(ctx, email) {
     delete userData._id
   }
 
+  if (userDetails.provider === 'openid') {
+    userData = {
+      msisdn: userData.msisdn,
+      dailyReport: userData.dailyReport,
+      weeklyReport: userData.weeklyReport,
+      settings: userData.settings
+    }
+  }
+
   try {
     let user, error
     // @deprecated Token user update
@@ -609,6 +640,7 @@ export async function updateUser(ctx, email) {
         passwordAlgorithm,
         passwordHash,
         passwordSalt,
+        provider: 'token',
         ...userData
       }))
       // Other providers

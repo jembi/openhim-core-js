@@ -71,8 +71,22 @@ The following config option are provided by the OpenHIM. All of these options ha
     // * "local" means through the UI with hitting "/authentication/local" endpoint with username and password, 
     // this will create a session for the user and set cookies in the browser.
     // * "basic" means with basic auth either through browser or postman by giving also username and password.
+    // * "openid" means with a third party authentication provider (e.g. keycloak).
     // * [Deprecated] "token" means that a request should provide in the header an 'auth-token', 'auth-salt' and 'auth-ts' to be authenticated.
-    "authenicationTypes": ["token"]
+    "authenicationTypes": ["token"],
+    // Openid connect provider configuration needed for the authentication
+    "openid": {
+      // Openid connect provider realm url link
+      "url": "http://localhost:9088/realms/platform-realm",
+      // Callback URL used by openid connect provider (should be the same callback URL specified in realm)
+      "callbackUrl": "http://localhost:9000",
+      // CLient ID specified in the realm
+      "clientId": "openhim-oauth",
+      // Client secret specified in the realm
+      "clientSecret": "tZKfEbWf0Ka5HBNZwFrdSyQH2xT1sNMR",
+      // Scopes to be requested from Openid connect provider
+      "scope": "openid email profile offline_access roles"
+    }
   },
   "rerun": {
     // The port that the transaction re-run processor runs on, this port is
