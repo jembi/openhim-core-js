@@ -424,8 +424,6 @@ describe('Upgrade DB Tests', () => {
 
   describe(`updateFunction3 - Migrate password properties of token auth strategy from User collection to Passport collection`, () => {
     const upgradeFunc = originalUpgradeFuncs[3].func
-    let userId1 = '',
-      userId2 = ''
 
     const userObj1 = {
       // password: "password"
@@ -471,9 +469,7 @@ describe('Upgrade DB Tests', () => {
 
     beforeEach(async () => {
       const res1 = await new UserModel(userObj1).save()
-      userId1 = res1._id
       const res2 = await new UserModel(userObj2).save()
-      userId2 = res2._id
     })
 
     it('should migrate password properties of token auth strategy from User to Passport collection', async () => {
@@ -492,12 +488,12 @@ describe('Upgrade DB Tests', () => {
       idx1.should.be.above(-1)
       passports[idx1].passwordHash.should.be.equal(userObj1.passwordHash)
       passports[idx1].passwordSalt.should.be.equal(userObj1.passwordSalt)
-      passports[idx1].user.should.be.deepEqual(userId1)
+      passports[idx1].email.should.be.equal(userObj1.email)
       passports[idx1].protocol.should.be.equal('token')
       idx2.should.be.above(-1)
       passports[idx2].passwordHash.should.be.equal(userObj2.passwordHash)
       passports[idx2].passwordSalt.should.be.equal(userObj2.passwordSalt)
-      passports[idx2].user.should.be.deepEqual(userId2)
+      passports[idx2].email.should.be.equal(userObj2.email)
       passports[idx2].protocol.should.be.equal('token')
     })
 

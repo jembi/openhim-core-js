@@ -35,7 +35,7 @@ describe('UserModel tests', () => {
       user.should.not.have.property('password')
 
       const passportResult = await model.PassportModelAPI.findOne({
-        user: user.id
+        email: user.email
       })
 
       passportResult.should.have.property('password')
@@ -74,17 +74,17 @@ describe('UserModel tests', () => {
     let userId = null
     let userIdWithoutPassword = null
     let oldPassword = null
+    const email = 'bfm@crazy.net'
 
     const userToBeCreated = {
       firstname: 'Bill',
       surname: 'Murray',
-      email: 'bfm@crazy.net',
+      email,
       password: 'password',
       groups: ['HISP', 'group2']
     }
 
     const userWithoutPassword = new model.UserModelAPI({
-      id: userId,
       firstname: 'Elena',
       surname: 'Smith',
       email: 'bfm@cool.net',
@@ -100,7 +100,7 @@ describe('UserModel tests', () => {
       userId = user.id
 
       const passportResult = await model.PassportModelAPI.findOne({
-        user: userId
+        email
       })
       oldPassword = passportResult.password
 
@@ -155,7 +155,7 @@ describe('UserModel tests', () => {
       user.should.not.have.property('password')
 
       const passportResult = await model.PassportModelAPI.find({
-        user: user.id
+        email: user.email
       })
         .limit(1)
         .sort({$natural: -1})
@@ -182,7 +182,7 @@ describe('UserModel tests', () => {
       user.should.not.have.property('password')
 
       const passportResult = await model.PassportModelAPI.findOne({
-        user: user.id
+        email: user.email
       })
       passportResult.should.have.property('password')
     })
@@ -242,7 +242,7 @@ describe('UserModel tests', () => {
       await model.updateTokenUser({id: userId, ...userToBeCreated})
 
       oldPassport = await model.PassportModelAPI.findOne({
-        user: userId
+        email: userToBeCreated.email
       })
 
       const res = await userWithoutPassword.save()
@@ -298,7 +298,7 @@ describe('UserModel tests', () => {
       user.should.have.property('email', userToBeUpdated.email)
 
       const res = await model.PassportModelAPI.find({
-        user: user.id,
+        email: user.email,
         protocol: 'token'
       })
         .limit(1)
@@ -336,7 +336,7 @@ describe('UserModel tests', () => {
       user.should.have.property('provider', 'token')
 
       const passportResult = await model.PassportModelAPI.findOne({
-        user: user.id,
+        email: user.email,
         protocol: 'token'
       })
       passportResult.should.have.property(

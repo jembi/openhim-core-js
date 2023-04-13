@@ -252,7 +252,7 @@ upgradeFuncs.push({
               passwordHash: user.passwordHash,
               passwordAlgorithm: user.passwordAlgorithm,
               passwordSalt: user.passwordSalt,
-              user: user.id,
+              email: user.email,
               protocol: 'token'
             }
 

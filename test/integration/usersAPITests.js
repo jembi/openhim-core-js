@@ -252,7 +252,8 @@ describe('API Integration Tests', () => {
           .send(updates)
           .expect(200)
 
-        const user = await UserModelAPI.findOne({email: 'jane@doe.net'})
+        const email = 'jane@doe.net'
+        const user = await UserModelAPI.findOne({email})
 
         user.should.have.property('firstname', 'Jane Sally')
         user.should.have.property('surname', 'Doe')
@@ -261,7 +262,7 @@ describe('API Integration Tests', () => {
         user.should.have.property('locked', false)
         user.should.have.property('expiry', null)
 
-        const passport = await PassportModelAPI.findOne({user: user.id})
+        const passport = await PassportModelAPI.findOne({email})
 
         passport.should.have.property('password')
       })
@@ -863,7 +864,7 @@ describe('API Integration Tests', () => {
         user.should.have.property('expiry', null)
 
         const passport = await PassportModelAPI.findOne({
-          user: user._id,
+          email: user.email,
           protocol: 'token'
         })
 
@@ -1087,7 +1088,7 @@ describe('API Integration Tests', () => {
         user.groups.should.have.length(3)
 
         const passport = await PassportModelAPI.findOne({
-          user: user.id,
+          email: user.email,
           protocol: 'token'
         })
 

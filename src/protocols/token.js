@@ -82,7 +82,7 @@ export const login = async function (req, next) {
 
     const passport = await PassportModelAPI.findOne({
       protocol: 'token',
-      user: user.id
+      email: user.email
     })
 
     if (passport == null) {

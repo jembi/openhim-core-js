@@ -89,7 +89,7 @@ export async function authenticateToken(ctx, email) {
     } else {
       const passport = await PassportModelAPI.findOne({
         protocol: 'token',
-        user: user.id
+        email: user.email
       })
 
       if (!passport) {
