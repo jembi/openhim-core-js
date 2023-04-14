@@ -4,8 +4,13 @@ import patchHistory from 'mongoose-patch-history'
 import {Schema} from 'mongoose'
 import {camelize, pascalize} from 'humps'
 
+import {KafkaProducerSet} from '../middleware/kafkaProducerSet'
 import {ContactUserDef} from './contactGroups'
-import {connectionAPI, connectionDefault} from '../config'
+import {connectionAPI, connectionDefault, config} from '../config'
+
+config.router = config.get('router')
+
+export let producerSingleton = []
 
 const RouteDef = {
   name: {
@@ -44,11 +49,12 @@ const RouteDef = {
   },
   waitPrimaryResponse: Boolean,
   statusCodesCheck: String,
+  kafkaClientId: String,
   // Kafka route definition
-  brokers: {
+  kafkaBrokers: {
     type: String
   },
-  topic: String
+  kafkaTopic: String
 }
 
 // Channel alerts
@@ -220,6 +226,72 @@ export {RouteDef}
  * of users or group that are authorised to send messages to this channel.
  */
 const ChannelSchema = new Schema(ChannelDef)
+
+// "pre" is a middleware that will run before the update takes place, 'this' will contain the new channel details
+ChannelSchema.pre('save', async function (next) {
+  const timeout = this.timeout ?? +config.router.timeout
+  const kafkaRoutes = this.routes.filter(e => e.type === 'kafka')
+
+  const existentChannelWithKafkaRoutes = await ChannelModel.aggregate([
+    {$match: {_id: this._id}},
+    {
+      $project: {
+        routes: {
+          $filter: {
+            input: '$routes',
+            as: 'route',
+            cond: {$eq: ['$$route.type', 'kafka']}
+          }
+        }
+      }
+    }
+  ])
+
+  if (
+    existentChannelWithKafkaRoutes &&
+    existentChannelWithKafkaRoutes.length > 0
+  ) {
+    if (existentChannelWithKafkaRoutes.routes) {
+      for (let route of existentChannelWithKafkaRoutes.routes) {
+        // To check if kafka was updated
+        const kafkaInstanceUpdated = kafkaRoutes.find(e => {
+          e.kafkaBrokers === route.kafkaBrokers &&
+            e.kafkaClientId === route.kafkaClientId
+        })
+
+        // Kafka details wasn't updated => To check if the timeout was updated
+        const kafkaExist = kafkaInstanceUpdated
+          ? KafkaProducerSet.findKafkaInstance({
+              kafkaBrokers: route.kafkaBrokers,
+              kafkaClientId: route.kafkaClientId,
+              timeout
+            })
+          : kafkaInstanceUpdated
+
+        // Remove connection if route was updated or the status of the channel is not enabled
+        if (!kafkaExist || this.status !== 'enabled') {
+          KafkaProducerSet.removeConnection(route)
+        }
+      }
+    }
+  }
+
+  // Open connection only if the status of the channel is enabled and the route is enabled as well
+  if (this.status === 'enabled') {
+    for (let route of kafkaRoutes) {
+      if (route.status === 'enabled') {
+        await KafkaProducerSet.findOrAddConnection({
+          kafkaBrokers: route.kafkaBrokers,
+          kafkaClientId: route.kafkaClientId,
+          timeout
+        })
+      } else {
+        KafkaProducerSet.removeConnection(route)
+      }
+    }
+  }
+  next()
+})
 
 // Use the patch history plugin to audit changes to channels
 ChannelSchema.plugin(patchHistory, {

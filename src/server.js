@@ -34,8 +34,10 @@ import * as tasks from './tasks'
 import * as tcpAdapter from './tcpAdapter'
 import * as tlsAuthentication from './middleware/tlsAuthentication'
 import * as upgradeDB from './upgradeDB'
+import {KafkaProducerSet} from './middleware/kafkaProducerSet'
 import {KeystoreModel} from './model/keystore'
 import {UserModel, createUser, updateTokenUser} from './model/users'
+import {ChannelModel} from './model/channels'
 import {appRoot, config, connectionAgenda} from './config'
 
 mongoose.Promise = Promise
@@ -809,6 +811,47 @@ if (cluster.isMaster && !module.parent) {
     return deferred.promise
   }
 
+  // function to start connection with kafka instances configured in the routes
+  function startKafkaConnections() {
+    return ChannelModel.aggregate([
+      {
+        $project: {
+          routes: {
+            $filter: {
+              input: '$routes',
+              as: 'route',
+              cond: {$eq: ['$$route.type', 'kafka']}
+            }
+          }
+        }
+      }
+    ]).then(async channels => {
+      const existentRoutes = channels
+        .filter(ch => ch.routes.length > 0)
+        .reduce((res, currChannel) => {
+          currChannel.routes.forEach(e => {
+            res.push({
+              ...e,
+              timeout: currChannel.timeout ?? +config.router.timeout
+            })
+          })
+          return res
+        }, [])
+
+      for (let route of existentRoutes) {
+        try {
+          await KafkaProducerSet.findOrAddConnection({
+            kafkaBrokers: route.kafkaBrokers,
+            kafkaClientId: route.kafkaClientId,
+            timeout: route.timeout
+          })
+        } catch (err) {
+          logger.error(err.message)
+        }
+      }
+    })
+  }
+
   exports.start = function (ports, done) {
     const bindAddress = config.get('bindAddress')
     logger.info(`Starting OpenHIM server on ${bindAddress}...`)
@@ -883,6 +926,7 @@ if (cluster.isMaster && !module.parent) {
       }
 
       promises.push(startAgenda())
+      promises.push(startKafkaConnections())
 
       return Promise.all(promises)
         .then(() => {

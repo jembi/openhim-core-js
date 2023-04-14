@@ -5,13 +5,13 @@ import http from 'http'
 import https from 'https'
 import logger from 'winston'
 import zlib from 'zlib'
-import {Kafka, logLevel} from 'kafkajs'
+import {promisify} from 'util'
 
 import * as events from '../middleware/events'
 import * as messageStore from '../middleware/messageStore'
 import * as utils from '../utils'
 import {config} from '../config'
-import {promisify} from 'util'
+import {KafkaProducerSet} from './kafkaProducerSet'
 
 config.mongo = config.get('mongo')
 config.router = config.get('router')
@@ -189,8 +189,8 @@ function constructOptionsObject(ctx, route, keystore) {
   }
 
   if (route.type === 'kafka') {
-    options.brokers = route.brokers
-    options.topic = route.topic
+    options.brokers = route.kafkaBrokers
+    options.topic = route.kafkaTopic
   }
 
   if (route.cert != null) {
@@ -548,30 +548,6 @@ function obtainCharset(headers) {
   return 'utf-8'
 }
 
-// Customize Kafka logs
-function kafkaLogger() {
-  const toWinstonLogLevel = level => {
-    switch (level) {
-      case logLevel.ERROR:
-      case logLevel.NOTHING:
-        return 'error'
-      case logLevel.WARN:
-        return 'warn'
-      case logLevel.INFO:
-        return 'info'
-      case logLevel.DEBUG:
-        return 'debug'
-    }
-  }
-  return ({level, log}) => {
-    const {message, ...extra} = log
-    logger[toWinstonLogLevel(level)]({
-      message,
-      extra
-    })
-  }
-}
-
 /*
  * A promise returning function that send a request to the given route and resolves
  * the returned promise with a response object of the following form:
@@ -678,66 +654,42 @@ function sendHttpRequest(ctx, route, options) {
  */
 function sendKafkaRequest(ctx, route) {
   return new Promise((resolve, reject) => {
-    const kafkaBrokers = route.brokers.replace(/"/g, '').split(',')
-    const timeout =
-      route.timeout != null ? route.timeout : +config.router.timeout
+    const timeout = route.timeout ?? +config.router.timeout
 
-    const kafka = new Kafka({
-      brokers: kafkaBrokers,
-      clientId: 'openhim',
-      requestTimeout: timeout,
-      logLevel: logLevel.INFO,
-      logCreator: kafkaLogger
+    KafkaProducerSet.getProducer({
+      kafkaBrokers: route.kafkaBrokers,
+      kafkaClientId: route.kafkaClientId,
+      timeout
     })
+      .then(producer => {
+        const topic = route.kafkaTopic
 
-    const topic = route.topic
-    const producer = kafka.producer()
-
-    const message = {
-      method: ctx.request.method,
-      path: ctx.request.url,
-      headers: ctx.request.headers,
-      body: ctx.body.toString()
-    }
-
-    const response = {
-      headers: {},
-      status: 400,
-      timestamp: +new Date()
-    }
-
-    producer
-      .connect()
-      .then((onfulfilled, onrejected) => {
-        if (onrejected) {
-          reject('Error connecting to kafka', onrejected)
-          return
-        }
-        return producer.send({
-          topic,
-          messages: [{value: JSON.stringify(message)}]
-        })
-      })
-      .then((onfulfilled, onrejected) => {
-        if (onrejected) {
-          reject('Error sending messages to kafka', onrejected)
-          return
-        }
-        response.body = JSON.stringify(onfulfilled)
-        response.status = 200
-        response.timestamp = +new Date()
-        producer.disconnect()
-      })
-      .then((onfulfilled, onrejected) => {
-        if (onrejected) {
-          reject('Error disconnecting from kafka', onrejected)
-          return
+        const message = {
+          method: ctx.request.method,
+          path: ctx.request.url,
+          headers: ctx.request.headers,
+          body: ctx.body.toString()
         }
 
-        resolve(response)
+        const response = {
+          headers: {},
+          status: 400,
+          timestamp: +new Date()
+        }
+
+        return producer
+          .send({
+            topic,
+            messages: [{value: JSON.stringify(message)}]
+          })
+          .then(res => {
+            response.body = JSON.stringify(res)
+            response.status = 200
+            response.timestamp = +new Date()
+            resolve(response)
+          })
       })
       .catch(e => {
-        producer.disconnect()
         reject(e)
       })
   })

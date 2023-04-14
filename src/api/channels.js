@@ -10,6 +10,7 @@ import * as routerMiddleware from '../middleware/router'
 import * as server from '../server'
 import * as tcpAdapter from '../tcpAdapter'
 import * as utils from '../utils'
+import {KafkaProducerSet} from '../middleware/kafkaProducerSet'
 import {TransactionModelAPI} from '../model/transactions'
 import {config} from '../config'
 
@@ -475,7 +476,14 @@ export async function updateChannel(ctx, channelId) {
   }
 }
 
-function processPostDeleteTriggers(channel) {
+async function processPostDeleteTriggers(channel) {
+  const kafkaRoutes = channel.routes.filter(e => e.type === 'kafka')
+  if (kafkaRoutes.length > 0) {
+    for await (let route of kafkaRoutes) {
+      await KafkaProducerSet.removeConnection(route)
+    }
+  }
+
   if (channel.type) {
     if (
       (channel.type === 'tcp' || channel.type === 'tls') &&
@@ -536,7 +544,7 @@ export async function removeChannel(ctx, channelId) {
     ctx.body = 'The channel was successfully deleted'
     logger.info(`User ${ctx.authenticated.email} removed channel with id ${id}`)
 
-    return processPostDeleteTriggers(channel)
+    return await processPostDeleteTriggers(channel)
   } catch (err) {
     // Error! So inform the user
     utils.logAndSetResponse(
