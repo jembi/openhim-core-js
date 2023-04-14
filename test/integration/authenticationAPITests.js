@@ -5,6 +5,7 @@
 import fs from 'fs'
 import https from 'https'
 import request from 'supertest'
+import jwt from 'jsonwebtoken'
 import {ObjectId} from 'mongodb'
 import {promisify} from 'util'
 
@@ -21,6 +22,25 @@ import {PassportModelAPI, UserModelAPI} from '../../src/model'
 const {SERVER_PORTS, BASE_URL} = constants
 
 describe('API Integration Tests', () => {
+  const keycloakProfileInfo = {
+    iss: config.api.openid.url,
+    sub: '123456789',
+    aud: 'client-id',
+    exp: 1911281975,
+    iat: 1311280970,
+    name: 'Jane Doe',
+    given_name: 'Jane',
+    family_name: 'Doe',
+    auth_time: 1677252562,
+    email: 'jane-doe@test.org',
+    preferred_username: 'janedoe',
+    resource_access: {
+      'client-id': {
+        roles: ['view']
+      }
+    }
+  }
+
   describe('Retrieve Enabled Authentication types', () => {
     const authConfig = config.authentication
 
@@ -118,6 +138,7 @@ describe('API Integration Tests', () => {
   })
 
   describe('Authentication API tests', () => {
+    let mockServer = null
     const user = {
       firstname: 'test',
       surname: 'with no password',
@@ -142,11 +163,12 @@ describe('API Integration Tests', () => {
         UserModelAPI.deleteMany({}),
         PassportModelAPI.deleteMany({}),
         testUtils.cleanupTestUsers(),
-        promisify(server.stop)()
+        promisify(server.stop)(),
+        await mockServer.close()
       ])
     })
 
-    it('should audit a successful login on an API endpoint', async () => {
+    it('should audit a successful login on an API endpoint with local auth', async () => {
       const user = testUtils.rootUser
       const cookie = await testUtils.authenticate(request, BASE_URL, user)
 
@@ -193,6 +215,68 @@ describe('API Integration Tests', () => {
       audits[0].activeParticipant.length.should.be.exactly(2)
       audits[0].activeParticipant[0].userID.should.be.equal('OpenHIM')
       audits[0].activeParticipant[1].userID.should.be.equal('root@jembi.org')
+    })
+
+    it('should audit a successful login on an API endpoint with openid auth', async () => {
+      const jwtToken = jwt.sign(keycloakProfileInfo, 'secret')
+
+      mockServer = await testUtils.createMockHttpServer(
+        {
+          access_token: jwtToken,
+          refresh_token: 'refresh_token',
+          id_token: jwtToken
+        },
+        10000,
+        201
+      )
+
+      const authResult = await request(BASE_URL)
+        .post('/authenticate/openid')
+        .send({
+          code: 'code-123',
+          sessionState: 'session-state-123',
+          state: 'state-123'
+        })
+        .expect(200)
+
+      authResult.body.should.have.property('user')
+      authResult.body.user.should.have.property('provider', 'openid')
+      authResult.body.user.should.have.property('groups')
+      authResult.body.user.groups[0].should.equal(
+        keycloakProfileInfo['resource_access']['client-id'].roles[0]
+      )
+      authResult.body.user.should.have.property(
+        'firstname',
+        keycloakProfileInfo['given_name']
+      )
+      authResult.body.user.should.have.property(
+        'surname',
+        keycloakProfileInfo['family_name']
+      )
+      authResult.body.user.should.have.property(
+        'email',
+        keycloakProfileInfo['email']
+      )
+
+      const cookie = testUtils.getCookie(authResult.headers['set-cookie'])
+      await request(BASE_URL).get('/channels').set('Cookie', cookie).expect(200)
+
+      await testUtils.pollCondition(() =>
+        AuditModel.countDocuments().then(c => c === 1)
+      )
+      const audits = await AuditModel.find()
+
+      audits.length.should.be.exactly(1)
+      audits[0].eventIdentification.eventOutcomeIndicator.should.be.equal('0') // success
+      audits[0].eventIdentification.eventTypeCode.code.should.be.equal('110122')
+      audits[0].eventIdentification.eventTypeCode.displayName.should.be.equal(
+        'Login'
+      )
+      audits[0].activeParticipant.length.should.be.exactly(2)
+      audits[0].activeParticipant[0].userID.should.be.equal('OpenHIM')
+      audits[0].activeParticipant[1].userID.should.be.equal(
+        keycloakProfileInfo.email
+      )
     })
 
     it('should audit an unsuccessful login on an API endpoint', async () => {
@@ -624,6 +708,22 @@ describe('API Integration Tests', () => {
   })
 
   describe('Authentication API types tests', () => {
+    let mockServer = null
+
+    before(async () => {
+      const jwtToken = jwt.sign(keycloakProfileInfo, 'secret')
+
+      mockServer = await testUtils.createMockHttpServer(
+        {
+          access_token: jwtToken,
+          refresh_token: 'refresh_token',
+          id_token: jwtToken
+        },
+        10000,
+        201
+      )
+    })
+
     afterEach(async () => {
       await Promise.all([
         AuditModel.deleteMany({}),
@@ -635,7 +735,8 @@ describe('API Integration Tests', () => {
     })
 
     after(async () => {
-      config.api.authenticationTypes = ['local', 'basic', 'token']
+      config.api.authenticationTypes = ['local', 'basic', 'token', 'openid']
+      await mockServer.close()
     })
 
     it('should audit an unsuccessful login with disabled basic auth', async () => {
@@ -745,6 +846,23 @@ describe('API Integration Tests', () => {
       audits[0].activeParticipant[1].userID.should.match(/Unknown with ip/)
     })
 
+    it('should audit an unsuccessful login with disabled openid auth', async () => {
+      config.api.authenticationTypes = ['basic']
+
+      await promisify(server.start)({apiPort: SERVER_PORTS.apiPort})
+      await testUtils.setImmediatePromise()
+      await AuditModel.deleteMany({})
+
+      await request(BASE_URL)
+        .post('/authenticate/openid')
+        .send({
+          code: 'code-123',
+          sessionState: 'session-state-123',
+          state: 'state-123'
+        })
+        .expect(401)
+    })
+
     it('should audit a successful login with enabled basic auth', async () => {
       config.api.authenticationTypes = ['basic']
 
@@ -764,7 +882,7 @@ describe('API Integration Tests', () => {
         .expect(200)
     })
 
-    it('should audit an unsuccessful login with disabled local auth', async () => {
+    it('should audit a successful login with enabled local auth', async () => {
       config.api.authenticationTypes = ['local']
 
       await promisify(server.start)({apiPort: SERVER_PORTS.apiPort})
@@ -780,7 +898,7 @@ describe('API Integration Tests', () => {
         .expect(200)
     })
 
-    it('should audit an unsuccessful login with disabled token auth', async () => {
+    it('should audit a successful login with enabled token auth', async () => {
       config.api.authenticationTypes = ['token']
 
       await promisify(server.start)({apiPort: SERVER_PORTS.apiPort})
@@ -800,6 +918,43 @@ describe('API Integration Tests', () => {
         .set('auth-salt', authDetails.authSalt)
         .set('auth-token', authDetails.authToken)
         .expect(200)
+    })
+
+    it('should audit a successful login on an API endpoint with openid auth', async () => {
+      config.api.authenticationTypes = ['openid']
+
+      await promisify(server.start)({apiPort: SERVER_PORTS.apiPort})
+      await testUtils.setImmediatePromise()
+      await AuditModel.deleteMany({})
+
+      const authResult = await request(BASE_URL)
+        .post('/authenticate/openid')
+        .send({
+          code: 'code-123',
+          sessionState: 'session-state-123',
+          state: 'state-123'
+        })
+        .expect(200)
+
+      const cookie = testUtils.getCookie(authResult.headers['set-cookie'])
+      await request(BASE_URL).get('/channels').set('Cookie', cookie).expect(200)
+
+      await testUtils.pollCondition(() =>
+        AuditModel.countDocuments().then(c => c === 1)
+      )
+      const audits = await AuditModel.find()
+
+      audits.length.should.be.exactly(1)
+      audits[0].eventIdentification.eventOutcomeIndicator.should.be.equal('0') // success
+      audits[0].eventIdentification.eventTypeCode.code.should.be.equal('110122')
+      audits[0].eventIdentification.eventTypeCode.displayName.should.be.equal(
+        'Login'
+      )
+      audits[0].activeParticipant.length.should.be.exactly(2)
+      audits[0].activeParticipant[0].userID.should.be.equal('OpenHIM')
+      audits[0].activeParticipant[1].userID.should.be.equal(
+        keycloakProfileInfo.email
+      )
     })
   })
 

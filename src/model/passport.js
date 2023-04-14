@@ -42,8 +42,8 @@ const PassportSchema = new Schema({
 
   // Provider fields: Provider, identifer and tokens
   //
-  // "provider" is the name of the third-party auth service in all lowercase
-  // (e.g. 'github', 'facebook') whereas "identifier" is a provider-specific
+  // "issuer" is the url of the third-party auth service used to define the baseUrl
+  // in any OIDC endpoint whereas "identifier" is a provider-specific
   // key, typically an ID. These two fields are used as the main means of
   // identifying a passport and tying it to a local user.
   //
@@ -51,7 +51,7 @@ const PassportSchema = new Schema({
   // dards. When using OAuth 1.0, a `token` as well as a `tokenSecret` will
   // be issued by the provider. In the case of OAuth 2.0, an `accessToken`
   // and a `refreshToken` will be issued.
-  provider: String,
+  issuer: String,
   identifier: String,
   tokens: Object,
 

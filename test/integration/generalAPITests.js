@@ -3,12 +3,20 @@
 /* eslint-env mocha */
 
 import request from 'supertest'
+import jwt from 'jsonwebtoken'
 import {promisify} from 'util'
 import * as crypto from 'crypto'
 
+import * as testUtils from '../utils'
 import * as constants from '../constants'
 import * as server from '../../src/server'
-import {UserModel, createUser, updateTokenUser} from '../../src/model'
+import {
+  PassportModel,
+  PassportModelAPI,
+  UserModel,
+  createUser,
+  updateTokenUser
+} from '../../src/model'
 import {authenticate} from '../utils'
 import {config} from '../../src/config'
 
@@ -22,7 +30,7 @@ describe('API Integration Tests', () => {
     groups: ['group1', 'group2']
   }
 
-  describe('General API tests', () => {
+  describe('General API tests (local auth)', () => {
     const userDoc = {
       firstname: 'Bill',
       surname: 'Murray',
@@ -116,6 +124,355 @@ describe('API Integration Tests', () => {
     })
   })
 
+  describe('General API tests (openid auth)', () => {
+    let mockServer = null
+    const userDoc = {
+      firstname: 'Bill',
+      surname: 'Murray',
+      email: 'bfm@crazy.net',
+      password: 'password',
+      groups: ['HISP', 'admin']
+    }
+    const keycloakProfileUser = {
+      iss: config.api.openid.url,
+      sub: 'profile-user',
+      aud: 'client-id',
+      exp: 1911281975,
+      iat: 1311280970,
+      given_name: 'Test',
+      family_name: 'Test',
+      auth_time: 1677252562,
+      email: userDoc.email,
+      resource_access: {
+        'client-id': {
+          roles: ['admin']
+        }
+      }
+    }
+    const keycloakProfileInfo = {
+      iss: config.api.openid.url,
+      sub: 'profile-123456789',
+      aud: 'client-id',
+      exp: 1911281975,
+      iat: 1311280970,
+      auth_time: 1677252562,
+      preferred_username: 'janedoe',
+      resource_access: {
+        'client-id': {
+          roles: ['group1']
+        }
+      }
+    }
+    const keycloakProfileInfoWithoutEmail = {
+      iss: config.api.openid.url,
+      sub: 'profile-2123456789',
+      aud: 'client-id',
+      exp: 1911281975,
+      iat: 1311280970,
+      name: 'Jane Doe',
+      given_name: 'Jane',
+      family_name: 'Doe',
+      auth_time: 1677252562,
+      resource_access: {}
+    }
+    const keycloakProfileUserExist = {
+      iss: config.api.openid.url,
+      sub: 'profile-3123456789',
+      aud: 'client-id',
+      exp: 1911281975,
+      iat: 1311280970,
+      given_name: 'New',
+      family_name: 'Name',
+      auth_time: 1677252562,
+      email: userWithoutPass.email,
+      resource_access: {
+        'client-id': {
+          roles: ['view']
+        }
+      }
+    }
+
+    before(async () => {
+      // Set the authentication maxAge to 1s for the tests
+      config.api.maxAge = 1000
+      await Promise.all([
+        promisify(server.start)({
+          apiPort: SERVER_PORTS.apiPort,
+          httpsPort: SERVER_PORTS.httpsPort
+        }),
+        new UserModel(userWithoutPass).save(),
+        createUser(userDoc)
+      ])
+    })
+
+    afterEach(async () => {
+      await mockServer.close()
+    })
+
+    after(async () => {
+      await Promise.all([
+        UserModel.deleteMany({}),
+        PassportModel.deleteMany({}),
+        promisify(server.stop)()
+      ])
+    })
+
+    it('should set the cross-origin resource sharing headers', async () => {
+      const jwtToken = jwt.sign(keycloakProfileInfo, 'secret')
+
+      mockServer = await testUtils.createMockHttpServer(
+        {
+          access_token: jwtToken,
+          refresh_token: 'refresh_token',
+          id_token: jwtToken
+        },
+        10000,
+        201
+      )
+
+      const origin = 'https://example.com'
+      await request(BASE_URL)
+        .post('/authenticate/openid')
+        .send({
+          code: 'code-123',
+          sessionState: 'session-state-123',
+          state: 'state-123'
+        })
+        .set('Origin', origin)
+        .set('Access-Control-Request-Method', 'POST')
+        .expect(200)
+        .expect('Access-Control-Allow-Origin', origin)
+        .expect('Access-Control-Allow-Credentials', 'true')
+    })
+
+    it('should disallow access if email or username is not provided in the keycloak profile', async () => {
+      const jwtToken = jwt.sign(keycloakProfileInfoWithoutEmail, 'secret')
+
+      mockServer = await testUtils.createMockHttpServer(
+        {
+          access_token: jwtToken,
+          refresh_token: 'refresh_token',
+          id_token: jwtToken
+        },
+        10000,
+        201
+      )
+
+      await request(BASE_URL)
+        .post('/authenticate/openid')
+        .send({
+          code: 'code-123',
+          sessionState: 'session-state-123',
+          state: 'state-123'
+        })
+        .expect(401)
+    })
+
+    it('should disallow if cookies are expired', async () => {
+      const jwtToken = jwt.sign(keycloakProfileInfo, 'secret')
+
+      mockServer = await testUtils.createMockHttpServer(
+        {
+          access_token: jwtToken,
+          refresh_token: 'refresh_token',
+          id_token: jwtToken
+        },
+        10000,
+        201
+      )
+
+      const authResult = await request(BASE_URL)
+        .post('/authenticate/openid')
+        .send({
+          code: 'code-123',
+          sessionState: 'session-state-123',
+          state: 'state-123'
+        })
+        .expect(200)
+      const cookie = testUtils.getCookie(authResult.headers['set-cookie'])
+
+      // Expire the cookies after 1s
+      await new Promise(resolve => setTimeout(resolve, 1000))
+
+      await request(BASE_URL).get('/channels').set('Cookie', cookie).expect(401)
+    })
+
+    it('should allow access if the user exist already without any passport', async () => {
+      const jwtToken = jwt.sign(keycloakProfileUserExist, 'secret')
+
+      mockServer = await testUtils.createMockHttpServer(
+        {
+          access_token: jwtToken,
+          refresh_token: 'refresh_token',
+          id_token: jwtToken
+        },
+        10000,
+        201
+      )
+
+      const authResult = await request(BASE_URL)
+        .post('/authenticate/openid')
+        .send({
+          code: 'code-123',
+          sessionState: 'session-state-123',
+          state: 'state-123'
+        })
+        .expect(200)
+
+      authResult.body.should.have.property('user')
+      authResult.body.user.should.have.property('provider', 'openid')
+      authResult.body.user.should.have.property('groups')
+      authResult.body.user.groups[0].should.equal(
+        keycloakProfileUserExist['resource_access']['client-id'].roles[0]
+      )
+      authResult.body.user.should.have.property(
+        'firstname',
+        keycloakProfileUserExist['given_name']
+      )
+      authResult.body.user.should.have.property(
+        'surname',
+        keycloakProfileUserExist['family_name']
+      )
+      authResult.body.user.should.have.property(
+        'email',
+        keycloakProfileUserExist['email']
+      )
+    })
+
+    it('should allow access if the user exist already and have a passport', async () => {
+      const user = {email: userDoc.email, password: userDoc.password}
+      const cookie = await authenticate(request, BASE_URL, user)
+
+      const jwtToken = jwt.sign(keycloakProfileUser, 'secret')
+
+      mockServer = await testUtils.createMockHttpServer(
+        {
+          access_token: jwtToken,
+          refresh_token: 'refresh_token',
+          id_token: jwtToken
+        },
+        10000,
+        201
+      )
+
+      const authResult = await request(BASE_URL)
+        .post('/authenticate/openid')
+        .set('Cookie', cookie)
+        .send({
+          code: 'code-123',
+          sessionState: 'session-state-123',
+          state: 'state-123'
+        })
+        .expect(200)
+
+      authResult.body.should.have.property('user')
+      authResult.body.user.should.have.property('provider', 'local')
+      authResult.body.user.should.have.property('groups')
+      authResult.body.user.groups[0].should.equal(userDoc.groups[0])
+      authResult.body.user.should.have.property('firstname', userDoc.firstname)
+      authResult.body.user.should.have.property('surname', userDoc.surname)
+      authResult.body.user.should.have.property('email', userDoc.email)
+    })
+
+    it('should allow access and update tokens for an existent keycloak user', async () => {
+      const jwtToken = jwt.sign(
+        {
+          ...keycloakProfileInfo,
+          preferred_username: 'another-username',
+          resource_access: {
+            'client-id': {
+              roles: ['another-group']
+            }
+          }
+        },
+        'another-secret'
+      )
+
+      mockServer = await testUtils.createMockHttpServer(
+        {
+          access_token: jwtToken,
+          refresh_token: 'refresh_token',
+          id_token: jwtToken
+        },
+        10000,
+        201
+      )
+
+      await request(BASE_URL)
+        .post('/authenticate/openid')
+        .send({
+          code: 'code-123',
+          sessionState: 'session-state-123',
+          state: 'state-123'
+        })
+        .expect(200)
+
+      const passport = await PassportModelAPI.findOne({
+        protocol: 'openid',
+        identifier: keycloakProfileInfo.sub
+      })
+
+      passport.should.have.property('tokens')
+      passport.should.have.property('accessToken')
+      JSON.stringify(passport.tokens).should.be.equal(
+        JSON.stringify({access_token: jwtToken, id_token: jwtToken})
+      )
+      passport.accessToken.should.be.equal(jwtToken)
+    })
+
+    it('should allow access if correct API authentication details are provided', async () => {
+      const jwtToken = jwt.sign(keycloakProfileInfo, 'secret')
+
+      mockServer = await testUtils.createMockHttpServer(
+        {
+          access_token: jwtToken,
+          refresh_token: 'refresh_token',
+          id_token: jwtToken
+        },
+        10000,
+        201
+      )
+
+      const authResult = await request(BASE_URL)
+        .post('/authenticate/openid')
+        .send({
+          code: 'code-123',
+          sessionState: 'session-state-123',
+          state: 'state-123'
+        })
+        .expect(200)
+
+      const cookie = testUtils.getCookie(authResult.headers['set-cookie'])
+      await request(BASE_URL).get('/channels').set('Cookie', cookie).expect(200)
+    })
+
+    it('should allow access and return same session if user is already logged in', async () => {
+      const jwtToken = jwt.sign(keycloakProfileInfo, 'secret')
+
+      mockServer = await testUtils.createMockHttpServer(
+        {
+          access_token: jwtToken,
+          refresh_token: 'refresh_token',
+          id_token: jwtToken
+        },
+        10000,
+        201
+      )
+
+      const authResult = await request(BASE_URL)
+        .post('/authenticate/openid')
+        .send({
+          code: 'code-123',
+          sessionState: 'session-state-123',
+          state: 'state-123'
+        })
+        .expect(200)
+
+      const cookie = testUtils.getCookie(authResult.headers['set-cookie'])
+      await request(BASE_URL).get('/channels').set('Cookie', cookie).expect(200)
+    })
+  })
+
   describe('General API tests (token auth)', () => {
     const userDoc = {
       firstname: 'Bill',
@@ -158,6 +515,14 @@ describe('API Integration Tests', () => {
 
     it('should disallow access if no API authentication details are provided', async () => {
       await request(BASE_URL).get('/channels').expect(401)
+    })
+
+    it('should disallow access if some of the authentication details are missing', async () => {
+      await request(BASE_URL)
+        .get('/channels')
+        .set('auth-username', 'bfm@crazy.net')
+        .set('auth-ts', new Date())
+        .expect(401)
     })
 
     it('should disallow access if token does not match', async () => {

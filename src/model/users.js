@@ -28,7 +28,7 @@ const UserSchema = new Schema({
   /* --- ----------- --- */
   provider: {
     type: String,
-    enum: ['keycloak', 'local', 'token'], // token is deprecated
+    enum: ['openid', 'local', 'token'], // token is deprecated
     default: 'local'
   },
   groups: [String],
@@ -56,9 +56,9 @@ export const UserModel = connectionDefault.model('User', UserSchema)
  * and assign the newly created user a local Passport.
  *
  */
-export const createUser = async function (_user) {
-  // Create a clone to _user
-  const userToBeCreated = {..._user}
+export const createUser = async function (newUserData) {
+  // Create a clone to newUserData
+  const userToBeCreated = {...newUserData}
 
   let result = {error: null, user: null}
 
@@ -95,9 +95,9 @@ export const createUser = async function (_user) {
  * and assign the newly created user a local Passport.
  *
  */
-export const updateUser = async function (_user) {
-  // Create a clone to _user
-  const userToBeUpdated = {..._user}
+export const updateUser = async function (newUserData) {
+  // Create a clone to newUserData
+  const userToBeUpdated = {...newUserData}
 
   let result = {user: null, error: null}
 
@@ -151,9 +151,10 @@ export const updateUser = async function (_user) {
  * and assign the newly created user a token Passport.
  *
  */
-export const updateTokenUser = async function (_user) {
-  // Create a clone to _user
-  const userToBeUpdated = {..._user, provider: 'token'}
+export const updateTokenUser = async function (newUserData) {
+  const provider = newUserData.provider ? newUserData.provider : 'token'
+  // Create a clone to newUserData
+  const userToBeUpdated = {...newUserData, provider}
 
   let result = {user: null, error: null}
 

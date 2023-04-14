@@ -60,6 +60,19 @@ describe('API Integration Tests', () => {
       groups: ['HISP']
     }
 
+    const keycloakUser = new UserModelAPI({
+      firstname: 'keycloak',
+      surname: 'test',
+      email: 'test@keycloak.net',
+      provider: 'openid',
+      // For testing purposes
+      token: 'leTgbOItS7y9vqqPldK6ARXtAA3wokejd',
+      tokenType: 'newUser',
+      locked: true,
+      expiry: moment().add(2, 'days').utc().format(),
+      groups: ['group1']
+    })
+
     before(async () => {
       config.api.maxAge = 1000
 
@@ -69,7 +82,8 @@ describe('API Integration Tests', () => {
         createUser(user1),
         createUser(user2),
         createUser(newUser),
-        createUser(newUserExpired)
+        createUser(newUserExpired),
+        keycloakUser.save()
       ])
     })
 
@@ -152,6 +166,12 @@ describe('API Integration Tests', () => {
       it('should return 403 when requesting root@openhim.org password reset', async () => {
         await request(BASE_URL)
           .get('/password-reset-request/root@openhim.org')
+          .expect(403)
+      })
+
+      it('should return 403 when requesting a keycloak user password reset', async () => {
+        await request(BASE_URL)
+          .get('/password-reset-request/test@keycloak.net')
           .expect(403)
       })
 
@@ -281,6 +301,20 @@ describe('API Integration Tests', () => {
           .expect(410)
       })
 
+      it('should prevent an update of a keycloak user', async () => {
+        const updates = {
+          firstname: 'key',
+          surname: 'cloak',
+          msisdn: '27123456789',
+          password: 'password-updated'
+        }
+
+        await request(BASE_URL)
+          .put('/token/leTgbOItS7y9vqqPldK6ARXtAA3wokejd')
+          .send(updates)
+          .expect(403)
+      })
+
       it('should return a not found error', async () => {
         const updates = {}
         const token = 'hSas987asdS7y9vqqKJHDSoARXtA098g'
@@ -304,8 +338,8 @@ describe('API Integration Tests', () => {
           .set('Cookie', cookie)
           .expect(200)
 
-        // user1, user2, newUser, newUserExpired, + the 2 API test users and the root user
-        res.body.length.should.be.eql(7)
+        // user1, user2, newUser, newUserExpired, keycloakUser + the 2 API test users and the root user
+        res.body.length.should.be.eql(8)
       })
 
       it('should not allow non admin user to fetch all users', async () => {
@@ -503,6 +537,29 @@ describe('API Integration Tests', () => {
 
         const user = await UserModelAPI.findOne({email: 'r..@jembi.org'})
         user.should.have.property('email', updates.email)
+      })
+
+      it('should prevent the update of a certain fields of a keycloak user', async () => {
+        const authUser = testUtils.rootUser
+        const cookie = await testUtils.authenticate(request, BASE_URL, authUser)
+
+        const updates = {
+          email: 'test@jembi.net',
+          firstname: 'key',
+          surname: 'cloak',
+          msisdn: '27123456789'
+        }
+
+        await request(BASE_URL)
+          .put('/users/test@keycloak.net')
+          .set('Cookie', cookie)
+          .send(updates)
+          .expect(200)
+
+        const user = await UserModelAPI.findOne({email: 'test@keycloak.net'})
+        user.should.have.property('firstname', keycloakUser.firstname)
+        user.should.have.property('surname', keycloakUser.surname)
+        user.should.have.property('msisdn', updates.msisdn)
       })
 
       it('should return a not found error', async () => {
