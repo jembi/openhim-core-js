@@ -10,7 +10,7 @@ import * as routerMiddleware from '../middleware/router'
 import * as server from '../server'
 import * as tcpAdapter from '../tcpAdapter'
 import * as utils from '../utils'
-import {KafkaProducerSet} from '../middleware/kafkaProducerSet'
+import {KafkaProducerManager} from '../middleware/KafkaProducerManager'
 import {TransactionModelAPI} from '../model/transactions'
 import {config} from '../config'
 
@@ -480,7 +480,7 @@ async function processPostDeleteTriggers(channel) {
   const kafkaRoutes = channel.routes.filter(e => e.type === 'kafka')
   if (kafkaRoutes.length > 0) {
     for await (let route of kafkaRoutes) {
-      await KafkaProducerSet.removeConnection(route)
+      await KafkaProducerManager.removeConnection(route)
     }
   }
 

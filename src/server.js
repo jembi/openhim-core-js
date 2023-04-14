@@ -34,7 +34,7 @@ import * as tasks from './tasks'
 import * as tcpAdapter from './tcpAdapter'
 import * as tlsAuthentication from './middleware/tlsAuthentication'
 import * as upgradeDB from './upgradeDB'
-import {KafkaProducerSet} from './middleware/kafkaProducerSet'
+import {KafkaProducerManager} from './middleware/KafkaProducerManager'
 import {KeystoreModel} from './model/keystore'
 import {UserModel, createUser, updateTokenUser} from './model/users'
 import {ChannelModel} from './model/channels'
@@ -825,7 +825,7 @@ if (cluster.isMaster && !module.parent) {
           }
         }
       }
-    ]).then(async channels => {
+    ]).then(channels => {
       const existentRoutes = channels
         .filter(ch => ch.routes.length > 0)
         .reduce((res, currChannel) => {
@@ -840,9 +840,9 @@ if (cluster.isMaster && !module.parent) {
 
       for (let route of existentRoutes) {
         try {
-          await KafkaProducerSet.findOrAddConnection({
-            kafkaBrokers: route.kafkaBrokers,
-            kafkaClientId: route.kafkaClientId,
+          KafkaProducerManager.findOrAddConnection({
+            brokers: route.kafkaBrokers,
+            clientId: route.kafkaClientId,
             timeout: route.timeout
           })
         } catch (err) {

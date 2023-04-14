@@ -4,7 +4,7 @@ import patchHistory from 'mongoose-patch-history'
 import {Schema} from 'mongoose'
 import {camelize, pascalize} from 'humps'
 
-import {KafkaProducerSet} from '../middleware/kafkaProducerSet'
+import {KafkaProducerManager} from '../middleware/KafkaProducerManager'
 import {ContactUserDef} from './contactGroups'
 import {connectionAPI, connectionDefault, config} from '../config'
 
@@ -246,7 +246,6 @@ ChannelSchema.pre('save', async function (next) {
       }
     }
   ])
-
   if (
     existentChannelWithKafkaRoutes &&
     existentChannelWithKafkaRoutes.length > 0
@@ -261,16 +260,16 @@ ChannelSchema.pre('save', async function (next) {
 
         // Kafka details wasn't updated => To check if the timeout was updated
         const kafkaExist = kafkaInstanceUpdated
-          ? KafkaProducerSet.findKafkaInstance({
-              kafkaBrokers: route.kafkaBrokers,
-              kafkaClientId: route.kafkaClientId,
+          ? KafkaProducerManager.getKafkaInstance({
+              brokers: route.kafkaBrokers,
+              clientId: route.kafkaClientId,
               timeout
             })
           : kafkaInstanceUpdated
 
         // Remove connection if route was updated or the status of the channel is not enabled
         if (!kafkaExist || this.status !== 'enabled') {
-          KafkaProducerSet.removeConnection(route)
+          KafkaProducerManager.removeConnection(route)
         }
       }
     }
@@ -280,13 +279,13 @@ ChannelSchema.pre('save', async function (next) {
   if (this.status === 'enabled') {
     for (let route of kafkaRoutes) {
       if (route.status === 'enabled') {
-        await KafkaProducerSet.findOrAddConnection({
-          kafkaBrokers: route.kafkaBrokers,
-          kafkaClientId: route.kafkaClientId,
+        KafkaProducerManager.findOrAddConnection({
+          brokers: route.kafkaBrokers,
+          clientId: route.kafkaClientId,
           timeout
         })
       } else {
-        KafkaProducerSet.removeConnection(route)
+        KafkaProducerManager.removeConnection(route)
       }
     }
   }

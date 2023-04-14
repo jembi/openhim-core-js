@@ -26,7 +26,7 @@ function kafkaLogger() {
 }
 
 export class KafkaProducer {
-  static details = {}
+  _options = {}
   _producer = null
   _isConnected = false
 
@@ -43,10 +43,10 @@ export class KafkaProducer {
         logCreator: kafkaLogger
       })
 
-      KafkaProducer.details = {
-        kafkaBrokers: brokers,
-        kafkaClientId: clientId,
-        timeout: timeout
+      this._options = {
+        brokers,
+        clientId,
+        timeout
       }
 
       this._producer = kafka.producer()
@@ -57,8 +57,8 @@ export class KafkaProducer {
     }
   }
 
-  get getDetails() {
-    return KafkaProducer.details
+  get options() {
+    return this._options
   }
 
   get isConnected() {
@@ -66,13 +66,18 @@ export class KafkaProducer {
   }
 
   async connect() {
+    // Not catching the error to throw the original error message
     await this._producer.connect()
     this._isConnected = true
   }
 
   async disconnect() {
-    await this._producer.disconnect()
-    this._isConnected = false
+    try {
+      await this._producer.disconnect()
+      this._isConnected = false
+    } catch (err) {
+      logger.error(err.message)
+    }
   }
 
   get producer() {

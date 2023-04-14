@@ -11,7 +11,7 @@ import * as events from '../middleware/events'
 import * as messageStore from '../middleware/messageStore'
 import * as utils from '../utils'
 import {config} from '../config'
-import {KafkaProducerSet} from './kafkaProducerSet'
+import {KafkaProducerManager} from './KafkaProducerManager'
 
 config.mongo = config.get('mongo')
 config.router = config.get('router')
@@ -656,9 +656,9 @@ function sendKafkaRequest(ctx, route) {
   return new Promise((resolve, reject) => {
     const timeout = route.timeout ?? +config.router.timeout
 
-    KafkaProducerSet.getProducer({
-      kafkaBrokers: route.kafkaBrokers,
-      kafkaClientId: route.kafkaClientId,
+    KafkaProducerManager.getProducer({
+      brokers: route.kafkaBrokers,
+      clientId: route.kafkaClientId,
       timeout
     })
       .then(producer => {
