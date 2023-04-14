@@ -1,0 +1,29 @@
+name: Scan latest docker image
+
+on:
+  schedule:
+    - cron: '0 5 * * *'
+
+jobs:
+  scan-images:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Build an image from Dockerfile
+        run: |
+          docker build -t jembi/openhim-core:${{ github.sha }} .
+
+      - name: Run trivy vulnerability scanner for the OpenHIM core image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: jembi/openhim-core:${{ github.sha }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+        
+      - name: Upload Trivy scan results to Github Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
