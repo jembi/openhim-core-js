@@ -58,6 +58,11 @@ describe('Metadata Functions', () => {
         groups: 'cgUID'
       })
       result.should.have.property('groups', 'cgUID')
+
+      result = metadata.getUniqueIdentifierForCollection('Invalid-collection', {
+        id: '123333'
+      })
+      result.should.deepEqual({})
       return done()
     }))
 
