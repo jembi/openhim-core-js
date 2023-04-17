@@ -16,6 +16,7 @@ import {ClientModelAPI} from '../../src/model/clients'
 import {ContactGroupModelAPI} from '../../src/model/contactGroups'
 import {MediatorModelAPI} from '../../src/model/mediators'
 import {UserModelAPI} from '../../src/model/users'
+import {PassportModelAPI} from '../../src/model/passport'
 import * as polling from '../../src/polling'
 
 const sampleMetadata = {
@@ -89,6 +90,12 @@ const sampleMetadata = {
       groups: ['admin', 'RHIE']
     }
   ],
+  Passports: [
+    {
+      email: 'r2..@jembi.org',
+      protocol: 'local'
+    }
+  ],
   ContactGroups: [
     {
       group: 'Group 1',
@@ -112,6 +119,7 @@ describe('API Integration Tests', () => {
       nonRootCookie = ''
 
     before(async () => {
+      await PassportModelAPI.deleteMany({})
       await promisify(server.start)({apiPort: SERVER_PORTS.apiPort})
       await testUtils.setupTestUsers()
     })
@@ -213,6 +221,17 @@ describe('API Integration Tests', () => {
             .expect(200)
 
           res.body[0].Users.length.should.equal(3) // Due to 3 auth test users
+        })
+      })
+
+      describe('Passports', () => {
+        it('should fetch passports and return status 200', async () => {
+          const res = await request(BASE_URL)
+            .get('/metadata')
+            .set('Cookie', rootCookie)
+            .expect(200)
+
+          res.body[0].Passports.length.should.equal(2)
         })
       })
 
@@ -724,11 +743,14 @@ describe('API Integration Tests', () => {
     // POST TO VALIDATE METADATA TESTS
     describe('*validateMetadata', () => {
       beforeEach(async () => {
+        await PassportModelAPI.deleteMany()
         await testUtils.cleanupAllTestUsers()
         await testUtils.setupTestUsers()
       })
 
       it('should validate metadata and return status 201', async () => {
+        const im = await PassportModelAPI.find()
+
         const res = await request(BASE_URL)
           .post('/metadata/validate')
           .set('Cookie', rootCookie)
@@ -741,7 +763,7 @@ describe('API Integration Tests', () => {
           statusCheckObj[doc.status] += 1
         }
 
-        statusCheckObj.Valid.should.equal(5)
+        statusCheckObj.Valid.should.equal(6)
         statusCheckObj.Conflict.should.equal(0)
         statusCheckObj.Error.should.equal(0)
       })
@@ -762,7 +784,7 @@ describe('API Integration Tests', () => {
           statusCheckObj[doc.status] += 1
         }
 
-        statusCheckObj.Valid.should.equal(4)
+        statusCheckObj.Valid.should.equal(5)
         statusCheckObj.Conflict.should.equal(0)
         statusCheckObj.Error.should.equal(1)
       })
@@ -787,7 +809,7 @@ describe('API Integration Tests', () => {
           statusCheckObj[doc.status] += 1
         }
 
-        statusCheckObj.Valid.should.equal(4)
+        statusCheckObj.Valid.should.equal(5)
         statusCheckObj.Conflict.should.equal(1)
         statusCheckObj.Error.should.equal(0)
         ChannelModelAPI.deleteMany({})

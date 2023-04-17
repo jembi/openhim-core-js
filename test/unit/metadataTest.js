@@ -42,6 +42,13 @@ describe('Metadata Functions', () => {
       })
       result.should.have.property('urn', 'mediatorUID')
 
+      result = metadata.getUniqueIdentifierForCollection('Passports', {
+        email: 'userEmail',
+        protocol: 'local'
+      })
+      result.should.have.property('email', 'userEmail')
+      result.should.have.property('protocol', 'local')
+
       result = metadata.getUniqueIdentifierForCollection('Users', {
         email: 'userUID'
       })
