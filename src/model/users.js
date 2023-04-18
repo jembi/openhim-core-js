@@ -104,8 +104,15 @@ export const updateUser = async function (newUserData) {
   try {
     let password
     if (userToBeUpdated.password) {
+      // Compute passport hash
       password = await hashPassword(userToBeUpdated.password)
-
+      /* --- @deprecated : Update password hash (auth with token) --- */
+      const { passwordSalt } = await UserModelAPI.findByIdAndUpdate(userToBeUpdated.id);
+      let shasum = crypto.createHash('sha512');
+      shasum.update(salt + userToBeUpdated.password);
+      const passhash = shasum.digest('hex');
+      userToBeUpdated.hashPassword = passhash;
+      /* --- ----------- --- */
       delete userToBeUpdated.password
     }
 
