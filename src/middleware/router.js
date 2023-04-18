@@ -220,20 +220,14 @@ function constructOptionsObject(ctx, route, keystore) {
 }
 
 function matchCodeOfPrimaryResponse(ctx, route) {
-  if (route.statusCodesCheck) {
-    const codes = route.statusCodesCheck.split(',')
+  if (!route.statusCodesCheck) return true
 
-    for (const code of codes) {
-      if (code.includes('*') && `${ctx.response.status}`[0] === code[0]) {
-        return true
-      } else if (Number(code) === `${ctx.response.status}`) {
-        return true
-      }
-    }
-
-    return false
+  const codes = route.statusCodesCheck.split(',')
+  const status = ctx.response.status
+  for (const code of codes) {
+    if (Number(code) === status) return true
+    if (code.includes('*')) return `${status}`[0] === code[0]
   }
-  return true
 }
 
 function storingNonPrimaryRouteResp(ctx, route, options, path) {
@@ -656,11 +650,7 @@ function sendKafkaRequest(ctx, route) {
   return new Promise((resolve, reject) => {
     const timeout = route.timeout ?? +config.router.timeout
 
-    KafkaProducerManager.getProducer({
-      brokers: route.kafkaBrokers,
-      clientId: route.kafkaClientId,
-      timeout
-    })
+    KafkaProducerManager.getProducer(route)
       .then(producer => {
         const topic = route.kafkaTopic
 
