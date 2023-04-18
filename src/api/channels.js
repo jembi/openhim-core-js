@@ -480,7 +480,8 @@ async function processPostDeleteTriggers(channel) {
   const kafkaRoutes = channel.routes.filter(e => e.type === 'kafka')
   if (kafkaRoutes.length > 0) {
     for await (let route of kafkaRoutes) {
-      await KafkaProducerManager.removeConnection(route)
+      const timeout = route.timeout ?? +config.router.timeout
+      await KafkaProducerManager.removeConnection(route, timeout)
     }
   }
 

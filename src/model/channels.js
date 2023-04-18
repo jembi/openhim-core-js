@@ -248,9 +248,9 @@ ChannelSchema.pre('save', async function (next) {
   ])
   if (
     existentChannelWithKafkaRoutes &&
-    existentChannelWithKafkaRoutes.length > 0
+    existentChannelWithKafkaRoutes.routes
   ) {
-    if (existentChannelWithKafkaRoutes.routes) {
+    if (existentChannelWithKafkaRoutes.routes.length > 0) {
       for (let route of existentChannelWithKafkaRoutes.routes) {
         // To check if kafka was updated
         const kafkaInstanceUpdated = kafkaRoutes.find(e => {
@@ -260,16 +260,12 @@ ChannelSchema.pre('save', async function (next) {
 
         // Kafka details wasn't updated => To check if the timeout was updated
         const kafkaExist = kafkaInstanceUpdated
-          ? KafkaProducerManager.getKafkaInstance({
-              brokers: route.kafkaBrokers,
-              clientId: route.kafkaClientId,
-              timeout
-            })
+          ? KafkaProducerManager.getKafkaInstance(route, timeout)
           : kafkaInstanceUpdated
 
         // Remove connection if route was updated or the status of the channel is not enabled
         if (!kafkaExist || this.status !== 'enabled') {
-          KafkaProducerManager.removeConnection(route)
+          KafkaProducerManager.removeConnection(route, timeout)
         }
       }
     }
@@ -278,14 +274,8 @@ ChannelSchema.pre('save', async function (next) {
   // Open connection only if the status of the channel is enabled and the route is enabled as well
   if (this.status === 'enabled') {
     for (let route of kafkaRoutes) {
-      if (route.status === 'enabled') {
-        KafkaProducerManager.findOrAddConnection({
-          brokers: route.kafkaBrokers,
-          clientId: route.kafkaClientId,
-          timeout
-        })
-      } else {
-        KafkaProducerManager.removeConnection(route)
+      if (route.status !== 'enabled') {
+        KafkaProducerManager.removeConnection(route, timeout)
       }
     }
   }

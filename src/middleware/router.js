@@ -281,10 +281,10 @@ function sendRequestToRoutes(ctx, routes, next) {
     }
 
     const routesToRunAfterPrimary = routes.filter(
-      r => r.waitPrimaryResponse && !r.primary
+      r => r.waitPrimaryResponse && !r.primary && isRouteEnabled(r)
     )
     const routesToRunSimultaneously = routes.filter(
-      r => !routesToRunAfterPrimary.includes(r)
+      r => !routesToRunAfterPrimary.includes(r) && isRouteEnabled(r)
     )
 
     for (const route of Array.from(routesToRunSimultaneously)) {
@@ -650,7 +650,7 @@ function sendKafkaRequest(ctx, route) {
   return new Promise((resolve, reject) => {
     const timeout = route.timeout ?? +config.router.timeout
 
-    KafkaProducerManager.getProducer(route)
+    KafkaProducerManager.getProducer(route, timeout)
       .then(producer => {
         const topic = route.kafkaTopic
 
