@@ -50,10 +50,6 @@ const RouteDef = {
   waitPrimaryResponse: Boolean,
   statusCodesCheck: String,
   kafkaClientId: String,
-  // Kafka route definition
-  kafkaBrokers: {
-    type: String
-  },
   kafkaTopic: String
 }
 
@@ -250,8 +246,8 @@ ChannelSchema.pre('save', async function (next) {
 
   // We need to cross reference the original, not-yet modified, routes
   // against the incoming dirty routes to see if any were removed and if so remove them from the manager
-  if (originalKafkaDetails.length > 0) originalKafkaDetails = originalKafkaDetails[0]
-  if (originalKafkaDetails.routes.length > 0) {
+  if (Array.isArray(originalKafkaDetails)) originalKafkaDetails = originalKafkaDetails[0]
+  if (originalKafkaDetails && originalKafkaDetails.routes.length > 0) {
     for (let route of originalKafkaDetails.routes) {
       const isTimeoutUpdated = originalKafkaDetails.timeout !== this.timeout
       const matchingRoute = kafkaRoutes.find(e => 
@@ -267,7 +263,7 @@ ChannelSchema.pre('save', async function (next) {
         // if timeout is null on the original document, it was set to the default
         // so pull that out from the config before trying to remove connections
         const originalTimeout = originalKafkaDetails.timeout ?? +config.router.timeout
-        await KafkaProducerManager.removeConnection(this.name, route, originalTimeout)
+        await KafkaProducerManager.removeConnection(this.name, route.kafkaClientId, originalTimeout)
       }
     }
   }
@@ -276,7 +272,7 @@ ChannelSchema.pre('save', async function (next) {
   // or the kafka specific route is set to disabled
   for (let route of kafkaRoutes) {
     if (route.status !== 'enabled' || this.status !== 'enabled') {
-      await KafkaProducerManager.removeConnection(this.name, route, timeout)
+      await KafkaProducerManager.removeConnection(this.name, route.kafkaClientId, timeout)
     }
   }
 

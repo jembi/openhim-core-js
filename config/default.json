@@ -24,7 +24,8 @@
     "externalHostname": "localhost",
     "httpPort": 5001,
     "httpsPort": 5000,
-    "timeout": 60000
+    "timeout": 60000,
+    "kafkaBrokers": "localhost:9092"
   },
   "bodyCull":{
     "enabled":true,

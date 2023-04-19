@@ -1,5 +1,8 @@
 import logger from 'winston'
 import {Kafka, logLevel} from 'kafkajs'
+import {config} from '../config'
+
+config.router = config.get('router')
 
 // Customize Kafka logs
 function kafkaLogger() {
@@ -26,13 +29,13 @@ function kafkaLogger() {
 }
 
 export class KafkaProducer {
-  _options = {}
   _producer = null
   _isConnected = false
 
-  constructor(brokers, clientId, timeout) {
-    if (brokers && clientId) {
-      const kafkaBrokers = brokers.replace(/"/g, '').split(',')
+  constructor(clientId, timeout) {
+    if (clientId) {
+      let kafkaBrokers = config.router.kafkaBrokers;
+      kafkaBrokers = kafkaBrokers.replace(/"/g, '').split(',')
 
       const kafka = new Kafka({
         brokers: kafkaBrokers,
@@ -43,12 +46,6 @@ export class KafkaProducer {
         logCreator: kafkaLogger
       })
 
-      this._options = {
-        brokers,
-        clientId,
-        timeout
-      }
-
       this._producer = kafka.producer()
 
       this._producer.on(this._producer.events.DISCONNECT, () => {
@@ -57,12 +54,12 @@ export class KafkaProducer {
     }
   }
 
-  get options() {
-    return this._options
-  }
-
   get isConnected() {
     return this._isConnected
+  }
+
+  get producer() {
+    return this._producer
   }
 
   async connect() {
@@ -78,9 +75,5 @@ export class KafkaProducer {
     } catch (err) {
       logger.error(err.message)
     }
-  }
-
-  get producer() {
-    return this._producer
   }
 }

@@ -189,7 +189,7 @@ function constructOptionsObject(ctx, route, keystore) {
   }
 
   if (route.type === 'kafka') {
-    options.brokers = route.kafkaBrokers
+    options.brokers = config.router.kafkaBrokers
     options.topic = route.kafkaTopic
   }
 
@@ -651,7 +651,7 @@ function sendKafkaRequest(ctx, route) {
     const timeout = route.timeout ?? +config.router.timeout
     const channel = ctx.authorisedChannel;
 
-    KafkaProducerManager.getProducer(channel.name, route, timeout)
+    KafkaProducerManager.getProducer(channel.name, route.kafkaClientId, timeout)
       .then(producer => {
         const topic = route.kafkaTopic
 
