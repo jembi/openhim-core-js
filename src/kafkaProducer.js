@@ -1,6 +1,6 @@
 import logger from 'winston'
 import {Kafka, logLevel} from 'kafkajs'
-import {config} from '../config'
+import {config} from './config'
 
 config.router = config.get('router')
 
@@ -34,11 +34,11 @@ export class KafkaProducer {
 
   constructor(clientId, timeout) {
     if (clientId) {
-      let kafkaBrokers = config.router.kafkaBrokers;
-      kafkaBrokers = kafkaBrokers.replace(/"/g, '').split(',')
+      let brokers = config.router.kafkaBrokers;
+      brokers = brokers.replace(/"/g, '').split(',')
 
       const kafka = new Kafka({
-        brokers: kafkaBrokers,
+        brokers: brokers,
         clientId: clientId,
         requestTimeout: timeout,
         connectionTimeout: timeout,

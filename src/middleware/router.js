@@ -11,7 +11,7 @@ import * as events from '../middleware/events'
 import * as messageStore from '../middleware/messageStore'
 import * as utils from '../utils'
 import {config} from '../config'
-import {KafkaProducerManager} from './KafkaProducerManager'
+import {KafkaProducerManager} from '../kafkaProducerManager'
 
 config.mongo = config.get('mongo')
 config.router = config.get('router')

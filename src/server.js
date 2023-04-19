@@ -34,10 +34,8 @@ import * as tasks from './tasks'
 import * as tcpAdapter from './tcpAdapter'
 import * as tlsAuthentication from './middleware/tlsAuthentication'
 import * as upgradeDB from './upgradeDB'
-import {KafkaProducerManager} from './middleware/KafkaProducerManager'
 import {KeystoreModel} from './model/keystore'
 import {UserModel, createUser, updateTokenUser} from './model/users'
-import {ChannelModel} from './model/channels'
 import {appRoot, config, connectionAgenda} from './config'
 
 mongoose.Promise = Promise

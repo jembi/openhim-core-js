@@ -4,7 +4,7 @@ import patchHistory from 'mongoose-patch-history'
 import {Schema} from 'mongoose'
 import {camelize, pascalize} from 'humps'
 
-import {KafkaProducerManager} from '../middleware/KafkaProducerManager'
+import {KafkaProducerManager} from '../kafkaProducerManager'
 import {ContactUserDef} from './contactGroups'
 import {connectionAPI, connectionDefault, config} from '../config'
 
