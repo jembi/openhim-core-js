@@ -232,10 +232,11 @@ ChannelSchema.pre('save', async function (next) {
   const timeout = this.timeout ?? +config.router.timeout
   const kafkaRoutes = this.routes.filter(e => e.type === 'kafka')
 
-  const existentChannelWithKafkaRoutes = await ChannelModel.aggregate([
+  let originalKafkaDetails = await ChannelModel.aggregate([
     {$match: {_id: this._id}},
     {
       $project: {
+        timeout,
         routes: {
           $filter: {
             input: '$routes',
@@ -246,39 +247,39 @@ ChannelSchema.pre('save', async function (next) {
       }
     }
   ])
-  if (
-    existentChannelWithKafkaRoutes &&
-    existentChannelWithKafkaRoutes.routes
-  ) {
-    if (existentChannelWithKafkaRoutes.routes.length > 0) {
-      for (let route of existentChannelWithKafkaRoutes.routes) {
-        // To check if kafka was updated
-        const kafkaInstanceUpdated = kafkaRoutes.find(e => {
-          e.kafkaBrokers === route.kafkaBrokers &&
-            e.kafkaClientId === route.kafkaClientId
-        })
 
-        // Kafka details wasn't updated => To check if the timeout was updated
-        const kafkaExist = kafkaInstanceUpdated
-          ? KafkaProducerManager.getKafkaInstance(route, timeout)
-          : kafkaInstanceUpdated
-
-        // Remove connection if route was updated or the status of the channel is not enabled
-        if (!kafkaExist || this.status !== 'enabled') {
-          KafkaProducerManager.removeConnection(route, timeout)
-        }
+  // We need to cross reference the original, not-yet modified, routes
+  // against the incoming dirty routes to see if any were removed and if so remove them from the manager
+  if (originalKafkaDetails.length > 0) originalKafkaDetails = originalKafkaDetails[0]
+  if (originalKafkaDetails.routes.length > 0) {
+    for (let route of originalKafkaDetails.routes) {
+      const isTimeoutUpdated = originalKafkaDetails.timeout !== this.timeout
+      const matchingRoute = kafkaRoutes.find(e => 
+        e.kafkaClientId === route.kafkaClientId &&
+        e.name === route.name
+      )
+      
+      // if we do not match to a route it means the dirty routes no longer has this route
+      // so we need to remove it from the kafka connection as it's about to be deleted
+      // if the timeout is changed, then all current routes will be invalid
+      // and will need to recreate the kafka connection with the new timeout
+      if (!matchingRoute || isTimeoutUpdated) {
+        // if timeout is null on the original document, it was set to the default
+        // so pull that out from the config before trying to remove connections
+        const originalTimeout = originalKafkaDetails.timeout ?? +config.router.timeout
+        await KafkaProducerManager.removeConnection(this.name, route, originalTimeout)
       }
     }
   }
 
-  // Open connection only if the status of the channel is enabled and the route is enabled as well
-  if (this.status === 'enabled') {
-    for (let route of kafkaRoutes) {
-      if (route.status !== 'enabled') {
-        KafkaProducerManager.removeConnection(route, timeout)
-      }
+  // remove kafka connections if either the entire channel is disabled
+  // or the kafka specific route is set to disabled
+  for (let route of kafkaRoutes) {
+    if (route.status !== 'enabled' || this.status !== 'enabled') {
+      await KafkaProducerManager.removeConnection(this.name, route, timeout)
     }
   }
+
   next()
 })
 

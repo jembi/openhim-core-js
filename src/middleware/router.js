@@ -649,8 +649,9 @@ function sendHttpRequest(ctx, route, options) {
 function sendKafkaRequest(ctx, route) {
   return new Promise((resolve, reject) => {
     const timeout = route.timeout ?? +config.router.timeout
+    const channel = ctx.authorisedChannel;
 
-    KafkaProducerManager.getProducer(route, timeout)
+    KafkaProducerManager.getProducer(channel.name, route, timeout)
       .then(producer => {
         const topic = route.kafkaTopic
 

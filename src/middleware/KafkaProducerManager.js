@@ -3,34 +3,39 @@ import {KafkaProducer} from './kafkaProducer.js'
 export class KafkaProducerManager {
   static kafkaSet = {}
 
-  static async getProducer(details, timeout) {
-    const kafkaInstance = this.findOrAddConnection(details, timeout)
+  static async getProducer(channelName, route, timeout) {
+    const kafkaInstance = this.findOrAddConnection(channelName, route, timeout)
     if (!kafkaInstance.isConnected) await kafkaInstance.connect()
     if (!kafkaInstance.isConnected) throw new Error('Kafka Producer failed to connect.')
 
     return kafkaInstance.producer
   }
 
-  static findOrAddConnection(details, timeout) {
-    let kafkaInstance = this.getKafkaInstance(details, timeout)
+  static findOrAddConnection(channelName, route, timeout) {
+    let kafkaInstance = this.getKafkaInstance(channelName, route, timeout)
     if (!kafkaInstance) {
-      const {kafkaBrokers, kafkaClientId} = details
+      const {kafkaBrokers, kafkaClientId} = route
       kafkaInstance = new KafkaProducer(kafkaBrokers, kafkaClientId, timeout)
-      this.kafkaSet[`${kafkaBrokers}${kafkaClientId}${timeout}`] = kafkaInstance
+      this.kafkaSet[`${channelName}${kafkaClientId}${timeout}`] = kafkaInstance
     }
 
     return kafkaInstance;
   }
 
-  static async removeConnection(details, timeout) {
-    const kafkaInstance = this.getKafkaInstance(details, timeout)
+  static async removeConnection(channelName, route, timeout) {
+    const kafkaInstance = this.getKafkaInstance(channelName, route, timeout)
 
-    if (kafkaInstance && kafkaInstance.isConnected) await kafkaInstance.disconnect()
+    if (kafkaInstance) {
+      if (kafkaInstance.isConnected) await kafkaInstance.disconnect()
+  
+      const {kafkaBrokers, kafkaClientId} = route
+      delete this.kafkaSet[`${channelName}${kafkaClientId}${timeout}`]
+    }
   }
 
-  static getKafkaInstance(details, timeout) {
-    const {kafkaBrokers, kafkaClientId} = details
+  static getKafkaInstance(channelName, route, timeout) {
+    const {kafkaBrokers, kafkaClientId} = route
 
-    return this.kafkaSet[`${kafkaBrokers}${kafkaClientId}${timeout}`]
+    return this.kafkaSet[`${channelName}${kafkaClientId}${timeout}`]
   }
 }
