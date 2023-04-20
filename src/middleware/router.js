@@ -173,10 +173,11 @@ function handleServerError(ctx, err, route) {
   }
 }
 
-function constructOptionsObject(ctx, route, keystore) {
+function constructOptionsObject(ctx, route, keystore, path) {
   const options = {
     method: ctx.request.method,
     headers: ctx.request.header,
+    path,
     agent: false,
     rejectUnauthorized: true,
     key: keystore.key,
@@ -289,7 +290,7 @@ function sendRequestToRoutes(ctx, routes, next) {
 
     for (const route of Array.from(routesToRunSimultaneously)) {
       const path = getDestinationPath(route, ctx.path)
-      const options = constructOptionsObject(ctx, route, keystore)
+      const options = constructOptionsObject(ctx, route, keystore, path)
 
       if (route.primary) {
         ctx.primaryRoute = route
@@ -350,7 +351,7 @@ function sendRequestToRoutes(ctx, routes, next) {
 
     for (const route of Array.from(routesToRunAfterPrimary)) {
       const path = getDestinationPath(route, ctx.path)
-      const options = constructOptionsObject(ctx, route, keystore)
+      const options = constructOptionsObject(ctx, route, keystore, path)
 
       logger.info(`executing non primary: ${route.name}`)
 
@@ -515,22 +516,18 @@ function sendRequest(ctx, route, options) {
     ctx.orchestrations.push(buildOrchestration(response))
   }
 
-  if (route.type === 'kafka') {
-    return sendKafkaRequest(ctx, route, options)
-  } else {
-    logger.info('Routing http(s) request')
-    return sendHttpRequest(ctx, route, options)
-      .then(response => {
-        recordOrchestration(response)
-        // Return the response as before
-        return response
-      })
-      .catch(err => {
-        recordOrchestration(err)
-        // Rethrow the error
-        throw err
-      })
-  }
+  const requestDelegate = route.type === 'kafka' ? sendKafkaRequest : sendHttpRequest
+  return requestDelegate(ctx, route, options)
+    .then(response => {
+      recordOrchestration(response)
+      // Return the response as before
+      return response
+    })
+    .catch(err => {
+      recordOrchestration(err)
+      // Rethrow the error
+      throw err
+    })
 }
 
 function obtainCharset(headers) {
@@ -662,22 +659,17 @@ function sendKafkaRequest(ctx, route) {
           body: ctx.body.toString()
         }
 
-        const response = {
-          headers: {},
-          status: 400,
-          timestamp: +new Date()
-        }
-
         return producer
           .send({
             topic,
             messages: [{value: JSON.stringify(message)}]
           })
           .then(res => {
-            response.body = JSON.stringify(res)
-            response.status = 200
-            response.timestamp = +new Date()
-            resolve(response)
+            resolve({
+              status: 200,
+              body: JSON.stringify(res),
+              timestamp: +new Date()
+            })
           })
       })
       .catch(e => {
