@@ -254,7 +254,7 @@ describe('API Integration Tests', () => {
               host: 'localhost',
               port: 9876,
               primary: true,
-              type: 'tcp'
+              type: 'http'
             }
           ]
         }
@@ -282,7 +282,7 @@ describe('API Integration Tests', () => {
               host: 'localhost',
               port: 9876,
               primary: true,
-              type: 'tcp'
+              type: 'http'
             }
           ],
           status: 'disabled'

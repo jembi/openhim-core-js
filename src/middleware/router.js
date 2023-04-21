@@ -184,7 +184,8 @@ function constructOptionsObject(ctx, route, keystore, path) {
     cert: keystore.cert.data
   }
 
-  if (route.type === 'http') {
+  // default route types to http
+  if (!route.type || route.type === 'http') {
     options.hostname = route.host
     options.port = route.port
   }
