@@ -10,6 +10,7 @@ import {ContactGroupModelAPI} from '../model/contactGroups'
 import {KeystoreModelAPI} from '../model/keystore'
 import {MediatorModelAPI} from '../model/mediators'
 import {UserModelAPI} from '../model/users'
+import {PassportModelAPI} from '../model/passport'
 import * as polling from '../polling'
 
 // Map string parameters to collections
@@ -18,6 +19,7 @@ const collections = {
   Clients: ClientModelAPI,
   Mediators: MediatorModelAPI,
   Users: UserModelAPI,
+  Passports: PassportModelAPI,
   ContactGroups: ContactGroupModelAPI,
   KeystoreModelAPI
 }
@@ -39,28 +41,27 @@ function removeProperties(obj) {
 
 // Function to return unique identifier key and value for a collection
 function getUniqueIdentifierForCollection(collection, doc) {
-  let uid
-  let uidKey
+  const returnObj = {}
+
   switch (collection) {
     case 'Channels':
-      uidKey = 'name'
-      uid = doc.name
+      returnObj['name'] = doc.name
       break
     case 'Clients':
-      uidKey = 'clientID'
-      uid = doc.clientID
+      returnObj['clientID'] = doc.clientID
       break
     case 'Mediators':
-      uidKey = 'urn'
-      uid = doc.urn
+      returnObj['urn'] = doc.urn
       break
     case 'Users':
-      uidKey = 'email'
-      uid = doc.email
+      returnObj['email'] = doc.email
+      break
+    case 'Passports':
+      returnObj['protocol'] = doc.protocol
+      returnObj['email'] = doc.email
       break
     case 'ContactGroups':
-      uidKey = 'groups'
-      uid = doc.groups
+      returnObj['groups'] = doc.groups
       break
     default:
       logger.debug(
@@ -68,8 +69,7 @@ function getUniqueIdentifierForCollection(collection, doc) {
       )
       break
   }
-  const returnObj = {}
-  returnObj[uidKey] = uid
+
   return returnObj
 }
 
