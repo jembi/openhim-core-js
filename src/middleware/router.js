@@ -657,7 +657,7 @@ function sendKafkaRequest(ctx, route) {
           method: ctx.request.method,
           path: ctx.request.url,
           headers: ctx.request.headers,
-          body: ctx.body.toString()
+          body: ctx.body && ctx.body.toString()
         }
 
         return producer

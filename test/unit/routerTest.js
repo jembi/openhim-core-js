@@ -11,6 +11,7 @@ import * as constants from '../constants'
 import * as router from '../../src/middleware/router'
 import * as testUtils from '../utils'
 import {CertificateModel, KeystoreModel} from '../../src/model'
+import * as kafkaProducer from '../../src/kafkaProducer';
 
 const DEFAULT_CHANNEL = Object.freeze({
   name: 'Mock endpoint',
@@ -20,6 +21,21 @@ const DEFAULT_CHANNEL = Object.freeze({
       host: 'localhost',
       port: constants.HTTP_PORT,
       primary: true
+    }
+  ]
+})
+
+const KAFKA_CHANNEL = Object.freeze({
+  name: 'Mock endpoint',
+  urlPattern: '.+',
+  routes: [
+    {
+      host: 'localhost',
+      port: constants.HTTP_PORT,
+      primary: true,
+      type: 'kafka',
+      kafkaClientId: 'test',
+      kafkaTopic: 'test'
     }
   ]
 })
@@ -52,6 +68,40 @@ describe('HTTP Router', () => {
   }
 
   describe('.route', () => {
+    describe('kafka single route', () => {
+      let server
+      let kafkaProducerInstanceMock
+      let kafkaProducerMock = { restore: () => {} }
+
+      afterEach(async () => {
+        if (server != null) {
+          await server.close()
+          server = null
+        }
+        kafkaProducerMock.restore();
+      })
+
+      it('should publish the request to the correct kafka topic', async () => {
+        kafkaProducerInstanceMock = testUtils.getMockKafkaProducer();
+        kafkaProducerMock = sinon.stub(kafkaProducer, "KafkaProducer").callsFake(() => kafkaProducerInstanceMock)
+        server = await testUtils.createMockHttpServer(
+          "test",
+          constants.HTTP_PORT,
+          200
+        )
+        const ctx = createContext(KAFKA_CHANNEL)
+        await promisify(router.route)(ctx)
+
+        ctx.response.status.should.be.exactly(200)
+        const responseBody = JSON.parse(ctx.response.body)
+        responseBody[0].topicName.should.be.eql('test') 
+        kafkaProducerInstanceMock.producer.connect.called.should.be.true;
+        const sendCall = kafkaProducerInstanceMock.producer.send.getCall(0);
+        sendCall.firstArg.topic.should.be.eql('test')
+      })
+
+    })
+
     describe('single route', () => {
       let server
 
@@ -323,10 +373,18 @@ describe('HTTP Router', () => {
 
     describe('multiroute', () => {
       let servers = []
+      let kafkaProducerInstanceMock
+      let kafkaProducerMock
+
+      beforeEach(() => {
+        kafkaProducerInstanceMock = testUtils.getMockKafkaProducer();
+        kafkaProducerMock = sinon.stub(kafkaProducer, "KafkaProducer").callsFake(() => kafkaProducerInstanceMock)
+      })
 
       afterEach(async () => {
         await Promise.all(servers.map(s => s.close()))
         servers.length = 0
+        kafkaProducerMock.restore();
       })
 
       const NON_PRIMARY1_PORT = constants.PORT_START + 101
@@ -351,6 +409,13 @@ describe('HTTP Router', () => {
             name: 'non_primary_2',
             host: 'localhost',
             port: NON_PRIMARY2_PORT
+          },
+          {
+            name: 'non_primary_kafka',
+            host: 'localhost',
+            type: 'kafka',
+            kafkaClientId: 'test',
+            kafkaTopic: 'test'
           }
         ]
       }
@@ -397,17 +462,23 @@ describe('HTTP Router', () => {
         await promisify(router.route)(ctx)
         await testUtils.setImmediatePromise()
 
-        ctx.routes.length.should.be.exactly(2)
-        ctx.routes[0].response.status.should.be.exactly(200)
-        ctx.routes[0].response.body.toString().should.be.eql('Non Primary 1')
-        ctx.routes[0].response.headers.should.be.ok
-        ctx.routes[0].request.path.should.be.exactly('/test/multicasting')
-        ctx.routes[0].request.timestamp.should.be.exactly(requestTimestamp)
-        ctx.routes[1].response.status.should.be.exactly(400)
-        ctx.routes[1].response.body.toString().should.be.eql('Non Primary 2')
-        ctx.routes[1].response.headers.should.be.ok
-        ctx.routes[1].request.path.should.be.exactly('/test/multicasting')
-        ctx.routes[1].request.timestamp.should.be.exactly(requestTimestamp)
+        ctx.routes.length.should.be.exactly(3)
+        const nonPrimary1 = ctx.routes.find(route => route.name === "non_primary_1")
+        nonPrimary1.response.status.should.be.exactly(200)
+        nonPrimary1.response.body.toString().should.be.eql('Non Primary 1')
+        nonPrimary1.response.headers.should.be.ok
+        nonPrimary1.request.path.should.be.exactly('/test/multicasting')
+        nonPrimary1.request.timestamp.should.be.exactly(requestTimestamp)
+        const nonPrimary2 = ctx.routes.find(route => route.name === "non_primary_2")
+        nonPrimary2.response.status.should.be.exactly(400)
+        nonPrimary2.response.body.toString().should.be.eql('Non Primary 2')
+        nonPrimary2.response.headers.should.be.ok
+        nonPrimary2.request.path.should.be.exactly('/test/multicasting')
+        nonPrimary2.request.timestamp.should.be.exactly(requestTimestamp)
+        const nonPrimaryKafka = ctx.routes.find(route => route.name === "non_primary_kafka")
+        nonPrimaryKafka.response.status.should.be.exactly(200)
+        nonPrimaryKafka.response.body.should.be.ok
+        nonPrimaryKafka.request.timestamp.should.be.exactly(requestTimestamp)
       })
 
       it('should pass an error to next if there are multiple primary routes', async () => {
@@ -433,6 +504,35 @@ describe('HTTP Router', () => {
         await promisify(router.route)(ctx).should.be.rejectedWith(
           'Cannot route transaction: Channel contains multiple primary routes and only one primary is allowed'
         )
+      })
+
+      it('should NOT run disabled routes when multicast to multiple endpoints', async () => {
+        servers = await Promise.all([
+          testUtils.createMockHttpServer(
+            'Non Primary 1',
+            NON_PRIMARY1_PORT,
+            200
+          ),
+          testUtils.createMockHttpServer(
+            'Non Primary 2',
+            NON_PRIMARY2_PORT,
+            400
+          ),
+          testUtils.createMockHttpServer('Primary', PRIMARY_PORT, 201)
+        ])
+
+        const ctx = createContext(channel, '/test/multicasting')
+        ctx.authorisedChannel.routes[2].status = 'disabled';
+        ctx.authorisedChannel.routes[3].status = 'disabled'
+        await promisify(router.route)(ctx)
+        await testUtils.setImmediatePromise()
+
+        ctx.routes.length.should.be.exactly(1)
+        ctx.routes[0].response.status.should.be.exactly(200)
+        ctx.routes[0].response.body.toString().should.be.eql('Non Primary 1')
+        ctx.routes[0].response.headers.should.be.ok
+        ctx.routes[0].request.path.should.be.exactly('/test/multicasting')
+        ctx.routes[0].request.timestamp.should.be.exactly(requestTimestamp)
       })
 
       it('should set mediator response data for non-primary routes', async () => {
