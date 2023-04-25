@@ -536,6 +536,36 @@ describe('HTTP Router', () => {
         ctx.routes[0].request.timestamp.should.be.exactly(requestTimestamp)
       })
 
+      it('should be able to multicast to multiple endpoints and set the responses for non-primary routes in ctx.routes', async () => {
+        servers = await Promise.all([
+          testUtils.createMockHttpServer(
+            'Non Primary 1',
+            NON_PRIMARY1_PORT,
+            200
+          ),
+          testUtils.createMockHttpServer('Primary', PRIMARY_PORT, 201)
+        ])
+
+        const ctx = createContext(channel, '/test/multicasting')
+        let waitingRoute = ctx.authorisedChannel.routes.find(route => route.name === 'non_primary_1')
+        waitingRoute.waitPrimaryResponse = true;
+        waitingRoute.statusCodesCheck = '2**,3**,4**,5**';
+
+        await promisify(router.route)(ctx)
+        await testUtils.setImmediatePromise()
+        await testUtils.setImmediatePromise()
+        await testUtils.setImmediatePromise()
+        await testUtils.setImmediatePromise()
+        await testUtils.setImmediatePromise()
+
+        waitingRoute = ctx.routes.find(route => route.name === "non_primary_1")
+        waitingRoute.response.status.should.be.exactly(200)
+        waitingRoute.response.body.toString().should.be.eql('Non Primary 1')
+        waitingRoute.response.headers.should.be.ok
+        waitingRoute.request.path.should.be.exactly('/test/multicasting')
+        waitingRoute.request.timestamp.should.be.exactly(requestTimestamp)
+      })
+
       it('should NOT run routes if they are set to wait for primary but returns it incorrect status code', async () => {
         servers = await Promise.all([
           testUtils.createMockHttpServer(
