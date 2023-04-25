@@ -33,7 +33,7 @@ export const login = async function (email, password, next) {
       }
       return PassportModelAPI.findOne({
         protocol: user.provider === 'token' ? 'token' : 'local',
-        user: user.id
+        email: user.email
       })
         .then(function (passport) {
           if (passport) {

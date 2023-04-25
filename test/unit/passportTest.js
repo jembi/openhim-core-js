@@ -8,18 +8,17 @@ import should from 'should'
 import * as model from '../../src/model'
 
 describe('PassportModel tests', () => {
-  let userId
+  const email = 'bfm@crazy.net'
 
   const user = new model.UserModelAPI({
     firstname: 'Bill',
     surname: 'Murray',
-    email: 'bfm@crazy.net',
+    email,
     groups: ['HISP', 'group2']
   })
 
   before(async () => {
-    const res = await user.save()
-    userId = res.id
+    await user.save()
   })
 
   after(async () => {
@@ -28,45 +27,35 @@ describe('PassportModel tests', () => {
 
   describe('.createPassport()', () => {
     it('should create a new password', async () => {
-      const {error, user} = await model.createPassport({id: userId}, 'password')
+      const {error, user} = await model.createPassport({email}, 'password')
 
       should.equal(error, null)
-      user.should.have.property('id', userId)
+      user.should.have.property('email', email)
 
       const passportResult = await model.PassportModelAPI.findOne({
-        user: userId
+        email
       })
 
       passportResult.should.have.property('password')
-    })
-
-    it('should return error for non existent user', async () => {
-      const {error, user} = await model.createPassport(
-        {id: 'non_existent_id'},
-        'password'
-      )
-
-      should.equal(user, null)
-      error.should.have.property('message')
     })
   })
 
   describe('.updatePassport()', () => {
     it('should update passport of a user', async () => {
       const passportResult = await model.PassportModelAPI.findOne({
-        user: userId
+        email
       })
 
       const {error, user} = await model.updatePassport(
-        {id: userId},
+        {email},
         {id: passportResult.id, password: 'new_password'}
       )
 
       should.equal(error, null)
-      user.should.have.property('id', userId)
+      user.should.have.property('email', email)
 
       const newPassportResult = await model.PassportModelAPI.findOne({
-        user: userId
+        email
       })
 
       newPassportResult.should.have.property('password')
@@ -75,7 +64,7 @@ describe('PassportModel tests', () => {
 
     it('should return error for non existent passport', async () => {
       const {error, user} = await model.updatePassport(
-        {id: userId},
+        {email},
         {id: 'non_existent_id'}
       )
 
