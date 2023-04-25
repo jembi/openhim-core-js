@@ -49,6 +49,52 @@ const tcpToHttpChannelDoc = {
   }
 }
 
+const tcpToTlsChannelDoc = {
+  name: 'TCPIntegrationChannel4',
+  urlPattern: '/',
+  allow: ['tcp'],
+  type: 'tcp',
+  tcpPort: CHANNEL_PORT_START + 3,
+  tcpHost: 'localhost',
+  routes: [
+    {
+      name: 'tls route',
+      host: 'localhost',
+      port: SERVER_PORT_START + 3,
+      type: 'http',
+      secured: true,
+      primary: true
+    }
+  ],
+  updatedBy: {
+    id: new ObjectId(),
+    name: 'Test'
+  }
+}
+
+const tcpToTlsNoCertChannelDoc = {
+  name: 'TCPIntegrationChannel5',
+  urlPattern: '/',
+  allow: ['tcp'],
+  type: 'tcp',
+  tcpPort: CHANNEL_PORT_START + 4,
+  tcpHost: 'localhost',
+  routes: [
+    {
+      name: 'tls route',
+      host: 'localhost',
+      port: SERVER_PORT_START + 4,
+      type: 'http',
+      secured: true,
+      primary: true
+    }
+  ],
+  updatedBy: {
+    id: new ObjectId(),
+    name: 'Test'
+  }
+}
+
 // We don't create a timeout channel for every possible combination as they all use the same code
 const tcpTimeoutChannel = {
   name: 'tcpTimeoutChannel',
@@ -75,10 +121,12 @@ const tcpTimeoutChannel = {
 
 const channels = [
   tcpToHttpChannelDoc,
+  tcpToTlsChannelDoc,
+  tcpToTlsNoCertChannelDoc,
   tcpTimeoutChannel
 ]
 
-describe('TCP Integration Tests', () => {
+describe('TCP/TLS Integration Tests', () => {
   let mockServer
   const sandbox = sinon.createSandbox()
   const ORIGINAL_TCP_ADAPTER = config.tcpAdapter
@@ -158,5 +206,45 @@ describe('TCP Integration Tests', () => {
 
     res.toString().should.eql(expectedResp)
     spy.callCount.should.eql(1)
+  })
+
+  it('will route tcp -> tls', async () => {
+    const request = 'Tcp Request'
+    let expectedResp
+    const spy = sandbox.spy(async data => {
+      expectedResp = data + ' with tls response'
+      return expectedResp
+    })
+    mockServer = await testUtils.createMockHttpsServer(
+      spy,
+      true,
+      tcpToTlsChannelDoc.routes[0].port
+    )
+    const res = await testUtils.socketTest(tcpToTlsChannelDoc.tcpPort, request)
+    res.toString().should.eql(expectedResp)
+    spy.callCount.should.eql(1)
+  })
+
+  it('will route tcp -> tls no auth will fail', async () => {
+    const spy = sandbox.spy()
+    mockServer = await testUtils.createMockTLSServerWithMutualAuth(
+      spy,
+      tcpToTlsNoCertChannelDoc.routes[0].port,
+      false
+    )
+    const resp = await testUtils.socketTest(
+      tcpToTlsNoCertChannelDoc.tcpPort,
+      'Data'
+    )
+
+    resp.toString().should.eql('An internal server error occurred')
+    spy.callCount.should.eql(0)
+
+    await testUtils.pollCondition(() =>
+      TransactionModel.countDocuments().then(c => c === 1)
+    )
+    const tran = await TransactionModel.findOne()
+
+    tran.status.should.eql('Failed')
   })
 })
