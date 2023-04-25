@@ -5,6 +5,7 @@
 
 import fs from 'fs'
 import sinon from 'sinon'
+import should from 'should'
 import {promisify} from 'util'
 
 import * as constants from '../constants'
@@ -533,6 +534,33 @@ describe('HTTP Router', () => {
         ctx.routes[0].response.headers.should.be.ok
         ctx.routes[0].request.path.should.be.exactly('/test/multicasting')
         ctx.routes[0].request.timestamp.should.be.exactly(requestTimestamp)
+      })
+
+      it('should NOT run routes if they are set to wait for primary but returns it incorrect status code', async () => {
+        servers = await Promise.all([
+          testUtils.createMockHttpServer(
+            'Non Primary 1',
+            NON_PRIMARY1_PORT,
+            200
+          ),
+          testUtils.createMockHttpServer(
+            'Non Primary 2',
+            NON_PRIMARY2_PORT,
+            200
+          ),
+          testUtils.createMockHttpServer('Primary', PRIMARY_PORT, 201)
+        ])
+
+        const ctx = createContext(channel, '/test/multicasting')
+        let waitingRoute = ctx.authorisedChannel.routes.find(route => route.name === 'non_primary_1')
+        waitingRoute.waitPrimaryResponse = true;
+        waitingRoute.statusCodesCheck = '500';
+        await promisify(router.route)(ctx)
+        await testUtils.setImmediatePromise()
+
+        ctx.response.status.should.not.be.exactly(500)
+        waitingRoute = ctx.routes.find(route => route.name === 'non_primary_1')
+        should.not.exist(waitingRoute)
       })
 
       it('should set mediator response data for non-primary routes', async () => {
