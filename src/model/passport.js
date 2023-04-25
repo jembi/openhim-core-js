@@ -68,8 +68,11 @@ const PassportSchema = new Schema({
 
   // Associations
   //
-  // Associate every passport with one, and only one, user.
-  user: {type: Schema.Types.ObjectId, ref: 'User'}
+  // Associate every passport with a user.
+  email: {
+    type: String,
+    required: true
+  }
 })
 
 // compile the Passport Schema into a Model
@@ -90,7 +93,7 @@ export const createPassport = async function (user, passwordInfo) {
   let result = {error: null, user: null}
   return await PassportModelAPI.create({
     protocol: passwordInfo.password ? 'local' : 'token',
-    user: user.id,
+    email: user.email,
     ...passwordInfo
   })
     .then(async function () {

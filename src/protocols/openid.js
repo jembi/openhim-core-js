@@ -94,7 +94,8 @@ export const login = async (
     tokens,
     issuer,
     identifier: identifier,
-    protocol: 'openid'
+    protocol: 'openid',
+    email: user.email
   }
 
   PassportModelAPI.findOne({
@@ -111,10 +112,7 @@ export const login = async (
           return createOrUpdateUser(user)
             .then(function (retrievedUser) {
               return PassportModelAPI.create(
-                {
-                  user: retrievedUser.id,
-                  ...newPassport
-                },
+                newPassport,
                 function () {
                   next(null, retrievedUser)
                 }
