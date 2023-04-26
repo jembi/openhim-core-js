@@ -45,6 +45,7 @@ describe('Kafka Producer Test', () => {
 
       producer.isConnected.should.be.true
       loggerSpy.calledOnce.should.be.true
+      loggerSpy.restore()
     })
   })
 })

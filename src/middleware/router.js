@@ -35,12 +35,12 @@ function setKoaResponse(ctx, response) {
   // Try and parse the status to an int if it is a string
   let err
   if (typeof response.status === 'string') {
-    try {
-      response.status = parseInt(response.status, 10)
-    } catch (error) {
-      err = error
-      logger.error(err)
-    }
+      const statusCode = parseInt(response.status, 10)
+      if (isNaN(response.status)) {
+        logger.error(`Failed to parse status code ${statusCode} to an int`)
+      } else {
+        response.status = statusCode
+      }
   }
 
   ctx.response.status = response.status

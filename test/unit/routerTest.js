@@ -7,6 +7,7 @@ import fs from 'fs'
 import sinon from 'sinon'
 import should from 'should'
 import {promisify} from 'util'
+import logger from 'winston';
 
 import * as constants from '../constants'
 import * as router from '../../src/middleware/router'
@@ -974,7 +975,7 @@ describe('HTTP Router', () => {
         headers: {
           'content-type': 'text/xml',
           'x-header': 'anotherValue',
-          'set-cookie': ['maximus=Thegreat; max-age=18']
+          'set-cookie': ['maximus=Thegreat; max-age=18; Expires=2023-04-26; overwrite=true']
         },
         timestamp: new Date(),
         body: 'Mock response body'
@@ -988,6 +989,43 @@ describe('HTTP Router', () => {
           maxage: 18
         })
         .should.be.true()
+    })
+
+    it('should try parse the status code as an int if it received a string', () => {
+      const ctx = createCtx()
+      const response = {
+        status: "201",
+        headers: {
+          'content-type': 'text/xml',
+          'x-header': 'anotherValue',
+        },
+        timestamp: new Date(),
+        body: 'Mock response body'
+      }
+
+      router.setKoaResponse(ctx, response)
+
+      return ctx.response.status.should.be.exactly(201)
+    })
+
+    it('should log if it fails to parse the status code as an int if it received a string', () => {
+      const loggerSpy = sinon.spy(logger, 'error')
+      const ctx = createCtx()
+      const response = {
+        status: "foo201",
+        headers: {
+          'content-type': 'text/xml',
+          'x-header': 'anotherValue',
+        },
+        timestamp: new Date(),
+        body: 'Mock response body'
+      }
+
+      router.setKoaResponse(ctx, response)
+
+      loggerSpy.calledOnce.should.be.true
+      ctx.response.status.should.be.exactly("foo201")
+      return loggerSpy.restore()
     })
   })
 })
