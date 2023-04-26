@@ -986,7 +986,9 @@ describe('HTTP Router', () => {
         .calledWith('maximus', 'Thegreat', {
           path: false,
           httpOnly: false,
-          maxage: 18
+          maxage: 18,
+          expires: new Date("2023-04-26"),
+          overwrite: true
         })
         .should.be.true()
     })

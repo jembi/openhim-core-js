@@ -120,7 +120,7 @@ function setCookiesOnContext(ctx, value) {
         case 'secure':
         case 'signed':
         case 'overwrite':
-          cOpts[pKeyL] = pVal
+          cOpts[pKeyL] = (pVal == 'true')
           break
         case 'httponly':
           cOpts.httpOnly = pVal
