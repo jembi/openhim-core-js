@@ -131,7 +131,7 @@ export const updateUser = async function (newUserData) {
         if (password) {
           await PassportModelAPI.findOne({
             protocol: 'local',
-            user: user.id
+            email: user.email
           }).then(async function (passport) {
             if (passport) {
               passport.password = password
@@ -188,7 +188,7 @@ export const updateTokenUser = async function (newUserData) {
       if (passwordHash && passwordAlgorithm && passwordSalt) {
         await PassportModelAPI.findOne({
           protocol: 'token',
-          user: user.id
+          email: user.email
         }).then(async function (passport) {
           if (passport) {
             passport.passwordHash = passwordHash
