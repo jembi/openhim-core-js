@@ -145,6 +145,15 @@ describe('MessageStore', () => {
       })
     })
 
+    it('should fail to save invalid transaction', done => {
+      ctx.authorisedChannel._id = 'Invalid_ID'
+
+      messageStore.storeTransaction(ctx, (error) => {
+        error.message.should.match(/Transaction validation failed/)
+        return done()
+      })
+    })
+
     it('should be able to save the transaction if the headers contain Mongo reserved characters ($ or .)', done => {
       ctx.header['dot.header'] = '123'
       ctx.header.dollar$header = '124'
@@ -241,6 +250,15 @@ describe('MessageStore', () => {
             })
           )
         })
+      })
+    })
+
+    it('should fail to update a transactionthat does not exist', done => {
+      ctx.response = createResponse(201)
+      ctx.transactionId = 'Invalid_ID'
+      messageStore.storeResponse(ctx, err => {
+        err.message.should.match(/Cast to ObjectId failed/)
+        return done()
       })
     })
 
