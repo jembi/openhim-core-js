@@ -107,19 +107,21 @@ export const updateUser = async function (newUserData) {
     if (userToBeUpdated.password) {
       // Compute passport new hash for local strategy
       password = await hashPassword(userToBeUpdated.password)
+
       /* --- @deprecated : Update password hash for token strategy --- */
       const passport = await PassportModelAPI.findOne({
         protocol: 'token',
-        user: user.id
+        email: userToBeUpdated.email
       })
       if (passport) {
-        let shasum = crypto.createHash('sha512');
-        shasum.update(passport.passwordSalt + userToBeUpdated.password);
-        const passhash = shasum.digest('hex');
+        let shasum = crypto.createHash(passport.passwordAlgorithm)
+        shasum.update(passport.passwordSalt + userToBeUpdated.password)
+        const passhash = shasum.digest('hex')
         passport.passwordHash = passhash
-        await PassportModelAPI.findByIdAndUpdate(passport.id, passport);
+        await PassportModelAPI.findByIdAndUpdate(passport.id, passport)
       }
       /* --- ----------- --- */
+
       delete userToBeUpdated.password
     }
 
