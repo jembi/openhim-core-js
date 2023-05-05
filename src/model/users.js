@@ -114,7 +114,7 @@ export const updateUser = async function (newUserData) {
         email: userToBeUpdated.email
       })
       if (passport) {
-        let shasum = crypto.createHash(passport.passwordAlgorithm)
+        let shasum = crypto.createHash(passport.passwordAlgorithm || 'sha512')
         shasum.update(passport.passwordSalt + userToBeUpdated.password)
         const passhash = shasum.digest('hex')
         passport.passwordHash = passhash
