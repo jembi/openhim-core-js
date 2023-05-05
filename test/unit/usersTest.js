@@ -364,5 +364,54 @@ describe('UserModel tests', () => {
       should.equal(user, null)
       error.should.have.property('message')
     })
+
+    it('should update both passwords if user have two passports token and local', async () => {
+      const userToBeUpdated = {
+        id: userId,
+        firstname: 'Elena',
+        surname: 'Smith',
+        email: 'bfm@notcrazy.net',
+        password: 'new_password',
+        groups: ['group1']
+      }
+
+      const {error, user} = await model.updateUser(userToBeUpdated)
+
+      should.equal(error, null)
+
+      user.should.have.property('id')
+      user.should.have.property('firstname', userToBeUpdated.firstname)
+      user.should.have.property('surname', userToBeUpdated.surname)
+      user.should.have.property('email', userToBeUpdated.email)
+      user.should.not.have.property('password')
+
+      const localResult = await model.PassportModelAPI.find({
+        email: user.email,
+        protocol: 'local'
+      })
+        .limit(1)
+        .sort({$natural: -1})
+
+      localResult.length.should.equal(1)
+      const localPassportResult = localResult[0]._doc
+      localPassportResult.should.have.property('password')
+
+      const res = await model.PassportModelAPI.find({
+        email: user.email,
+        protocol: 'token'
+      })
+        .limit(1)
+        .sort({$natural: -1})
+
+      res.length.should.equal(1)
+      const tokenPassportResult = res[0]._doc
+      tokenPassportResult.should.not.have.property('password')
+      tokenPassportResult.should.have.property('passwordAlgorithm')
+      tokenPassportResult.should.have.property('passwordHash')
+      tokenPassportResult.should.have.property('passwordSalt')
+      tokenPassportResult.passwordHash.should.not.equal(
+        oldPassport.passwordHash
+      )
+    })
   })
 })
