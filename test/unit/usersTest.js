@@ -413,5 +413,60 @@ describe('UserModel tests', () => {
         oldPassport.passwordHash
       )
     })
+
+    it('should update both passwords even if user do not have a passwordAlgorithm field', async () => {
+      const localUserToBeUpdated = {
+        id: userId,
+        firstname: 'Elena',
+        surname: 'Smith',
+        email: 'bfm@notcrazy.net',
+        password: 'new_password',
+        groups: ['group1']
+      }
+
+      const passwordRes = await model.PassportModelAPI.find({
+        email: localUserToBeUpdated.email,
+        protocol: 'token'
+      })
+        .limit(1)
+        .sort({$natural: -1})
+
+      passwordRes.length.should.equal(1)
+      await model.PassportModelAPI.findByIdAndUpdate(passwordRes[0]._id, {
+        passwordAlgorithm: null
+      })
+
+      const {error, user} = await model.updateUser(localUserToBeUpdated)
+
+      should.equal(error, null)
+
+      const localResult = await model.PassportModelAPI.find({
+        email: user.email,
+        protocol: 'local'
+      })
+        .limit(1)
+        .sort({$natural: -1})
+
+      localResult.length.should.equal(1)
+      const localPassportResult = localResult[0]._doc
+      localPassportResult.should.have.property('password')
+
+      const res = await model.PassportModelAPI.find({
+        email: user.email,
+        protocol: 'token'
+      })
+        .limit(1)
+        .sort({$natural: -1})
+
+      res.length.should.equal(1)
+      const tokenPassportResult = res[0]._doc
+      tokenPassportResult.should.not.have.property('password')
+      tokenPassportResult.should.have.property('passwordAlgorithm')
+      tokenPassportResult.should.have.property('passwordHash')
+      tokenPassportResult.should.have.property('passwordSalt')
+      tokenPassportResult.passwordHash.should.not.equal(
+        oldPassport.passwordHash
+      )
+    })
   })
 })
