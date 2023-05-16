@@ -1,6 +1,7 @@
 'use strict'
 
 import {Schema} from 'mongoose'
+import * as crypto from 'crypto'
 
 import {PassportModelAPI, createPassport, updatePassport} from './passport'
 import {connectionAPI, connectionDefault} from '../config'
@@ -104,7 +105,22 @@ export const updateUser = async function (newUserData) {
   try {
     let password
     if (userToBeUpdated.password) {
+      // Compute passport new hash for local strategy
       password = await hashPassword(userToBeUpdated.password)
+
+      /* --- @deprecated : Update password hash for token strategy --- */
+      const passport = await PassportModelAPI.findOne({
+        protocol: 'token',
+        email: userToBeUpdated.email
+      })
+      if (passport) {
+        let shasum = crypto.createHash(passport.passwordAlgorithm || 'sha512')
+        shasum.update(passport.passwordSalt + userToBeUpdated.password)
+        const passhash = shasum.digest('hex')
+        passport.passwordHash = passhash
+        await PassportModelAPI.findByIdAndUpdate(passport.id, passport)
+      }
+      /* --- ----------- --- */
 
       delete userToBeUpdated.password
     }
