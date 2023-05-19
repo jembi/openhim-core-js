@@ -33,6 +33,7 @@
   "api": {
     "sessionKey": "r8q,+&1LM3)CD*zAGpx1xm{NeQhc;#",
     "trustProxy": false,
+    "secureCookie": true,
     "maxAge": 7200000,
     "salt": 10,
     "enabled": true,

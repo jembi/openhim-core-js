@@ -50,7 +50,7 @@ export function setupApp(done) {
       {
         maxAge: config.api.maxAge || 7200000,
         resave: false,
-        secure: config.api.protocol === 'https',
+        secure: config.api.secureCookie,
         httpOnly: true,
         sameSite: 'none',
         store: new MongooseStore()

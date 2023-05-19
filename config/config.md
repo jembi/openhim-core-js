@@ -46,6 +46,8 @@ The following config option are provided by the OpenHIM. All of these options ha
     "sessionKey": "r8q,+&1LM3)CD*zAGpx1xm{NeQhc;#",
     // If OpenHIM is behind a proxy (should be `true` if the ssl is handled by the proxy)
     "trustProxy": false,
+    // Secure the cookie (either protocol is https or trusting a secured proxy)
+    secureCookie: true,
     // The session max age is the session cookie expiration time (in milliseconds)
     "maxAge": 7200000,
     // The number of characters that will be used to generate a random salt for the encryption of passwords
