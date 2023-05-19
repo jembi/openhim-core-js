@@ -42,7 +42,7 @@ export function setupApp(done) {
   app.keys = [config.api.sessionKey]
   
   if (config.api.trustProxy) {
-    app.proxy = true;
+    app.proxy = true
   }
   
   app.use(
