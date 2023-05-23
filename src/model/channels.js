@@ -244,13 +244,14 @@ ChannelSchema.pre('save', async function (next) {
     }
   ])
 
+  let originalKafkaItem
   // We need to cross reference the original, not-yet modified, routes
   // against the incoming dirty routes to see if any were removed and if so remove them from the manager
   if (Array.isArray(originalKafkaDetails))
-    originalKafkaDetails = originalKafkaDetails[0]
-  if (originalKafkaDetails && originalKafkaDetails.routes.length > 0) {
-    for (let route of originalKafkaDetails.routes) {
-      const isTimeoutUpdated = originalKafkaDetails.timeout !== this.timeout
+    originalKafkaItem = originalKafkaDetails[0]
+  if (originalKafkaItem && originalKafkaItem.routes.length > 0) {
+    for (let route of originalKafkaItem.routes) {
+      const isTimeoutUpdated = originalKafkaItem.timeout !== this.timeout
       const matchingRoute = kafkaRoutes.find(
         e => e.kafkaClientId === route.kafkaClientId && e.name === route.name
       )
@@ -263,7 +264,7 @@ ChannelSchema.pre('save', async function (next) {
         // if timeout is null on the original document, it was set to the default
         // so pull that out from the config before trying to remove connections
         const originalTimeout =
-          originalKafkaDetails.timeout ?? +config.router.timeout
+          originalKafkaItem.timeout ?? +config.router.timeout
         await KafkaProducerManager.removeConnection(
           this.name,
           route.kafkaClientId,

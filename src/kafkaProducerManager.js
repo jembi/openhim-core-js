@@ -10,8 +10,6 @@ export class KafkaProducerManager {
       timeout
     )
     if (!kafkaInstance.isConnected) await kafkaInstance.connect()
-    if (!kafkaInstance.isConnected)
-      throw new Error('Kafka Producer failed to connect.')
 
     return kafkaInstance.producer
   }
@@ -20,7 +18,7 @@ export class KafkaProducerManager {
     let kafkaInstance = this.getKafkaInstance(channelName, clientId, timeout)
     if (!kafkaInstance) {
       kafkaInstance = new KafkaProducer(clientId, timeout)
-      this.kafkaSet[`${channelName}${clientId}${timeout}`] = kafkaInstance
+      this.kafkaSet[`urn:${channelName}:${clientId}:${timeout}`] = kafkaInstance
     }
 
     return kafkaInstance
@@ -31,11 +29,11 @@ export class KafkaProducerManager {
 
     if (kafkaInstance) {
       if (kafkaInstance.isConnected) await kafkaInstance.disconnect()
-      delete this.kafkaSet[`${channelName}${clientId}${timeout}`]
+      delete this.kafkaSet[`urn:${channelName}:${clientId}:${timeout}`]
     }
   }
 
   static getKafkaInstance(channelName, clientId, timeout) {
-    return this.kafkaSet[`${channelName}${clientId}${timeout}`]
+    return this.kafkaSet[`urn:${channelName}:${clientId}:${timeout}`]
   }
 }
