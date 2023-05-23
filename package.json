@@ -54,6 +54,7 @@
     "glossy": "0.1.7",
     "handlebars": "^4.7.7",
     "jsonwebtoken": "^8.5.1",
+    "kafkajs": "^2.2.4",
     "kcors": "2.2.2",
     "koa": "^2.13.0",
     "koa-bodyparser": "^4.3.0",

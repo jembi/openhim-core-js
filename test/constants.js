@@ -64,5 +64,8 @@ export const MEDIATOR_REPONSE = Object.freeze({
   properties: {
     prop1: 'val1',
     prop2: 'val2'
+  },
+  metrics: {
+    prop1: 'val1'
   }
 })

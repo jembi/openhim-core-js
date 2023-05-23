@@ -38,7 +38,9 @@ The following config option are provided by the OpenHIM. All of these options ha
     // forward  them to other services
     "httpsPort": 5000,
     // The timeout for requests that the OpenHIM makes to other services (in milliseconds)
-    "timeout": 60000
+    "timeout": 60000,
+    // The comma seperated list of kafka broker connection strings
+    "kafkaBrokers": "localhost:9092,localhost:9093"
   },
   "api": {
     // The session secret key used for the hashing of signed cookie (used to detect if the client modified the cookie)

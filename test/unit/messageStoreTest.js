@@ -148,7 +148,7 @@ describe('MessageStore', () => {
     it('should fail to save invalid transaction', done => {
       ctx.authorisedChannel._id = 'Invalid_ID'
 
-      messageStore.storeTransaction(ctx, (error) => {
+      messageStore.storeTransaction(ctx, error => {
         error.message.should.match(/Transaction validation failed/)
         return done()
       })

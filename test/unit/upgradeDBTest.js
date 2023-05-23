@@ -468,8 +468,8 @@ describe('Upgrade DB Tests', () => {
     })
 
     beforeEach(async () => {
-      const res1 = await new UserModel(userObj1).save()
-      const res2 = await new UserModel(userObj2).save()
+      await new UserModel(userObj1).save()
+      await new UserModel(userObj2).save()
     })
 
     it('should migrate password properties of token auth strategy from User to Passport collection', async () => {

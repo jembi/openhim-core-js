@@ -4,22 +4,37 @@ import patchHistory from 'mongoose-patch-history'
 import {Schema} from 'mongoose'
 import {camelize, pascalize} from 'humps'
 
+import {KafkaProducerManager} from '../kafkaProducerManager'
 import {ContactUserDef} from './contactGroups'
-import {connectionAPI, connectionDefault} from '../config'
+import {connectionAPI, connectionDefault, config} from '../config'
+
+config.router = config.get('router')
+
+export let producerSingleton = []
 
 const RouteDef = {
   name: {
     type: String,
     required: true
   },
+  type: {
+    type: String,
+    default: 'http',
+    enum: ['http', 'kafka']
+  },
+  cert: Schema.Types.ObjectId,
+  status: {
+    type: String,
+    default: 'enabled',
+    enum: ['enabled', 'disabled']
+  },
+  // HTTP route definition
   secured: Boolean,
   host: {
-    type: String,
-    required: true
+    type: String
   },
   port: {
     type: Number,
-    required: true,
     min: 0,
     max: 65536
   },
@@ -28,21 +43,14 @@ const RouteDef = {
   primary: Boolean,
   username: String,
   password: String,
-  type: {
-    type: String,
-    default: 'http',
-    enum: ['http', 'tcp', 'mllp']
-  },
-  cert: Schema.Types.ObjectId,
-  status: {
-    type: String,
-    default: 'enabled',
-    enum: ['enabled', 'disabled']
-  },
   forwardAuthHeader: {
     type: Boolean,
     default: false
-  }
+  },
+  waitPrimaryResponse: Boolean,
+  statusCodesCheck: String,
+  kafkaClientId: String,
+  kafkaTopic: String
 }
 
 // Channel alerts
@@ -214,6 +222,72 @@ export {RouteDef}
  * of users or group that are authorised to send messages to this channel.
  */
 const ChannelSchema = new Schema(ChannelDef)
+
+// "pre" is a middleware that will run before the update takes place, 'this' will contain the new channel details
+ChannelSchema.pre('save', async function (next) {
+  const timeout = this.timeout ?? +config.router.timeout
+  const kafkaRoutes = this.routes.filter(e => e.type === 'kafka')
+
+  let originalKafkaDetails = await ChannelModel.aggregate([
+    {$match: {_id: this._id}},
+    {
+      $project: {
+        timeout,
+        routes: {
+          $filter: {
+            input: '$routes',
+            as: 'route',
+            cond: {$eq: ['$$route.type', 'kafka']}
+          }
+        }
+      }
+    }
+  ])
+
+  let originalKafkaItem
+  // We need to cross reference the original, not-yet modified, routes
+  // against the incoming dirty routes to see if any were removed and if so remove them from the manager
+  if (Array.isArray(originalKafkaDetails))
+    originalKafkaItem = originalKafkaDetails[0]
+  if (originalKafkaItem && originalKafkaItem.routes.length > 0) {
+    for (let route of originalKafkaItem.routes) {
+      const isTimeoutUpdated = originalKafkaItem.timeout !== this.timeout
+      const matchingRoute = kafkaRoutes.find(
+        e => e.kafkaClientId === route.kafkaClientId && e.name === route.name
+      )
+
+      // if we do not match to a route it means the dirty routes no longer has this route
+      // so we need to remove it from the kafka connection as it's about to be deleted
+      // if the timeout is changed, then all current routes will be invalid
+      // and will need to recreate the kafka connection with the new timeout
+      if (!matchingRoute || isTimeoutUpdated) {
+        // if timeout is null on the original document, it was set to the default
+        // so pull that out from the config before trying to remove connections
+        const originalTimeout =
+          originalKafkaItem.timeout ?? +config.router.timeout
+        await KafkaProducerManager.removeConnection(
+          this.name,
+          route.kafkaClientId,
+          originalTimeout
+        )
+      }
+    }
+  }
+
+  // remove kafka connections if either the entire channel is disabled
+  // or the kafka specific route is set to disabled
+  for (let route of kafkaRoutes) {
+    if (route.status !== 'enabled' || this.status !== 'enabled') {
+      await KafkaProducerManager.removeConnection(
+        this.name,
+        route.kafkaClientId,
+        timeout
+      )
+    }
+  }
+
+  next()
+})
 
 // Use the patch history plugin to audit changes to channels
 ChannelSchema.plugin(patchHistory, {

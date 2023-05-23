@@ -111,12 +111,9 @@ export const login = async (
         if (!passport) {
           return createOrUpdateUser(user)
             .then(function (retrievedUser) {
-              return PassportModelAPI.create(
-                newPassport,
-                function () {
-                  next(null, retrievedUser)
-                }
-              )
+              return PassportModelAPI.create(newPassport, function () {
+                next(null, retrievedUser)
+              })
             })
             .catch(next)
         }
