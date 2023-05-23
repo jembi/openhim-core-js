@@ -3,8 +3,8 @@
 /* eslint-env mocha */
 
 import sinon from 'sinon'
-import logger from 'winston';
-import {KafkaProducer} from '../../src/kafkaProducer';
+import logger from 'winston'
+import {KafkaProducer} from '../../src/kafkaProducer'
 
 describe('Kafka Producer Test', () => {
   describe('connect', () => {
@@ -36,7 +36,9 @@ describe('Kafka Producer Test', () => {
     it('should log when disconnect throws and not update connected', async () => {
       const loggerSpy = sinon.spy(logger, 'error')
       const producer = new KafkaProducer('test', 60000)
-      producer._producer.disconnect = sinon.stub().returns(Promise.reject(new Error('bad test')))
+      producer._producer.disconnect = sinon
+        .stub()
+        .returns(Promise.reject(new Error('bad test')))
       producer._producer.connect = sinon.stub()
       await producer.connect()
       producer.isConnected.should.be.true

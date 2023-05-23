@@ -7,13 +7,13 @@ import fs from 'fs'
 import sinon from 'sinon'
 import should from 'should'
 import {promisify} from 'util'
-import logger from 'winston';
+import logger from 'winston'
 
 import * as constants from '../constants'
 import * as router from '../../src/middleware/router'
 import * as testUtils from '../utils'
 import {CertificateModel, KeystoreModel} from '../../src/model'
-import * as kafkaProducer from '../../src/kafkaProducer';
+import * as kafkaProducer from '../../src/kafkaProducer'
 
 const DEFAULT_CHANNEL = Object.freeze({
   name: 'Mock endpoint',
@@ -73,21 +73,23 @@ describe('HTTP Router', () => {
     describe('kafka single route', () => {
       let server
       let kafkaProducerInstanceMock
-      let kafkaProducerMock = { restore: () => {} }
+      let kafkaProducerMock = {restore: () => {}}
 
       afterEach(async () => {
         if (server != null) {
           await server.close()
           server = null
         }
-        kafkaProducerMock.restore();
+        kafkaProducerMock.restore()
       })
 
       it('should publish the request to the correct kafka topic', async () => {
-        kafkaProducerInstanceMock = testUtils.getMockKafkaProducer();
-        kafkaProducerMock = sinon.stub(kafkaProducer, "KafkaProducer").callsFake(() => kafkaProducerInstanceMock)
+        kafkaProducerInstanceMock = testUtils.getMockKafkaProducer()
+        kafkaProducerMock = sinon
+          .stub(kafkaProducer, 'KafkaProducer')
+          .callsFake(() => kafkaProducerInstanceMock)
         server = await testUtils.createMockHttpServer(
-          "test",
+          'test',
           constants.HTTP_PORT,
           200
         )
@@ -96,12 +98,11 @@ describe('HTTP Router', () => {
 
         ctx.response.status.should.be.exactly(200)
         const responseBody = JSON.parse(ctx.response.body)
-        responseBody[0].topicName.should.be.eql('test') 
-        kafkaProducerInstanceMock.producer.connect.called.should.be.true;
-        const sendCall = kafkaProducerInstanceMock.producer.send.getCall(0);
+        responseBody[0].topicName.should.be.eql('test')
+        kafkaProducerInstanceMock.producer.connect.called.should.be.true
+        const sendCall = kafkaProducerInstanceMock.producer.send.getCall(0)
         sendCall.firstArg.topic.should.be.eql('test')
       })
-
     })
 
     describe('single route', () => {
@@ -379,14 +380,16 @@ describe('HTTP Router', () => {
       let kafkaProducerMock
 
       beforeEach(() => {
-        kafkaProducerInstanceMock = testUtils.getMockKafkaProducer();
-        kafkaProducerMock = sinon.stub(kafkaProducer, "KafkaProducer").callsFake(() => kafkaProducerInstanceMock)
+        kafkaProducerInstanceMock = testUtils.getMockKafkaProducer()
+        kafkaProducerMock = sinon
+          .stub(kafkaProducer, 'KafkaProducer')
+          .callsFake(() => kafkaProducerInstanceMock)
       })
 
       afterEach(async () => {
         await Promise.all(servers.map(s => s.close()))
         servers.length = 0
-        kafkaProducerMock.restore();
+        kafkaProducerMock.restore()
       })
 
       const NON_PRIMARY1_PORT = constants.PORT_START + 101
@@ -465,19 +468,25 @@ describe('HTTP Router', () => {
         await testUtils.setImmediatePromise()
 
         ctx.routes.length.should.be.exactly(3)
-        const nonPrimary1 = ctx.routes.find(route => route.name === "non_primary_1")
+        const nonPrimary1 = ctx.routes.find(
+          route => route.name === 'non_primary_1'
+        )
         nonPrimary1.response.status.should.be.exactly(200)
         nonPrimary1.response.body.toString().should.be.eql('Non Primary 1')
         nonPrimary1.response.headers.should.be.ok
         nonPrimary1.request.path.should.be.exactly('/test/multicasting')
         nonPrimary1.request.timestamp.should.be.exactly(requestTimestamp)
-        const nonPrimary2 = ctx.routes.find(route => route.name === "non_primary_2")
+        const nonPrimary2 = ctx.routes.find(
+          route => route.name === 'non_primary_2'
+        )
         nonPrimary2.response.status.should.be.exactly(400)
         nonPrimary2.response.body.toString().should.be.eql('Non Primary 2')
         nonPrimary2.response.headers.should.be.ok
         nonPrimary2.request.path.should.be.exactly('/test/multicasting')
         nonPrimary2.request.timestamp.should.be.exactly(requestTimestamp)
-        const nonPrimaryKafka = ctx.routes.find(route => route.name === "non_primary_kafka")
+        const nonPrimaryKafka = ctx.routes.find(
+          route => route.name === 'non_primary_kafka'
+        )
         nonPrimaryKafka.response.status.should.be.exactly(200)
         nonPrimaryKafka.response.body.should.be.ok
         nonPrimaryKafka.request.timestamp.should.be.exactly(requestTimestamp)
@@ -524,7 +533,7 @@ describe('HTTP Router', () => {
         ])
 
         const ctx = createContext(channel, '/test/multicasting')
-        ctx.authorisedChannel.routes[2].status = 'disabled';
+        ctx.authorisedChannel.routes[2].status = 'disabled'
         ctx.authorisedChannel.routes[3].status = 'disabled'
         await promisify(router.route)(ctx)
         await testUtils.setImmediatePromise()
@@ -548,9 +557,11 @@ describe('HTTP Router', () => {
         ])
 
         const ctx = createContext(channel, '/test/multicasting')
-        let waitingRoute = ctx.authorisedChannel.routes.find(route => route.name === 'non_primary_1')
-        waitingRoute.waitPrimaryResponse = true;
-        waitingRoute.statusCodesCheck = '2**,3**,4**,5**';
+        let waitingRoute = ctx.authorisedChannel.routes.find(
+          route => route.name === 'non_primary_1'
+        )
+        waitingRoute.waitPrimaryResponse = true
+        waitingRoute.statusCodesCheck = '2**,3**,4**,5**'
 
         await promisify(router.route)(ctx)
         await testUtils.setImmediatePromise()
@@ -559,7 +570,7 @@ describe('HTTP Router', () => {
         await testUtils.setImmediatePromise()
         await testUtils.setImmediatePromise()
 
-        waitingRoute = ctx.routes.find(route => route.name === "non_primary_1")
+        waitingRoute = ctx.routes.find(route => route.name === 'non_primary_1')
         waitingRoute.response.status.should.be.exactly(200)
         waitingRoute.response.body.toString().should.be.eql('Non Primary 1')
         waitingRoute.response.headers.should.be.ok
@@ -583,9 +594,11 @@ describe('HTTP Router', () => {
         ])
 
         const ctx = createContext(channel, '/test/multicasting')
-        let waitingRoute = ctx.authorisedChannel.routes.find(route => route.name === 'non_primary_1')
-        waitingRoute.waitPrimaryResponse = true;
-        waitingRoute.statusCodesCheck = '500';
+        let waitingRoute = ctx.authorisedChannel.routes.find(
+          route => route.name === 'non_primary_1'
+        )
+        waitingRoute.waitPrimaryResponse = true
+        waitingRoute.statusCodesCheck = '500'
         await promisify(router.route)(ctx)
         await testUtils.setImmediatePromise()
 
@@ -975,7 +988,9 @@ describe('HTTP Router', () => {
         headers: {
           'content-type': 'text/xml',
           'x-header': 'anotherValue',
-          'set-cookie': ['maximus=Thegreat; max-age=18; Expires=2023-04-26; overwrite=true']
+          'set-cookie': [
+            'maximus=Thegreat; max-age=18; Expires=2023-04-26; overwrite=true'
+          ]
         },
         timestamp: new Date(),
         body: 'Mock response body'
@@ -987,7 +1002,7 @@ describe('HTTP Router', () => {
           path: false,
           httpOnly: false,
           maxage: 18,
-          expires: new Date("2023-04-26"),
+          expires: new Date('2023-04-26'),
           overwrite: true
         })
         .should.be.true()
@@ -996,10 +1011,10 @@ describe('HTTP Router', () => {
     it('should try parse the status code as an int if it received a string', () => {
       const ctx = createCtx()
       const response = {
-        status: "201",
+        status: '201',
         headers: {
           'content-type': 'text/xml',
-          'x-header': 'anotherValue',
+          'x-header': 'anotherValue'
         },
         timestamp: new Date(),
         body: 'Mock response body'
@@ -1014,10 +1029,10 @@ describe('HTTP Router', () => {
       const loggerSpy = sinon.spy(logger, 'error')
       const ctx = createCtx()
       const response = {
-        status: "foo201",
+        status: 'foo201',
         headers: {
           'content-type': 'text/xml',
-          'x-header': 'anotherValue',
+          'x-header': 'anotherValue'
         },
         timestamp: new Date(),
         body: 'Mock response body'
@@ -1026,7 +1041,7 @@ describe('HTTP Router', () => {
       router.setKoaResponse(ctx, response)
 
       loggerSpy.calledOnce.should.be.true
-      ctx.response.status.should.be.exactly("foo201")
+      ctx.response.status.should.be.exactly('foo201')
       return loggerSpy.restore()
     })
   })

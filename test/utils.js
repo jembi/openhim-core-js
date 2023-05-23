@@ -364,12 +364,12 @@ export function getMockKafkaProducer(topic = 'test', errorCode = 0) {
     }
   ]
   const kafkaInstance = {
-    connect: async function() {
+    connect: async function () {
       if (!this.bag) this.bag = {}
       await this.producer.connect()
       this.bag.isConnected = true
     },
-    disconnect: async function() {
+    disconnect: async function () {
       if (!this.bag) this.bag = {}
       await this.producer.disconnect()
       this.bag.isConnected = false
@@ -380,14 +380,14 @@ export function getMockKafkaProducer(topic = 'test', errorCode = 0) {
       disconnect: sinon.stub().returns(Promise.resolve())
     }
   }
-  Object.defineProperty(kafkaInstance, "isConnected", {
+  Object.defineProperty(kafkaInstance, 'isConnected', {
     get() {
       if (!this.bag) return false
       return this.bag.isConnected
     }
   })
 
-  return kafkaInstance;
+  return kafkaInstance
 }
 
 /**

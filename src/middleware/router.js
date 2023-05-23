@@ -33,14 +33,13 @@ const containsMultiplePrimaries = routes => numberOfPrimaryRoutes(routes) > 1
 
 function setKoaResponse(ctx, response) {
   // Try and parse the status to an int if it is a string
-  let err
   if (typeof response.status === 'string') {
-      const statusCode = parseInt(response.status, 10)
-      if (isNaN(response.status)) {
-        logger.error(`Failed to parse status code ${statusCode} to an int`)
-      } else {
-        response.status = statusCode
-      }
+    const statusCode = parseInt(response.status, 10)
+    if (isNaN(response.status)) {
+      logger.error(`Failed to parse status code ${statusCode} to an int`)
+    } else {
+      response.status = statusCode
+    }
   }
 
   ctx.response.status = response.status
@@ -120,7 +119,7 @@ function setCookiesOnContext(ctx, value) {
         case 'secure':
         case 'signed':
         case 'overwrite':
-          cOpts[pKeyL] = (pVal == 'true')
+          cOpts[pKeyL] = pVal == 'true'
           break
         case 'httponly':
           cOpts.httpOnly = pVal
@@ -517,7 +516,8 @@ function sendRequest(ctx, route, options) {
     ctx.orchestrations.push(buildOrchestration(response))
   }
 
-  const requestDelegate = route.type === 'kafka' ? sendKafkaRequest : sendHttpRequest
+  const requestDelegate =
+    route.type === 'kafka' ? sendKafkaRequest : sendHttpRequest
   return requestDelegate(ctx, route, options)
     .then(response => {
       recordOrchestration(response)
@@ -647,7 +647,7 @@ function sendHttpRequest(ctx, route, options) {
 function sendKafkaRequest(ctx, route) {
   return new Promise((resolve, reject) => {
     const timeout = route.timeout ?? +config.router.timeout
-    const channel = ctx.authorisedChannel;
+    const channel = ctx.authorisedChannel
 
     KafkaProducerManager.getProducer(channel.name, route.kafkaClientId, timeout)
       .then(producer => {

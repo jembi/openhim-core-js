@@ -4,9 +4,14 @@ export class KafkaProducerManager {
   static kafkaSet = {}
 
   static async getProducer(channelName, clientId, timeout) {
-    const kafkaInstance = this.findOrAddConnection(channelName, clientId, timeout)
+    const kafkaInstance = this.findOrAddConnection(
+      channelName,
+      clientId,
+      timeout
+    )
     if (!kafkaInstance.isConnected) await kafkaInstance.connect()
-    if (!kafkaInstance.isConnected) throw new Error('Kafka Producer failed to connect.')
+    if (!kafkaInstance.isConnected)
+      throw new Error('Kafka Producer failed to connect.')
 
     return kafkaInstance.producer
   }
@@ -18,7 +23,7 @@ export class KafkaProducerManager {
       this.kafkaSet[`${channelName}${clientId}${timeout}`] = kafkaInstance
     }
 
-    return kafkaInstance;
+    return kafkaInstance
   }
 
   static async removeConnection(channelName, clientId, timeout) {

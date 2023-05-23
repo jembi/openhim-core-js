@@ -14,7 +14,7 @@ import * as constants from '../constants'
 import * as polling from '../../src/polling'
 import * as server from '../../src/server'
 import * as tcpAdapter from '../../src/tcpAdapter'
-import * as kafkaProducer from '../../src/kafkaProducer';
+import * as kafkaProducer from '../../src/kafkaProducer'
 import * as testUtils from '../utils'
 import {ChannelModelAPI} from '../../src/model/channels'
 import {ClientModelAPI} from '../../src/model/clients'
@@ -1636,7 +1636,9 @@ describe('API Integration Tests', () => {
           ]
         }
         const kafkaProducerMock = testUtils.getMockKafkaProducer()
-        sandbox.stub(kafkaProducer, "KafkaProducer").callsFake(() => kafkaProducerMock)
+        sandbox
+          .stub(kafkaProducer, 'KafkaProducer')
+          .callsFake(() => kafkaProducerMock)
         KafkaProducerManager.getProducer('TestChannel3', 'test', 60000)
 
         await request(BASE_URL)
@@ -1645,7 +1647,7 @@ describe('API Integration Tests', () => {
           .send(updates)
           .expect(200)
 
-        const channel = await ChannelModelAPI.findOne({name: 'TestChannel3'})
+        await ChannelModelAPI.findOne({name: 'TestChannel3'})
         kafkaProducerMock.producer.disconnect.callCount.should.be.eql(1)
       })
 
@@ -1661,12 +1663,14 @@ describe('API Integration Tests', () => {
               primary: true,
               type: 'kafka',
               kafkaClientId: 'test',
-              kafkaTopic: 'test',
+              kafkaTopic: 'test'
             }
           ]
         }
         const kafkaProducerMock = testUtils.getMockKafkaProducer()
-        sandbox.stub(kafkaProducer, "KafkaProducer").callsFake(() => kafkaProducerMock)
+        sandbox
+          .stub(kafkaProducer, 'KafkaProducer')
+          .callsFake(() => kafkaProducerMock)
         KafkaProducerManager.getProducer('TestChannel3', 'test', 60000)
 
         await request(BASE_URL)
@@ -1675,7 +1679,7 @@ describe('API Integration Tests', () => {
           .send(updates)
           .expect(200)
 
-        const channel = await ChannelModelAPI.findOne({name: 'TestChannel3'})
+        await ChannelModelAPI.findOne({name: 'TestChannel3'})
         kafkaProducerMock.producer.disconnect.callCount.should.be.eql(1)
       })
 
@@ -1691,12 +1695,14 @@ describe('API Integration Tests', () => {
               primary: true,
               type: 'kafka',
               kafkaClientId: 'test2',
-              kafkaTopic: 'test2',
+              kafkaTopic: 'test2'
             }
           ]
         }
         const kafkaProducerMock = testUtils.getMockKafkaProducer()
-        sandbox.stub(kafkaProducer, "KafkaProducer").callsFake(() => kafkaProducerMock)
+        sandbox
+          .stub(kafkaProducer, 'KafkaProducer')
+          .callsFake(() => kafkaProducerMock)
         KafkaProducerManager.getProducer('TestChannel3', 'test', 60000)
 
         await request(BASE_URL)
@@ -1705,7 +1711,7 @@ describe('API Integration Tests', () => {
           .send(updates)
           .expect(200)
 
-        const channel = await ChannelModelAPI.findOne({name: 'TestChannel3'})
+        await ChannelModelAPI.findOne({name: 'TestChannel3'})
         kafkaProducerMock.producer.disconnect.callCount.should.be.eql(1)
       })
     })

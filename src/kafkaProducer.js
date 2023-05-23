@@ -34,7 +34,7 @@ export class KafkaProducer {
 
   constructor(clientId, timeout) {
     if (clientId) {
-      let brokers = config.router.kafkaBrokers;
+      let brokers = config.router.kafkaBrokers
       brokers = brokers.replace(/"/g, '').split(',')
 
       const kafka = new Kafka({
