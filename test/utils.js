@@ -356,6 +356,40 @@ export function createSpyWithResolve(spyFnOrContent) {
   return spy
 }
 
+export function getMockKafkaProducer(topic = 'test', errorCode = 0) {
+  const kafkaResponse = [
+    {
+      topicName: topic,
+      errorCode: errorCode
+    }
+  ]
+  const kafkaInstance = {
+    connect: async function () {
+      if (!this.bag) this.bag = {}
+      await this.producer.connect()
+      this.bag.isConnected = true
+    },
+    disconnect: async function () {
+      if (!this.bag) this.bag = {}
+      await this.producer.disconnect()
+      this.bag.isConnected = false
+    },
+    producer: {
+      send: sinon.stub().returns(Promise.resolve(kafkaResponse)),
+      connect: sinon.stub().returns(Promise.resolve()),
+      disconnect: sinon.stub().returns(Promise.resolve())
+    }
+  }
+  Object.defineProperty(kafkaInstance, 'isConnected', {
+    get() {
+      if (!this.bag) return false
+      return this.bag.isConnected
+    }
+  })
+
+  return kafkaInstance
+}
+
 /**
  * Creates a static server
  *

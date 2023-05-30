@@ -14,11 +14,13 @@ import * as constants from '../constants'
 import * as polling from '../../src/polling'
 import * as server from '../../src/server'
 import * as tcpAdapter from '../../src/tcpAdapter'
+import * as kafkaProducer from '../../src/kafkaProducer'
 import * as testUtils from '../utils'
 import {ChannelModelAPI} from '../../src/model/channels'
 import {ClientModelAPI} from '../../src/model/clients'
 import {TransactionModelAPI} from '../../src/model/transactions'
 import {config} from '../../src/config'
+import {KafkaProducerManager} from '../../src/kafkaProducerManager'
 
 const {SERVER_PORTS, BASE_URL} = constants
 let sandbox = sinon.createSandbox()
@@ -65,6 +67,28 @@ describe('API Integration Tests', () => {
       }
     }
 
+    const channel3 = {
+      name: 'TestChannel3',
+      urlPattern: 'test/sample',
+      allow: ['PoC', 'Test1', 'Test2'],
+      routes: [
+        {
+          name: 'test route',
+          host: 'localhost',
+          port: 9876,
+          primary: true,
+          type: 'kafka',
+          kafkaClientId: 'test',
+          kafkaTopic: 'test'
+        }
+      ],
+      txViewAcl: 'aGroup',
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
+    }
+
     let rootCookie = '',
       nonRootCookie = ''
 
@@ -103,6 +127,8 @@ describe('API Integration Tests', () => {
       channel1._id = ch1._id
       const ch2 = await new ChannelModelAPI(channel2).save()
       channel2._id = ch2._id
+      const ch3 = await new ChannelModelAPI(channel3).save()
+      channel3._id = ch3._id
       sandbox.stub(tcpAdapter, 'notifyMasterToStartTCPServer')
       sandbox.stub(tcpAdapter, 'notifyMasterToStopTCPServer')
 
@@ -124,7 +150,7 @@ describe('API Integration Tests', () => {
           .get('/channels')
           .set('Cookie', rootCookie)
           .expect(200)
-        result.body.length.should.be.eql(2)
+        result.body.length.should.be.eql(3)
       })
 
       it('should only allow non root user to fetch channel that they are allowed to view', async () => {
@@ -254,7 +280,7 @@ describe('API Integration Tests', () => {
               host: 'localhost',
               port: 9876,
               primary: true,
-              type: 'tcp'
+              type: 'http'
             }
           ]
         }
@@ -282,7 +308,7 @@ describe('API Integration Tests', () => {
               host: 'localhost',
               port: 9876,
               primary: true,
-              type: 'tcp'
+              type: 'http'
             }
           ],
           status: 'disabled'
@@ -1586,6 +1612,107 @@ describe('API Integration Tests', () => {
 
         const channel = await ChannelModelAPI.findById(channelId)
         channel.timeout.should.eql(10)
+      })
+
+      it('should disconnect connected kafka connections if those routes are disabled', async () => {
+        const updates = {
+          _id: 'thisShouldBeIgnored',
+          allow: ['PoC', 'Test1', 'Test2'],
+          routes: [
+            {
+              name: 'test route',
+              host: 'localhost',
+              type: 'kafka',
+              kafkaClientId: 'test',
+              kafkaTopic: 'test',
+              status: 'disabled'
+            },
+            {
+              name: 'test route2',
+              host: 'localhost',
+              port: 8899,
+              primary: true
+            }
+          ]
+        }
+        const kafkaProducerMock = testUtils.getMockKafkaProducer()
+        sandbox
+          .stub(kafkaProducer, 'KafkaProducer')
+          .callsFake(() => kafkaProducerMock)
+        KafkaProducerManager.getProducer('TestChannel3', 'test', 60000)
+
+        await request(BASE_URL)
+          .put(`/channels/${channel3._id}`)
+          .set('Cookie', rootCookie)
+          .send(updates)
+          .expect(200)
+
+        await ChannelModelAPI.findOne({name: 'TestChannel3'})
+        kafkaProducerMock.producer.disconnect.callCount.should.be.eql(1)
+      })
+
+      it('should disconnect connected kafka connections if the channel timeout is changed', async () => {
+        const updates = {
+          _id: 'thisShouldBeIgnored',
+          allow: ['PoC', 'Test1', 'Test2'],
+          timeout: 5000,
+          routes: [
+            {
+              name: 'test route',
+              host: 'localhost',
+              primary: true,
+              type: 'kafka',
+              kafkaClientId: 'test',
+              kafkaTopic: 'test'
+            }
+          ]
+        }
+        const kafkaProducerMock = testUtils.getMockKafkaProducer()
+        sandbox
+          .stub(kafkaProducer, 'KafkaProducer')
+          .callsFake(() => kafkaProducerMock)
+        KafkaProducerManager.getProducer('TestChannel3', 'test', 60000)
+
+        await request(BASE_URL)
+          .put(`/channels/${channel3._id}`)
+          .set('Cookie', rootCookie)
+          .send(updates)
+          .expect(200)
+
+        await ChannelModelAPI.findOne({name: 'TestChannel3'})
+        kafkaProducerMock.producer.disconnect.callCount.should.be.eql(1)
+      })
+
+      it('should disconnect a connected kafka connection if the route is deleted', async () => {
+        const updates = {
+          _id: 'thisShouldBeIgnored',
+          allow: ['PoC', 'Test1', 'Test2'],
+          timeout: 5000,
+          routes: [
+            {
+              name: 'new route',
+              host: 'localhost',
+              primary: true,
+              type: 'kafka',
+              kafkaClientId: 'test2',
+              kafkaTopic: 'test2'
+            }
+          ]
+        }
+        const kafkaProducerMock = testUtils.getMockKafkaProducer()
+        sandbox
+          .stub(kafkaProducer, 'KafkaProducer')
+          .callsFake(() => kafkaProducerMock)
+        KafkaProducerManager.getProducer('TestChannel3', 'test', 60000)
+
+        await request(BASE_URL)
+          .put(`/channels/${channel3._id}`)
+          .set('Cookie', rootCookie)
+          .send(updates)
+          .expect(200)
+
+        await ChannelModelAPI.findOne({name: 'TestChannel3'})
+        kafkaProducerMock.producer.disconnect.callCount.should.be.eql(1)
       })
     })
 

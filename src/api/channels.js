@@ -475,7 +475,7 @@ export async function updateChannel(ctx, channelId) {
   }
 }
 
-function processPostDeleteTriggers(channel) {
+async function processPostDeleteTriggers(channel) {
   if (channel.type) {
     if (
       (channel.type === 'tcp' || channel.type === 'tls') &&
@@ -536,7 +536,7 @@ export async function removeChannel(ctx, channelId) {
     ctx.body = 'The channel was successfully deleted'
     logger.info(`User ${ctx.authenticated.email} removed channel with id ${id}`)
 
-    return processPostDeleteTriggers(channel)
+    return await processPostDeleteTriggers(channel)
   } catch (err) {
     // Error! So inform the user
     utils.logAndSetResponse(
