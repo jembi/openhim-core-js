@@ -64,6 +64,22 @@ export function setupApp(done) {
   // Passport load strategies: local basic
   passport.loadStrategies()
 
+  // This function is a workaround to the issue of passport version 6.x
+  // To be removed when a later version get released
+  // See https://github.com/jaredhanson/passport/issues/904
+  app.use(function (ctx, next) {
+    if (ctx.req.user) {
+      if (!ctx.req.session) ctx.req.session = {}
+      ctx.req.session.save = cb => {
+        cb()
+      }
+      ctx.req.session.regenerate = cb => {
+        cb()
+      }
+    }
+    return next()
+  })
+
   // Expose uptime server stats route before the auth middleware so that it is publicly accessible
   app.use(route.get('/heartbeat', heartbeat.getHeartbeat))
 
