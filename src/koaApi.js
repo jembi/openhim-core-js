@@ -75,12 +75,8 @@ export function setupApp(done) {
   app.use(function (ctx, next) {
     if (ctx.req.user) {
       if (!ctx.req.session) ctx.req.session = {}
-      ctx.req.session.save = cb => {
-        cb()
-      }
-      ctx.req.session.regenerate = cb => {
-        cb()
-      }
+      if (!ctx.req.session.save) ctx.req.session.save = cb => cb()
+      if (!ctx.req.session.regenerate) ctx.req.session.regenerate = cb => cb()
     }
     return next()
   })
