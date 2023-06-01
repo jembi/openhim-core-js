@@ -29,7 +29,7 @@
   },
   "bodyCull":{
     "enabled":true,
-    "pollPeriodMins": 2
+    "pollPeriodMins": 60
   },
   "api": {
     "sessionKey": "r8q,+&1LM3)CD*zAGpx1xm{NeQhc;#",
