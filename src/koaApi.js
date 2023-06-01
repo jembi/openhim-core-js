@@ -40,12 +40,17 @@ export function setupApp(done) {
 
   // Configure Sessions Middleware
   app.keys = [config.api.sessionKey]
+  
+  if (config.api.trustProxy) {
+    app.proxy = true
+  }
+  
   app.use(
     session(
       {
         maxAge: config.api.maxAge || 7200000,
         resave: false,
-        secure: true,
+        secure: config.api.secureCookie,
         httpOnly: true,
         sameSite: 'none',
         store: new MongooseStore()

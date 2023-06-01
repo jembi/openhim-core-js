@@ -46,6 +46,10 @@ The following config option are provided by the OpenHIM. All of these options ha
     // The session secret key used for the hashing of signed cookie (used to detect if the client modified the cookie)
     // Signed cookie is another cookie of the same name with the .sig suffix appended
     "sessionKey": "r8q,+&1LM3)CD*zAGpx1xm{NeQhc;#",
+    // If OpenHIM is behind a proxy (should be `true` if the proxy sends relevant Forwarded headers)
+    "trustProxy": false,
+    // Secure the cookie (either protocol is https or trusting a secured proxy)
+    secureCookie: true,
     // The session max age is the session cookie expiration time (in milliseconds)
     "maxAge": 7200000,
     // The number of characters that will be used to generate a random salt for the encryption of passwords
