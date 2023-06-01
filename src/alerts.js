@@ -132,7 +132,7 @@ Please note that they will not be retried any further by the OpenHIM automatical
   }
 })
 
-const getAllChannels = callback => ChannelModel.find({}, callback)
+const getAllChannels = callback => ChannelModel.find({}).exec(callback)
 
 const findGroup = (groupID, callback) =>
   ContactGroupModel.findOne({_id: groupID}, callback)

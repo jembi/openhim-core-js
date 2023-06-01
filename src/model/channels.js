@@ -1,6 +1,6 @@
 'use strict'
 
-import patchHistory from 'mongoose-patch-history'
+// import patchHistory from 'mongoose-patch-history'
 import {Schema} from 'mongoose'
 import {camelize, pascalize} from 'humps'
 
@@ -289,21 +289,21 @@ ChannelSchema.pre('save', async function (next) {
   next()
 })
 
-// Use the patch history plugin to audit changes to channels
-ChannelSchema.plugin(patchHistory, {
-  mongoose: connectionDefault,
-  name: 'ChannelAudits',
-  transforms: [pascalize, camelize],
-  includes: {
-    updatedBy: {
-      type: {
-        id: Schema.Types.ObjectId,
-        name: String
-      },
-      required: true
-    }
-  }
-})
+// // Use the patch history plugin to audit changes to channels
+// ChannelSchema.plugin(patchHistory, {
+//   mongoose: connectionDefault,
+//   name: 'ChannelAudits',
+//   transforms: [pascalize, camelize],
+//   includes: {
+//     updatedBy: {
+//       type: {
+//         id: Schema.Types.ObjectId,
+//         name: String
+//       },
+//       required: true
+//     }
+//   }
+// })
 
 // Create a unique index on the name field
 ChannelSchema.index('name', {unique: true})

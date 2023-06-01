@@ -42,7 +42,7 @@ class MongooseStore {
     if (changed || rolling) {
       const {session} = this
       const record = {_id: id, data, updatedAt: new Date()}
-      await session.findByIdAndUpdate(id, record, {upsert: true, safe: true})
+      await session.findByIdAndUpdate(id, record, {upsert: true, writeConcern: {w: "majority", wtimeout: 10000}})
     }
     return data
   }

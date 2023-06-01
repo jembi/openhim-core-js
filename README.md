@@ -18,12 +18,13 @@ See the [development road-map](http://openhim.org/docs/introduction/roadmap) for
 
 ## Requirements
 
-Last 2 versions of NodeJS LTS are supported
+Currently supported versions of NodeJS LTS are
 
 | NodeJS (LTS) | MongoDB                    |
 | ------------ | -------------------------- |
-| 10.x         | >= 3.6 &#124;&#124; <= 4.2 |
-| 12.x         | >= 3.6 &#124;&#124; <= 4.2 |
+|  14.2x.x     | >= 3.6 &#124;&#124; <= 4.2 |
+|  15.x        | >= 3.6 &#124;&#124; <= 4.2 |
+
 
 - [NodeJS Release Versions](https://github.com/nodejs/Release)
 - [MongoDB NodeJS Driver Versions](https://mongodb.github.io/node-mongodb-native/)
