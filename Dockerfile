@@ -1,4 +1,4 @@
-FROM node:14.17-alpine
+FROM node:14.21.3-alpine
 
 RUN apk upgrade --update-cache --available && \
     apk add openssl && \
