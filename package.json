@@ -63,7 +63,7 @@
     "koa-compress": "^5.1.0",
     "koa-passport": "^6.0.0",
     "koa-route": "3.2.0",
-    "koa-session": "^6.3.1",
+    "koa-session": "^6.4.0",
     "lodash": "^4.17.20",
     "moment": "^2.29.1",
     "moment-timezone": "^0.5.31",
