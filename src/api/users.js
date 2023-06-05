@@ -121,7 +121,8 @@ export const logout = async function (ctx) {
   // See https://github.com/jaredhanson/passport/issues/904
   // Also see https://github.com/rkusa/koa-passport/issues/181
   if (ctx.req.user) {
-    if (!ctx.req.session) ctx.req.session = {}
+    // try preserve the session if possible, otherwise recreate necessary methods
+    if (!ctx.req.session) ctx.req.session = ctx.session ?? {}
     if (!ctx.req.session.save) ctx.req.session.save = cb => cb()
     if (!ctx.req.session.regenerate) ctx.req.session.regenerate = cb => cb()
   }
