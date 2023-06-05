@@ -8,6 +8,8 @@ RUN npm install && npm run build
 
 FROM node:14.21.3-alpine
 
+ENV NODE_ENV=production
+
 RUN apk upgrade --update-cache --available && \
     apk add openssl && \
     rm -rf /var/cache/apk/*
