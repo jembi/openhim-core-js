@@ -38,12 +38,10 @@ class MongooseStore {
     return data
   }
 
-  async set(id, data, maxAge, {changed, rolling}) {
-    if (changed || rolling) {
-      const {session} = this
-      const record = {_id: id, data, updatedAt: new Date()}
-      await session.findByIdAndUpdate(id, record, {upsert: true, writeConcern: {w: "majority", wtimeout: 10000}})
-    }
+  async set(id, data) {
+    const {session} = this
+    const record = {_id: id, data, updatedAt: new Date()}
+    await session.findByIdAndUpdate(id, record, {upsert: true, writeConcern: {w: "majority", wtimeout: 10000}})
     return data
   }
 
