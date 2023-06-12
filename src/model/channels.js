@@ -1,13 +1,11 @@
 'use strict'
 
-import patchHistory from 'mongoose-patch-history'
+import patchHistory from 'mongoose-patch-audit'
 import {Schema} from 'mongoose'
-import {camelize, pascalize} from 'humps'
 
 import {KafkaProducerManager} from '../kafkaProducerManager'
 import {ContactUserDef} from './contactGroups'
 import {connectionAPI, connectionDefault, config} from '../config'
-
 config.router = config.get('router')
 
 export let producerSingleton = []
@@ -292,12 +290,11 @@ ChannelSchema.pre('save', async function (next) {
 // Use the patch history plugin to audit changes to channels
 ChannelSchema.plugin(patchHistory, {
   mongoose: connectionDefault,
+  schema: Schema,
   name: 'ChannelAudits',
-  transforms: [pascalize, camelize],
   includes: {
     updatedBy: {
       type: {
-        id: Schema.Types.ObjectId,
         name: String
       },
       required: true

@@ -136,8 +136,8 @@ export async function getTransactions(ctx) {
     const filtersObject = ctx.request.query
 
     // get limit and page values
-    const {filterLimit} = filtersObject
-    const {filterPage} = filtersObject
+    const {filterLimit = 0} = filtersObject
+    const {filterPage = 0} = filtersObject
     let {filterRepresentation} = filtersObject
 
     // remove limit/page/filterRepresentation values from filtersObject (Not apart of filtering and will break filter if present)

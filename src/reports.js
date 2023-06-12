@@ -291,11 +291,11 @@ function fetchChannelReport(channel, user, flag, from, to, callback) {
 }
 
 const fetchDailySubscribers = callback => {
-  UserModel.find({dailyReport: true}, callback)
+  UserModel.find({dailyReport: true}).exec(callback)
 }
 
 const fetchWeeklySubscribers = callback => {
-  UserModel.find({weeklyReport: true}, callback)
+  UserModel.find({weeklyReport: true}).exec(callback)
 }
 
 function plainTemplate(report) {

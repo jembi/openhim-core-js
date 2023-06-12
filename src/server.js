@@ -474,7 +474,7 @@ if (cluster.isMaster && !module.parent) {
 
   // Ensure that a root user always exists
   const ensureRootUser = async callback =>
-    await UserModel.findOne({email: 'root@openhim.org'}, async (err, user) => {
+    UserModel.findOne({email: 'root@openhim.org'}).exec(async (err, user) => {
       if (err) {
         return callback(err)
       }

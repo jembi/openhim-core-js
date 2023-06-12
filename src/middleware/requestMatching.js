@@ -2,7 +2,7 @@
 
 import logger from 'winston'
 import xpath from 'xpath'
-import {DOMParser as Dom} from 'xmldom'
+import {DOMParser as Dom} from '@xmldom/xmldom'
 import {promisify} from 'util'
 
 import * as Channels from '../model/channels'

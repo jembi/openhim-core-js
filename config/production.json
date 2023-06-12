@@ -1,0 +1,7 @@
+{
+  "logger": {
+    "level": "warn",
+    "logToDB": true,
+    "capDBLogs": false
+  }
+}

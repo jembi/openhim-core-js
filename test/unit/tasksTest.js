@@ -373,8 +373,19 @@ describe('Rerun Task Tests', () => {
       await clearTasksFn()
     })
 
-    it(`will not throw if it doesn't find any tasks`, async () => {
+    it("will not throw if it doesn't find any tasks", async () => {
       await tasks.findAndProcessAQueuedTask().should.not.rejected()
+    })
+
+    it("should return without processing if active tasks is greater than max active", async () => {
+      const spy = sinon.spy(TaskModel, "findOneAndUpdate")
+      config.rerun.activeConcurrentTasks = -1
+      
+      await tasks.findAndProcessAQueuedTask()
+      spy.called.should.be.false
+
+      config.rerun.activeConcurrentTasks = 3
+      spy.restore()
     })
 
     it('will process empty tasks', async () => {

@@ -1,4 +1,14 @@
-FROM node:14.17-alpine
+FROM node:14.21.3-alpine as build
+
+WORKDIR /build
+
+COPY . .
+
+RUN npm install && npm run build
+
+FROM node:14.21.3-alpine
+
+ENV NODE_ENV=production
 
 RUN apk upgrade --update-cache --available && \
     apk add openssl && \
@@ -6,10 +16,10 @@ RUN apk upgrade --update-cache --available && \
 
 WORKDIR /app
 
+COPY --from=build ./build/lib ./lib
+
 COPY . .
 
-RUN npm install
-
-RUN npm run build
+RUN npm install --production
 
 CMD ["node", "lib/server.js"]

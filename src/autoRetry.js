@@ -32,7 +32,7 @@ export async function queueForRetry(tx) {
 }
 
 const getChannels = callback =>
-  ChannelModel.find({autoRetryEnabled: true, status: 'enabled'}, callback)
+  ChannelModel.find({autoRetryEnabled: true, status: 'enabled'}).exec(callback)
 
 function popTransactions(channel, callback) {
   const to = moment().subtract(channel.autoRetryPeriodMinutes - 1, 'minutes')

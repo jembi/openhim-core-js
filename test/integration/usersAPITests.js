@@ -646,7 +646,7 @@ describe('API Integration Tests', () => {
           .set('Cookie', cookie)
           .expect(200)
 
-        const users = await UserModelAPI.find({name: 'bfm@crazy.net'})
+        const users = await UserModelAPI.find({email: 'bfm@crazy.net'})
         users.should.have.length(0)
       })
 
@@ -659,7 +659,7 @@ describe('API Integration Tests', () => {
           .set('Cookie', cookie)
           .expect(200)
 
-        const users = await UserModelAPI.find({name: user2.email})
+        const users = await UserModelAPI.find({email: user2.email})
         users.should.have.length(0)
       })
 
@@ -1244,7 +1244,7 @@ describe('API Integration Tests', () => {
           .set('auth-token', authDetails.authToken)
           .expect(200)
 
-        const users = await UserModelAPI.find({name: 'bfm@crazy.net'})
+        const users = await UserModelAPI.find({email: 'bfm@crazy.net'})
         users.should.have.length(0)
       })
 
@@ -1257,7 +1257,7 @@ describe('API Integration Tests', () => {
           .set('auth-token', authDetails.authToken)
           .expect(200)
 
-        const users = await UserModelAPI.find({name: user2.email})
+        const users = await UserModelAPI.find({email: user2.email})
         users.should.have.length(0)
       })
 

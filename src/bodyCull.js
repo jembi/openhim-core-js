@@ -53,9 +53,9 @@ async function clearTransactions(channel) {
   const updateResp = await TransactionModel.updateMany(query, {
     $unset: {'request.body': '', 'response.body': ''}
   })
-  if (updateResp.nModified > 0) {
+  if (updateResp.modifiedCount > 0) {
     logger.info(
-      `Culled ${updateResp.nModified} transactions for channel ${channel.name}`
+      `Culled ${updateResp.modifiedCount} transactions for channel ${channel.name}`
     )
   }
 }

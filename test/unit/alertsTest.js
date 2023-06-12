@@ -404,11 +404,11 @@ describe('Transaction Alerts', () => {
                       return done(err)
                     }
                     results.length.should.be.exactly(3)
-                    const resultIDs = results.map(result => result._id)
-                    resultIDs.should.containEql(testTransactions[0]._id)
-                    resultIDs.should.containEql(testTransactions[1]._id)
-                    resultIDs.should.containEql(testTransactions[2]._id)
-                    resultIDs.should.not.containEql(testTransactions[6]._id)
+                    const resultIDs = results.map(result => result.id)
+                    resultIDs.should.containEql(testTransactions[0].id)
+                    resultIDs.should.containEql(testTransactions[1].id)
+                    resultIDs.should.containEql(testTransactions[2].id)
+                    resultIDs.should.not.containEql(testTransactions[6].id)
                     return done()
                   }
                 )
