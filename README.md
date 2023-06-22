@@ -182,6 +182,8 @@ To contribute code, please fork the repository and submit a pull request. The ma
 
 ## Data Privacy Disclaimer
 
+All users downloading and using OpenHIM should note the following:
+
 * All message data sent to the OpenHIM is retained indefinitely within the OpenHIM’s MongoDB database. By default, this data is stored indefinitely in line with the function of a middleware software with audit & transaction replay capabilities.
 * All message data is stored in OpenHIM's MongoDB and is only accessible or viewable by a) An authorized admin-level user or a user that has been explicitly allowed to do so or; b) An authorized system administrator staff member having access to the server itself.
 * Access to the message data stored in OpenHIM’s MongoDB database is controlled by the organization hosting OpenHIM. This organisation must know its responsibilities as a ‘Data Controller’ and potentially other roles, as defined in standard data privacy regulations, such as the General Data Protection Regulation (GDPR) and the South African Protection of Personal Information Act (POPIA). The organisation using OpenHIM is responsible for having the required policies in place to ensure compliance with the applicable laws and regulations in the country where the software is being operated.
