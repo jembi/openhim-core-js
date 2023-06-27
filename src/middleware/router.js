@@ -61,6 +61,11 @@ function setKoaResponse(ctx, response) {
     }
   }
 
+  // Save response body of the primary route
+  ctx.resBody = Buffer.isBuffer(response.body)
+    ? response.body.toString()
+    : response.body
+
   for (const key in response.headers) {
     const value = response.headers[key]
     switch (key.toLowerCase()) {
@@ -488,6 +493,11 @@ function sendRequest(ctx, route, options) {
       }
     }
 
+    if (route.primary) {
+      // Save request body of the primary route
+      ctx.reqBody = Buffer.isBuffer(ctx.body) ? ctx.body.toString() : ctx.body
+    }
+
     if (response instanceof Error) {
       orchestration.error = {
         message: response.message,
@@ -657,7 +667,8 @@ function sendKafkaRequest(ctx, route) {
           method: ctx.request.method,
           path: ctx.request.url,
           headers: ctx.request.headers,
-          body: ctx.body && ctx.body.toString()
+          requestBody: ctx.reqBody ?? '',
+          responseBody: ctx.resBody ?? ''
         }
 
         return producer
