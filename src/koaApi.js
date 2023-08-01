@@ -40,11 +40,11 @@ export function setupApp(done) {
 
   // Configure Sessions Middleware
   app.keys = [config.api.sessionKey]
-  
+
   if (config.api.trustProxy) {
     app.proxy = true
   }
-  
+
   app.use(
     session(
       {
@@ -106,6 +106,20 @@ export function setupApp(done) {
   )
   // @deprecated: Token authentication
   app.use(route.get('/authenticate/:username', users.authenticateToken))
+
+  // Publicly exposed Prometheus metrics endpoint
+  // only invoked if the accept header is correct else passes to the next middleware
+  app.use(async (ctx, next) => {
+    if (
+      ctx.request.headers['accept']?.includes('application/openmetrics-text') &&
+      ctx.request.path === '/metrics' &&
+      ctx.request.method === 'GET'
+    ) {
+      metrics.getPrometheusMetrics(ctx)
+    } else {
+      await next()
+    }
+  })
 
   // Authenticate the API request
   app.use(authentication.authenticate)

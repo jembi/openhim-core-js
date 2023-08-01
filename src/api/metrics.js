@@ -3,6 +3,7 @@
 import logger from 'winston'
 import moment from 'moment'
 import mongoose from 'mongoose'
+import {register} from 'prom-client'
 
 import * as authorisation from './authorisation'
 import * as metrics from '../metrics'
@@ -78,4 +79,8 @@ function calculateAverage(total, count) {
     return 0
   }
   return total / count
+}
+
+export async function getPrometheusMetrics(ctx) {
+  ctx.body = await register.metrics()
 }
