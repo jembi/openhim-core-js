@@ -5,13 +5,22 @@
 
 import should from 'should'
 import {ObjectId} from 'mongodb'
+import {register} from 'prom-client'
 
 import * as metrics from '../../src/metrics'
 import {MetricModel} from '../../src/model'
+import {ChannelModelAPI} from '../../src/model/channels'
+import {ClientModelAPI} from '../../src/model/clients'
 
 describe('recordTransactionMetrics', () => {
   beforeEach(async () => {
     await MetricModel.deleteMany()
+  })
+
+  after(async () => {
+    await MetricModel.deleteMany()
+    await ChannelModelAPI.deleteMany()
+    await ClientModelAPI.deleteMany()
   })
 
   it('should record the correct metrics for a transaction', async () => {
@@ -233,6 +242,147 @@ describe('recordTransactionMetrics', () => {
 
     const count = await MetricModel.countDocuments()
     should.equal(count, 0)
+  })
+
+  it('should capture prometheus metrics to the default registry (undefined channel and client case)', async () => {
+    const channelID = new ObjectId()
+    const clientID = new ObjectId()
+    const transaction = {
+      status: 'Successful',
+      channelID,
+      clientID,
+      request: {
+        method: 'GET',
+        timestamp: new Date('2017-12-07T09:17:58.333Z')
+      },
+      response: {
+        timestamp: new Date('2017-12-07T09:18:01.500Z'),
+        status: '200'
+      }
+    }
+
+    register.resetMetrics()
+    await metrics.recordTransactionMetrics(transaction)
+
+    const txString = await register.getSingleMetricAsString(
+      'openhim_transactions_total'
+    )
+    should.equal(
+      txString,
+      `# HELP openhim_transactions_total Total transactions processed
+# TYPE openhim_transactions_total counter
+openhim_transactions_total{status="Successful",method="GET",client="undefined",channel="undefined",code="200"} 1`
+    )
+
+    const reqString = await register.getSingleMetricAsString(
+      'openhim_request_duration'
+    )
+    should.equal(
+      reqString,
+      `# HELP openhim_request_duration Request response time in seconds
+# TYPE openhim_request_duration histogram
+openhim_request_duration_bucket{le="0.005",status="Successful",method="GET",client="undefined",channel="undefined",code="200"} 0
+openhim_request_duration_bucket{le="0.01",status="Successful",method="GET",client="undefined",channel="undefined",code="200"} 0
+openhim_request_duration_bucket{le="0.025",status="Successful",method="GET",client="undefined",channel="undefined",code="200"} 0
+openhim_request_duration_bucket{le="0.05",status="Successful",method="GET",client="undefined",channel="undefined",code="200"} 0
+openhim_request_duration_bucket{le="0.1",status="Successful",method="GET",client="undefined",channel="undefined",code="200"} 0
+openhim_request_duration_bucket{le="0.25",status="Successful",method="GET",client="undefined",channel="undefined",code="200"} 0
+openhim_request_duration_bucket{le="0.5",status="Successful",method="GET",client="undefined",channel="undefined",code="200"} 0
+openhim_request_duration_bucket{le="1",status="Successful",method="GET",client="undefined",channel="undefined",code="200"} 0
+openhim_request_duration_bucket{le="2.5",status="Successful",method="GET",client="undefined",channel="undefined",code="200"} 0
+openhim_request_duration_bucket{le="5",status="Successful",method="GET",client="undefined",channel="undefined",code="200"} 0
+openhim_request_duration_bucket{le="10",status="Successful",method="GET",client="undefined",channel="undefined",code="200"} 0
+openhim_request_duration_bucket{le="+Inf",status="Successful",method="GET",client="undefined",channel="undefined",code="200"} 1
+openhim_request_duration_sum{status="Successful",method="GET",client="undefined",channel="undefined",code="200"} 3167
+openhim_request_duration_count{status="Successful",method="GET",client="undefined",channel="undefined",code="200"} 1`
+    )
+  })
+
+  it('should capture prometheus metrics to the default registry (existing channel and client case)', async () => {
+    const channel1 = {
+      name: 'TestChannel1',
+      urlPattern: 'test/sample',
+      allow: ['PoC', 'Test1', 'Test2'],
+      routes: [
+        {
+          name: 'test route',
+          host: 'localhost',
+          port: 9876,
+          primary: true
+        }
+      ],
+      txViewAcl: 'aGroup',
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
+    }
+    const channel = await new ChannelModelAPI(channel1).save()
+
+    const testAppDoc = {
+      clientID: 'testApp',
+      clientDomain: 'test-client.jembi.org',
+      name: 'TEST Client',
+      roles: ['OpenMRS_PoC', 'PoC'],
+      passwordAlgorithm: 'sha512',
+      passwordHash:
+        '28dce3506eca8bb3d9d5a9390135236e8746f15ca2d8c86b8d8e653da954e9e3632bf9d85484ee6e9b28a3ada30eec89add42012b185bd9a4a36a07ce08ce2ea',
+      passwordSalt: '1234567890',
+      cert: ''
+    }
+    const client = await new ClientModelAPI(testAppDoc).save()
+
+    const transaction = {
+      status: 'Successful',
+      channelID: channel._id,
+      clientID: client._id,
+      request: {
+        method: 'GET',
+        timestamp: new Date('2017-12-07T09:17:58.333Z')
+      },
+      response: {
+        timestamp: new Date('2017-12-07T09:18:01.500Z'),
+        status: '200'
+      }
+    }
+
+    register.resetMetrics()
+    await metrics.recordTransactionMetrics(transaction)
+    // record second transaction to cover cache retrieval
+    await metrics.recordTransactionMetrics(transaction)
+
+    const txString = await register.getSingleMetricAsString(
+      'openhim_transactions_total'
+    )
+    should.equal(
+      txString,
+      `# HELP openhim_transactions_total Total transactions processed
+# TYPE openhim_transactions_total counter
+openhim_transactions_total{status="Successful",method="GET",client="${client.name}",channel="${channel.name}",code="200"} 2`
+    )
+
+    const reqString = await register.getSingleMetricAsString(
+      'openhim_request_duration'
+    )
+    should.equal(
+      reqString,
+      `# HELP openhim_request_duration Request response time in seconds
+# TYPE openhim_request_duration histogram
+openhim_request_duration_bucket{le="0.005",status="Successful",method="GET",client="${client.name}",channel="${channel.name}",code="200"} 0
+openhim_request_duration_bucket{le="0.01",status="Successful",method="GET",client="${client.name}",channel="${channel.name}",code="200"} 0
+openhim_request_duration_bucket{le="0.025",status="Successful",method="GET",client="${client.name}",channel="${channel.name}",code="200"} 0
+openhim_request_duration_bucket{le="0.05",status="Successful",method="GET",client="${client.name}",channel="${channel.name}",code="200"} 0
+openhim_request_duration_bucket{le="0.1",status="Successful",method="GET",client="${client.name}",channel="${channel.name}",code="200"} 0
+openhim_request_duration_bucket{le="0.25",status="Successful",method="GET",client="${client.name}",channel="${channel.name}",code="200"} 0
+openhim_request_duration_bucket{le="0.5",status="Successful",method="GET",client="${client.name}",channel="${channel.name}",code="200"} 0
+openhim_request_duration_bucket{le="1",status="Successful",method="GET",client="${client.name}",channel="${channel.name}",code="200"} 0
+openhim_request_duration_bucket{le="2.5",status="Successful",method="GET",client="${client.name}",channel="${channel.name}",code="200"} 0
+openhim_request_duration_bucket{le="5",status="Successful",method="GET",client="${client.name}",channel="${channel.name}",code="200"} 0
+openhim_request_duration_bucket{le="10",status="Successful",method="GET",client="${client.name}",channel="${channel.name}",code="200"} 0
+openhim_request_duration_bucket{le="+Inf",status="Successful",method="GET",client="${client.name}",channel="${channel.name}",code="200"} 2
+openhim_request_duration_sum{status="Successful",method="GET",client="${client.name}",channel="${channel.name}",code="200"} 6334
+openhim_request_duration_count{status="Successful",method="GET",client="${client.name}",channel="${channel.name}",code="200"} 2`
+    )
   })
 })
 
