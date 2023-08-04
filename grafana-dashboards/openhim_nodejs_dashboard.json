@@ -282,7 +282,7 @@
           "calcs": [
             "mean"
           ],
-          "fields": "/^__name__$/",
+          "fields": "",
           "values": false
         },
         "textMode": "name"
