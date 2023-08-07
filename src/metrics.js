@@ -1,6 +1,21 @@
 'use strict'
 
 import moment from 'moment'
+import {collectDefaultMetrics, Counter, Histogram} from 'prom-client'
+import {ChannelModelAPI} from './model/channels'
+import {ClientModelAPI} from './model/clients'
+
+collectDefaultMetrics({prefix: 'openhim_'})
+const txCounter = new Counter({
+  name: 'openhim_transactions_total',
+  help: 'Total transactions processed',
+  labelNames: ['method', 'status', 'client', 'channel', 'code']
+})
+const respTimeHistogram = new Histogram({
+  name: 'openhim_request_duration',
+  help: 'Request response time in seconds',
+  labelNames: ['method', 'status', 'client', 'channel', 'code']
+})
 
 import {
   METRIC_TYPE_DAY,
@@ -19,12 +34,56 @@ const TRANSACTION_STATUS_KEYS = {
 
 const METRIC_UPDATE_OPTIONS = {upsert: true, setDefaultsOnInsert: true}
 
+const cache = {
+  clientMap: {},
+  clientsLastFetch: moment(0),
+  channelMap: {},
+  channelsLastFetch: moment(0),
+  refreshMins: 1
+}
+
 async function recordTransactionMetric(fields, update) {
   return MetricModel.updateOne(
     fields,
     Object.assign({}, update, {$setOnInsert: fields}),
     METRIC_UPDATE_OPTIONS
   )
+}
+
+async function getClientNameFromCache(clientID) {
+  if (
+    cache.clientsLastFetch.isBefore(
+      moment().subtract(cache.refreshMins, 'minute')
+    ) ||
+    cache.clientMap[clientID] === undefined
+  ) {
+    const clients = await ClientModelAPI.find({}, {name: 1})
+    cache.clientMap = clients.reduce((clientMap, client) => {
+      clientMap[client._id.toString()] = client.name
+      return clientMap
+    }, {})
+    cache.clientsLastFetch = moment()
+  }
+
+  return cache.clientMap[clientID]
+}
+
+async function getChannelNameFromCache(channelID) {
+  if (
+    cache.channelsLastFetch.isBefore(
+      moment().subtract(cache.refreshMins, 'minute')
+    ) ||
+    cache.channelMap[channelID] === undefined
+  ) {
+    const channels = await ChannelModelAPI.find({}, {name: 1})
+    cache.channelMap = channels.reduce((channelMap, channel) => {
+      channelMap[channel._id.toString()] = channel.name
+      return channelMap
+    }, {})
+    cache.channelsLastFetch = moment()
+  }
+
+  return cache.channelMap[channelID]
 }
 
 export async function recordTransactionMetrics(transaction) {
@@ -43,6 +102,19 @@ export async function recordTransactionMetrics(transaction) {
     transaction.response.timestamp.getTime() -
     transaction.request.timestamp.getTime()
   const statusKey = TRANSACTION_STATUS_KEYS[transaction.status]
+
+  // collect metric for Prometheus
+  const labels = {
+    status: transaction.status,
+    method: transaction.request?.method,
+    client: await getClientNameFromCache(transaction.clientID),
+    channel: await getChannelNameFromCache(transaction.channelID),
+    code: transaction.response?.status
+  }
+  txCounter.inc(labels)
+  respTimeHistogram.observe(labels, responseTime)
+
+  // collect metrics for internal metric API
   const update = {
     $inc: {
       requests: 1,
