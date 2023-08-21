@@ -45,7 +45,7 @@ export async function updateApp(ctx) {
       )
     }
 
-    const id = ctx.params.id
+    const id = ctx.params.appId
     const update = ctx.request.body
 
     const app = await AppModelAPI.findById(id)
@@ -92,7 +92,7 @@ export async function getApps(ctx) {
 
 export async function getApp(ctx) {
   try {
-    const id = ctx.params.id
+    const id = ctx.params.appId
 
     const app = await AppModelAPI.findById(id)
 
@@ -115,7 +115,7 @@ export async function getApp(ctx) {
 
 export async function deleteApp(ctx) {
   try {
-    const _id = ctx.params.id
+    const _id = ctx.params.appId
 
     const app = await AppModelAPI.findById(_id)
 
