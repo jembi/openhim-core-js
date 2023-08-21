@@ -9,7 +9,9 @@ export async function addApp(ctx) {
   try {
     if (!authorisation.inGroup('admin', ctx.authenticated)) {
       ctx.statusCode = 403
-      throw Error(`User ${ctx.authenticated.email} is not an admin, API access to addClient denied.`)
+      throw Error(
+        `User ${ctx.authenticated.email} is not an admin, API access to add an app denied.`
+      )
     }
 
     const app = new AppModelAPI(ctx.request.body)
@@ -18,6 +20,7 @@ export async function addApp(ctx) {
       .save()
       .then(app => {
         logger.info(`User ${ctx.request.email} created app ${app.name}`)
+
         ctx.status = 201
         ctx.body = app
       })
@@ -27,6 +30,7 @@ export async function addApp(ctx) {
       })
   } catch (e) {
     logger.error(`Could not add an app via the API: ${e.message}`)
+
     ctx.body = e.message
     ctx.status = ctx.statusCode ? ctx.statusCode : 500
   }
@@ -36,7 +40,9 @@ export async function updateApp(ctx) {
   try {
     if (!authorisation.inGroup('admin', ctx.authenticated)) {
       ctx.statusCode = 403
-      throw Error(`User ${ctx.authenticated.email} is not an admin, API access to addClient denied.`)
+      throw Error(
+        `User ${ctx.authenticated.email} is not an admin, API access to update an app denied.`
+      )
     }
 
     const id = ctx.params.id
