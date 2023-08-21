@@ -55,16 +55,59 @@ export async function updateApp(ctx) {
       throw Error(`App with ${id} does not exist`)
     }
 
-    await AppModelAPI.findOneAndUpdate({_id}, update).then(app => {
-      logger.info(`User ${ctx.authenticated.email} updated app ${app.name}`)
-      ctx.body = app
-      ctx.status = 200
-    }).catch(e => {
-      ctx.statusCode = 400
-      throw e
-    })
+    await AppModelAPI.findOneAndUpdate({_id}, update)
+      .then(app => {
+        logger.info(`User ${ctx.authenticated.email} updated app ${app.name}`)
+
+        ctx.body = app
+        ctx.status = 200
+      })
+      .catch(e => {
+        ctx.statusCode = 400
+        throw e
+      })
   } catch (e) {
     logger.error(`Could not update app via the API: ${e.message}`)
+
+    ctx.body = e.message
+    ctx.status = ctx.statusCode ? ctx.statusCode : 500
+  }
+}
+
+export async function getApps(ctx) {
+  try {
+    const apps = await AppModelAPI.find(ctx.request.query)
+
+    logger.info(`User ${ctx.authenticated.email} fetched ${apps.length} apps`)
+
+    ctx.body = apps
+    ctx.status = 200
+  } catch (e) {
+    logger.error(`Could not retrieve apps via the API: ${e.message}`)
+
+    ctx.body = e.message
+    ctx.status = 500
+  }
+}
+
+export async function getApp(ctx) {
+  try {
+    const id = ctx.params.id
+
+    const app = AppModelAPI.findById(id)
+
+    if (!app) {
+      ctx.statusCode = 404
+      throw Error(`App with ${id} does not exist`)
+    }
+
+    logger.info(`User ${ctx.authenticated.email} app fetched ${id}`)
+
+    ctx.body = app
+    ctx.status = 200
+  } catch (e) {
+    logger.error(`Could not retrieve an app via the API: ${e.message}`)
+
     ctx.body = e.message
     ctx.status = ctx.statusCode ? ctx.statusCode : 500
   }
