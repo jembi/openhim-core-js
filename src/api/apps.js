@@ -48,7 +48,7 @@ export async function updateApp(ctx) {
     const id = ctx.params.id
     const update = ctx.request.body
 
-    const app = AppModelAPI.findById(id)
+    const app = await AppModelAPI.findById(id)
 
     if (!app) {
       ctx.statusCode = 404
@@ -94,7 +94,7 @@ export async function getApp(ctx) {
   try {
     const id = ctx.params.id
 
-    const app = AppModelAPI.findById(id)
+    const app = await AppModelAPI.findById(id)
 
     if (!app) {
       ctx.statusCode = 404
@@ -107,6 +107,31 @@ export async function getApp(ctx) {
     ctx.status = 200
   } catch (e) {
     logger.error(`Could not retrieve an app via the API: ${e.message}`)
+
+    ctx.body = e.message
+    ctx.status = ctx.statusCode ? ctx.statusCode : 500
+  }
+}
+
+export async function deleteApp(ctx) {
+  try {
+    const _id = ctx.params.id
+
+    const app = await AppModelAPI.findById(_id)
+
+    if (!app) {
+      ctx.statusCode = 404
+      throw Error(`App with ${id} does not exist`)
+    }
+
+    await AppModelAPI.deleteOne({_id}).then(() => {
+      logger.info(`User ${ctx.authenticated.email} deleted app ${id}`)
+
+      ctx.status = 200
+      ctx.body = 'Successful'
+    })
+  } catch (e) {
+    logger.error(`Could not delete an app via the API: ${e.message}`)
 
     ctx.body = e.message
     ctx.status = ctx.statusCode ? ctx.statusCode : 500
