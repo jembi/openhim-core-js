@@ -5,14 +5,36 @@ import logger from 'winston'
 import * as authorisation from './authorisation'
 import {AppModelAPI} from '../model/apps'
 
+/*
+  Checks admin permission for create, update and delete operations.
+  Throws error if user does not have admin access
+*/
+const checkUserPermission = (ctx, operation) => {
+  if (!authorisation.inGroup('admin', ctx.authenticated)) {
+    ctx.statusCode = 403
+    throw Error(
+      `User ${ctx.authenticated.email} is not an admin, API access to ${operation} an app denied.`
+    )
+  }
+}
+
+/*
+  Returns app if it exists, if not it throws an error
+*/
+const checkAppExists = async (ctx, appId) => {
+  const app = await AppModelAPI.findById(appId)
+
+  if (!app) {
+    ctx.statusCode = 404
+    throw Error(`App with ${appId} does not exist`)
+  }
+
+  return app
+}
+
 export async function addApp(ctx) {
   try {
-    if (!authorisation.inGroup('admin', ctx.authenticated)) {
-      ctx.statusCode = 403
-      throw Error(
-        `User ${ctx.authenticated.email} is not an admin, API access to add an app denied.`
-      )
-    }
+    checkUserPermission(ctx, 'add')
 
     const app = new AppModelAPI(ctx.request.body)
 
@@ -36,26 +58,18 @@ export async function addApp(ctx) {
   }
 }
 
-export async function updateApp(ctx) {
+export async function updateApp(ctx, appId) {
   try {
-    if (!authorisation.inGroup('admin', ctx.authenticated)) {
-      ctx.statusCode = 403
-      throw Error(
-        `User ${ctx.authenticated.email} is not an admin, API access to update an app denied.`
-      )
-    }
+    checkUserPermission(ctx, 'update')
 
-    const id = ctx.params.appId
     const update = ctx.request.body
 
-    const app = await AppModelAPI.findById(id)
+    await checkAppExists(ctx, appId)
 
-    if (!app) {
-      ctx.statusCode = 404
-      throw Error(`App with ${id} does not exist`)
-    }
-
-    await AppModelAPI.findOneAndUpdate({_id}, update)
+    await AppModelAPI.findOneAndUpdate({_id: appId}, update, {
+      new: true,
+      runValidators: true
+    })
       .then(app => {
         logger.info(`User ${ctx.authenticated.email} updated app ${app.name}`)
 
@@ -90,18 +104,11 @@ export async function getApps(ctx) {
   }
 }
 
-export async function getApp(ctx) {
+export async function getApp(ctx, appId) {
   try {
-    const id = ctx.params.appId
+    const app = await checkAppExists(ctx, appId)
 
-    const app = await AppModelAPI.findById(id)
-
-    if (!app) {
-      ctx.statusCode = 404
-      throw Error(`App with ${id} does not exist`)
-    }
-
-    logger.info(`User ${ctx.authenticated.email} app fetched ${id}`)
+    logger.info(`User ${ctx.authenticated.email} app fetched ${appId}`)
 
     ctx.body = app
     ctx.status = 200
@@ -113,22 +120,19 @@ export async function getApp(ctx) {
   }
 }
 
-export async function deleteApp(ctx) {
+export async function deleteApp(ctx, appId) {
   try {
-    const _id = ctx.params.appId
+    checkUserPermission(ctx, 'delete')
 
-    const app = await AppModelAPI.findById(_id)
+    await checkAppExists(ctx, appId)
 
-    if (!app) {
-      ctx.statusCode = 404
-      throw Error(`App with ${id} does not exist`)
-    }
-
-    await AppModelAPI.deleteOne({_id}).then(() => {
-      logger.info(`User ${ctx.authenticated.email} deleted app ${id}`)
+    await AppModelAPI.deleteOne({_id: appId}).then(() => {
+      logger.info(`User ${ctx.authenticated.email} deleted app ${appId}`)
 
       ctx.status = 200
-      ctx.body = 'Successful'
+      ctx.body = {
+        success: true
+      }
     })
   } catch (e) {
     logger.error(`Could not delete an app via the API: ${e.message}`)
