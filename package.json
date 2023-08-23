@@ -37,6 +37,7 @@
     "test:seed:ci": "npm run test:seed -- --quiet",
     "start": "node lib/server.js",
     "start:dev": "nodemon lib/server.js",
+    "start:dev:watch": "npm run clean && npm run build && nodemon lib/server.js",
     "stop": "pkill -SIGINT Core",
     "spec": "speculate"
   },
