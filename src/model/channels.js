@@ -18,7 +18,7 @@ const RouteDef = {
   type: {
     type: String,
     default: 'http',
-    enum: ['http', 'kafka']
+    enum: ['http', 'kafka', 'rabbitmq']
   },
   cert: Schema.Types.ObjectId,
   status: {
@@ -48,7 +48,12 @@ const RouteDef = {
   waitPrimaryResponse: Boolean,
   statusCodesCheck: String,
   kafkaClientId: String,
-  kafkaTopic: String
+  kafkaTopic: String,
+
+  rabbitmqHost: String,
+  rabbitmqUsername: String,
+  rabbitmqPassword: String,
+  rabbitmqExchangeName: String
 }
 
 // Channel alerts
