@@ -12,6 +12,7 @@ import * as messageStore from '../middleware/messageStore'
 import * as utils from '../utils'
 import {config} from '../config'
 import {KafkaProducerManager} from '../kafkaProducerManager'
+const amqp = require('amqplib')
 
 config.mongo = config.get('mongo')
 config.router = config.get('router')
@@ -517,7 +518,11 @@ function sendRequest(ctx, route, options) {
   }
 
   const requestDelegate =
-    route.type === 'kafka' ? sendKafkaRequest : sendHttpRequest
+    route.type === 'kafka'
+      ? sendKafkaRequest
+      : route.type === 'rabbitmq'
+      ? sendRabbitMQRequest
+      : sendHttpRequest
   return requestDelegate(ctx, route, options)
     .then(response => {
       recordOrchestration(response)
@@ -676,6 +681,62 @@ function sendKafkaRequest(ctx, route) {
       .catch(e => {
         reject(e)
       })
+  })
+}
+
+function sendRabbitMQRequest(ctx, route) {
+  return new Promise(async (resolve, reject) => {
+    const timeout = route.timeout ?? +config.router.timeout
+    const channel = ctx.authorisedChannel
+
+    const rabbitMQUsername = route.rabbitmqUsername
+    const rabbitMQPassword = route.rabbitmqPassword
+    const rabbitMQHost = route.rabbitmqHost
+    const rabbitMQExchangeName = route.rabbitmqExchangeName
+
+    const message = ctx.body.toString()
+
+    let connection
+
+    let response = {
+      status: ctx.response.status,
+      message: 'Message Received in RabbitMQ Successfully!'
+    }
+
+    try {
+      connection = await amqp.connect(
+        `amqp://${rabbitMQUsername}:${rabbitMQPassword}@${rabbitMQHost}:5672`
+      )
+
+      const channel = await connection.createChannel()
+
+      await channel.assertExchange(rabbitMQExchangeName, 'fanout', {
+        durable: true
+      })
+
+      channel.publish(rabbitMQExchangeName, '', Buffer.from(message))
+      console.log(" [x] Sent '%s'", message)
+
+      resolve({
+        status: 200,
+        body: JSON.stringify(response),
+        timestamp: +new Date()
+      })
+      await channel.close()
+    } catch (error) {
+      let errorResponse = {
+        status: 404,
+        message: 'Message not received in RabbitMQ!'
+      }
+      resolve({
+        status: 404,
+        body: JSON.stringify(errorResponse),
+        timestamp: +new Date()
+      })
+      console.warn(error)
+    } finally {
+      if (connection) await connection.close()
+    }
   })
 }
 

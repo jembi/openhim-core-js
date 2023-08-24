@@ -44,6 +44,7 @@
   "dependencies": {
     "@xmldom/xmldom": "^0.8.7",
     "agenda": "^5.0.0",
+    "amqplib": "^0.10.3",
     "atna-audit": "1.0.1",
     "axios": "^0.21.2",
     "babel-polyfill": "6.26.0",
