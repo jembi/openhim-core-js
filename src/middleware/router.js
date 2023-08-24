@@ -687,19 +687,13 @@ function sendKafkaRequest(ctx, route) {
 function sendRabbitMQRequest(ctx, route) {
   // eslint-disable-next-line no-async-promise-executor
   return new Promise(async (resolve, reject) => {
-    const timeout = route.timeout ?? +config.router.timeout
-    const channel = ctx.authorisedChannel
-
     const rabbitMQUsername = route.rabbitmqUsername
     const rabbitMQPassword = route.rabbitmqPassword
     const rabbitMQHost = route.rabbitmqHost
     const rabbitMQExchangeName = route.rabbitmqExchangeName
-
     const message = ctx.body.toString()
-
     let connection
-
-    let response = {
+    const response = {
       status: ctx.response.status,
       message: 'Message Received in RabbitMQ Successfully!'
     }
@@ -710,11 +704,9 @@ function sendRabbitMQRequest(ctx, route) {
       )
 
       const channel = await connection.createChannel()
-
       await channel.assertExchange(rabbitMQExchangeName, 'fanout', {
         durable: true
       })
-
       channel.publish(rabbitMQExchangeName, '', Buffer.from(message))
       resolve({
         status: 200,
