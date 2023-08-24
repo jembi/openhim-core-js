@@ -715,8 +715,6 @@ function sendRabbitMQRequest(ctx, route) {
       })
 
       channel.publish(rabbitMQExchangeName, '', Buffer.from(message))
-      console.log(" [x] Sent '%s'", message)
-
       resolve({
         status: 200,
         body: JSON.stringify(response),
