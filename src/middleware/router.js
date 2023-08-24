@@ -685,6 +685,7 @@ function sendKafkaRequest(ctx, route) {
 }
 
 function sendRabbitMQRequest(ctx, route) {
+  // eslint-disable-next-line no-async-promise-executor
   return new Promise(async (resolve, reject) => {
     const timeout = route.timeout ?? +config.router.timeout
     const channel = ctx.authorisedChannel
@@ -732,6 +733,7 @@ function sendRabbitMQRequest(ctx, route) {
         timestamp: +new Date()
       })
       console.warn(error)
+      reject(error)
     } finally {
       if (connection) await connection.close()
     }
