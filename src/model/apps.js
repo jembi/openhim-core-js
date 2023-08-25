@@ -7,7 +7,8 @@ import {connectionAPI, connectionDefault} from '../config'
 const AppSchema = new Schema({
   name: {
     type: String,
-    unique: true
+    unique: true,
+    required: true
   },
   description: String,
   icon: {
@@ -18,7 +19,8 @@ const AppSchema = new Schema({
   access_roles: [String],
   url: {
     type: String,
-    unique: true
+    unique: true,
+    required: true
   },
   showInPortal: {
     type: Boolean,
