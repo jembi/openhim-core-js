@@ -32,7 +32,7 @@ const checkAppExists = async (ctx, appId) => {
   return app
 }
 
-// Creates error response operations create, read, update and delete
+// Creates error response for operations create, read, update and delete
 const createErrorResponse = (ctx, operation, error) => {
   logger.error(`Could not ${operation} an app via the API: ${error.message}`)
 
