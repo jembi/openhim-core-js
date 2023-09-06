@@ -96,6 +96,7 @@ const TransactionSchema = new Schema({
     required: true,
     enum: [
       'Processing',
+      'Pending Async',
       'Failed',
       'Completed',
       'Successful',

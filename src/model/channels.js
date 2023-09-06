@@ -112,6 +112,11 @@ const ChannelDef = {
     type: String,
     required: true
   },
+  isAsynchronousProcess:{
+    type: Boolean,
+    required: false,
+    default: false
+  },
   maxBodyAgeDays: {
     type: Number,
     min: 1,

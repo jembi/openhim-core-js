@@ -10,6 +10,7 @@ import * as utils from '../utils'
 
 export const transactionStatus = {
   PROCESSING: 'Processing',
+  PENDING_ASYNC: 'Pending Async',
   SUCCESSFUL: 'Successful',
   COMPLETED: 'Completed',
   COMPLETED_W_ERR: 'Completed with error(s)',
@@ -93,9 +94,13 @@ export function storeTransaction(ctx, done) {
 
 export function storeResponse(ctx, done) {
   const headers = copyMapWithEscapedReservedCharacters(ctx.response.header)
+  
+  const status = ctx.matchingChannel.isAsynchronousProcess && ctx.response.status < 400 ? 202 : ctx.response.status;
+  // updates the status code that appears to for the client
+  ctx.response.status = status;
 
   const res = {
-    status: ctx.response.status,
+    status,
     headers,
     body: !ctx.response.body ? '' : ctx.response.body.toString(),
     timestamp: ctx.response.timestamp
@@ -259,7 +264,11 @@ export function setFinalStatus(ctx, callback) {
           ctx.response.status <= 299 &&
           routeSuccess
         ) {
-          tx.status = transactionStatus.SUCCESSFUL
+          if(ctx.matchingChannel.isAsynchronousProcess){
+            tx.status = transactionStatus.PENDING_ASYNC
+          }else{
+            tx.status = transactionStatus.SUCCESSFUL
+          }
         }
         if (
           ctx.response.status >= 400 &&
@@ -279,6 +288,8 @@ export function setFinalStatus(ctx, callback) {
 
       logger.info(`Final status for transaction ${tx._id} : ${tx.status}`)
       update.status = tx.status
+      
+      
     }
 
     if (ctx.autoRetry != null) {
