@@ -3,7 +3,7 @@
 /* eslint-env mocha */
 
 import * as transactions from '../../src/api/transactions'
-import {TaskModel, TransactionModel} from '../../src/model'
+import {TaskModel, TransactionModel, resolveStuckProcessingState} from '../../src/model'
 import {ObjectId} from 'mongodb'
 
 describe('calculateTransactionBodiesByteLength()', () => {
@@ -87,5 +87,36 @@ describe('*createRerunTasks', () => {
     await transactions.createRerunTasks({}, 1, userEmail, 0, 1, '', 1)
     const tasks = await TaskModel.find()
     tasks.length.should.be.exactly(2)
+  })
+})
+
+describe('TransactionModel tests', () => {
+  const transaction = Object.freeze({
+    status: 'Processing',
+    request: {
+      timestamp: new Date().toISOString()
+    },
+    updatedBy: {
+      id: new ObjectId(),
+      name: 'Test'
+    }
+  })
+
+  beforeEach(async () => {
+    await TransactionModel.deleteMany({})
+  })
+
+  afterEach(async () => {
+    await TransactionModel.deleteMany({})
+  })
+
+  describe('.resolveStuckProcessingState()', async () => {
+    await TransactionModel(transaction).save()
+
+    resolveStuckProcessingState()
+    await new Promise((resolve) => setTimeout(() => { resolve() }, 1000))
+
+    const transactions = await TransactionModel.find({ status: 'Processing' });
+    transactions.length.should.be.exactly(0);
   })
 })
