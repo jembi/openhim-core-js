@@ -91,32 +91,75 @@ describe('*createRerunTasks', () => {
 })
 
 describe('TransactionModel tests', () => {
-  const transaction = Object.freeze({
-    status: 'Processing',
-    request: {
-      timestamp: new Date().toISOString()
-    },
-    updatedBy: {
-      id: new ObjectId(),
-      name: 'Test'
-    }
-  })
+  describe('.resolveStuckProcessingState()', () => {
+    const midFlightTransaction = Object.freeze({
+      status: 'Processing',
+      request: {
+        timestamp: new Date().toISOString()
+      },
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
+    })
+  
+    const validProcessingTransaction = Object.freeze({
+      status: 'Processing',
+      request: {
+        timestamp: new Date().toISOString()
+      },
+      response: {
+        status: 200,
+        timestamp: new Date().toISOString()
+      },
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
+    })
 
-  beforeEach(async () => {
-    await TransactionModel.deleteMany({})
-  })
+    const errorProcessingTransaction = Object.freeze({
+      status: 'Processing',
+      request: {
+        timestamp: new Date().toISOString()
+      },
+      error: {
+        message: 'something bad happened',
+        stack: 'stack trace'
+      },
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
+    })
+  
+    beforeEach(async () => {
+      await TransactionModel.deleteMany({})
+    })
+  
+    afterEach(async () => {
+      await TransactionModel.deleteMany({})
+    })
 
-  afterEach(async () => {
-    await TransactionModel.deleteMany({})
-  })
+    it('should update a processing transaction to failed if no response or error set', async () => {
+      await TransactionModel(midFlightTransaction).save()
 
-  describe('.resolveStuckProcessingState()', async () => {
-    await TransactionModel(transaction).save()
+      resolveStuckProcessingState()
+      await new Promise((resolve) => setTimeout(() => { resolve() }, 500))
+  
+      const transactions = await TransactionModel.find({ status: 'Processing' });
+      transactions.length.should.be.exactly(0);
+    })
 
-    resolveStuckProcessingState()
-    await new Promise((resolve) => setTimeout(() => { resolve() }, 1000))
+    it('should not update a transaction processing state if response or error set', async () => {
+      await TransactionModel(validProcessingTransaction).save()
+      await TransactionModel(errorProcessingTransaction).save()
 
-    const transactions = await TransactionModel.find({ status: 'Processing' });
-    transactions.length.should.be.exactly(0);
+      resolveStuckProcessingState()
+      await new Promise((resolve) => setTimeout(() => { resolve() }, 500))
+
+      const transactions = await TransactionModel.find({ status: 'Processing' });
+      transactions.length.should.be.exactly(2);
+    })
   })
 })

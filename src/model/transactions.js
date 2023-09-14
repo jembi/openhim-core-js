@@ -133,10 +133,11 @@ export const resolveStuckProcessingState = async () => {
   .cursor()
   .on('data', async (transaction) => {
     try {
-      TransactionModelAPI.findByIdAndUpdate(transaction.id, { 
-        status: transactionStatus.FAILED,
-        error: { message: 'OpenHIM crashed while still waiting for a response' },
-      }).exec()
+      if (transaction.$isEmpty('response') && transaction.$isEmpty('error'))
+        TransactionModelAPI.findByIdAndUpdate(transaction.id, { 
+          status: transactionStatus.FAILED,
+          error: { message: 'OpenHIM crashed while still waiting for a response' },
+        }).exec()
     } catch (err) {
       console.error(`Error updating transaction stuck in processing: ${err}`)
     }
