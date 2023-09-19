@@ -37,7 +37,7 @@ export function storeTransaction(ctx, done) {
   const headers = copyMapWithEscapedReservedCharacters(ctx.header)
 
   const tx = new transactions.TransactionModel({
-    status: transactionStatus.PROCESSING,
+    status: ctx?.matchingChannel?.isAsynchronousProcess ? transactionStatus.PENDING_ASYNC:transactionStatus.PROCESSING ,
     clientID: ctx.authenticated != null ? ctx.authenticated._id : undefined,
     channelID: ctx.authorisedChannel._id,
     clientIP: ctx.ip,
@@ -95,9 +95,9 @@ export function storeTransaction(ctx, done) {
 export function storeResponse(ctx, done) {
   const headers = copyMapWithEscapedReservedCharacters(ctx.response.header)
   
-  const status = ctx.matchingChannel.isAsynchronousProcess && ctx.response.status < 400 ? 202 : ctx.response.status;
-  // updates the status code that appears to for the client
-  ctx.response.status = status;
+  const status = ctx.matchingChannel?.isAsynchronousProcess && ctx.response.status < 400 ? 202 : ctx.response.status
+  // if the channel is asynchronous and the response is successful, change the status to 202 otherwise use the original status
+  ctx.response.status = status
 
   const res = {
     status,
@@ -264,7 +264,7 @@ export function setFinalStatus(ctx, callback) {
           ctx.response.status <= 299 &&
           routeSuccess
         ) {
-          if(ctx.matchingChannel.isAsynchronousProcess){
+          if(ctx.matchingChannel?.isAsynchronousProcess){
             tx.status = transactionStatus.PENDING_ASYNC
           }else{
             tx.status = transactionStatus.SUCCESSFUL
@@ -288,7 +288,6 @@ export function setFinalStatus(ctx, callback) {
 
       logger.info(`Final status for transaction ${tx._id} : ${tx.status}`)
       update.status = tx.status
-      
       
     }
 
