@@ -4,6 +4,15 @@ import {Schema} from 'mongoose'
 
 import {connectionAPI, connectionDefault} from '../config'
 
+export const transactionStatus = {
+  PROCESSING: 'Processing',
+  PENDING_ASYNC: 'Pending Async',
+  SUCCESSFUL: 'Successful',
+  COMPLETED: 'Completed',
+  COMPLETED_W_ERR: 'Completed with error(s)',
+  FAILED: 'Failed'
+}
+
 // Request Schema definition
 const RequestDef = {
   host: String,
@@ -94,14 +103,7 @@ const TransactionSchema = new Schema({
   status: {
     type: String,
     required: true,
-    enum: [
-      'Processing',
-      'Pending Async',
-      'Failed',
-      'Completed',
-      'Successful',
-      'Completed with error(s)'
-    ]
+    enum: Object.values(transactionStatus)
   }
 })
 
@@ -119,3 +121,26 @@ export const TransactionModel = connectionDefault.model(
   'Transaction',
   TransactionSchema
 )
+
+/**
+ * Resolve a transaction stuck in the processing state
+ *
+ * If OpenHIM crashes with an inflight transaction, that transaction's status will stay in processing
+ * So we run this function at start up and set all those transactions to failed 
+ *
+ */
+export const resolveStuckProcessingState = async () => {
+  TransactionModelAPI.find({ status: transactionStatus.PROCESSING })
+  .cursor()
+  .on('data', async (transaction) => {
+    try {
+      if (transaction.$isEmpty('response') && transaction.$isEmpty('error'))
+        TransactionModelAPI.findByIdAndUpdate(transaction.id, { 
+          status: transactionStatus.FAILED,
+          error: { message: 'OpenHIM crashed while still waiting for a response' },
+        }).exec()
+    } catch (err) {
+      console.error(`Error updating transaction stuck in processing: ${err}`)
+    }
+  })
+}

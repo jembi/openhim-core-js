@@ -8,6 +8,7 @@ import session from 'koa-session'
 import compose from 'koa-compose'
 
 import * as about from './api/about'
+import * as apps from './api/apps'
 import * as audits from './api/audits'
 import * as authentication from './api/authentication'
 import * as certificateAuthority from './api/certificateAuthority'
@@ -136,6 +137,12 @@ export function setupApp(done) {
   app.use(route.get('/logout', users.logout))
 
   // Define the api routes
+  app.use(route.get('/apps', apps.getApps))
+  app.use(route.get('/apps/:appId', apps.getApp))
+  app.use(route.put('/apps/:appId', apps.updateApp))
+  app.use(route.post('/apps', apps.addApp))
+  app.use(route.delete('/apps/:appId', apps.deleteApp))
+
   app.use(route.get('/users', users.getUsers))
   app.use(route.get('/users/:email', users.getUser))
   app.use(route.post('/users', users.addUser))

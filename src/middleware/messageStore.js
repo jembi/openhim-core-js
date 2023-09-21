@@ -8,14 +8,7 @@ import * as metrics from '../metrics'
 import * as transactions from '../model/transactions'
 import * as utils from '../utils'
 
-export const transactionStatus = {
-  PROCESSING: 'Processing',
-  PENDING_ASYNC: 'Pending Async',
-  SUCCESSFUL: 'Successful',
-  COMPLETED: 'Completed',
-  COMPLETED_W_ERR: 'Completed with error(s)',
-  FAILED: 'Failed'
-}
+const { transactionStatus } = transactions
 
 function copyMapWithEscapedReservedCharacters(map) {
   const escapedMap = {}
