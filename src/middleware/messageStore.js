@@ -87,8 +87,8 @@ export function storeTransaction(ctx, done) {
 
 export function storeResponse(ctx, done) {
   const headers = copyMapWithEscapedReservedCharacters(ctx.response.header)
-  
-  const status = ctx.matchingChannel?.isAsynchronousProcess && ctx.response.status < 400 ? 202 : ctx.response.status
+  const isAsynchronousProcess = Boolean(ctx?.matchingChannel?.isAsynchronousProcess) || Boolean(ctx?.authorisedChannel?.isAsynchronousProcess);
+  const status = isAsynchronousProcess && ctx.response.status < 400 ? 202 : ctx.response.status
   // if the channel is asynchronous and the response is successful, change the status to 202 otherwise use the original status
   ctx.response.status = status
 
@@ -257,7 +257,7 @@ export function setFinalStatus(ctx, callback) {
           ctx.response.status <= 299 &&
           routeSuccess
         ) {
-          if(ctx.matchingChannel?.isAsynchronousProcess){
+          if(ctx?.matchingChannel?.isAsynchronousProcess || !!ctx?.authorisedChannel?.isAsynchronousProcess){
             tx.status = transactionStatus.PENDING_ASYNC
           }else{
             tx.status = transactionStatus.SUCCESSFUL
