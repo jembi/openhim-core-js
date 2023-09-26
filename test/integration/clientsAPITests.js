@@ -162,6 +162,46 @@ describe('API Integration Tests', () => {
       })
     })
 
+    describe('Getting a client ID by the named "clientID" field on the document in the database', () => {
+      const clientTest = {
+        clientID: 'testClient',
+        clientDomain: 'www.zedmusic-unique.co.zw',
+        name: 'OpenHIE NodeJs',
+        roles: ['test_role_PoC', 'monitoring'],
+        passwordHash:
+          '$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy'
+      }
+
+      let clientId;
+
+      beforeEach(async () => {
+        const client = await new ClientModelAPI(clientTest).save()
+        clientId = clientTest.clientID;
+      })
+
+      it('should return the client ID if it exists', async () => {
+        const client = await new ClientModelAPI(testAppDoc).save()
+        const res = await request(BASE_URL)
+          .get(`/clients/${clientId}?byNamedClientID=true`)
+          .set('Cookie', rootCookie)
+          .expect(200)
+      })
+
+      it('should return 404 if the client ID does not exist', async () => {
+        await request(BASE_URL)
+          .get('/clients/nonExistentClientID?byNamedClientID=true')
+          .set('Cookie', rootCookie)
+          .expect(404)
+      })
+
+      it('should fail when sending clientID with "byNamedClientID" param set to false', async () => {
+        await request(BASE_URL)
+          .get(`/clients/${clientId}?byNamedClientID=false`)
+          .set('Cookie', rootCookie)
+          .expect(500)
+      })
+    });
+
     describe('*getClient(_id)', () => {
       const clientTest = {
         clientID: 'testClient',
