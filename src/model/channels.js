@@ -112,7 +112,7 @@ const ChannelDef = {
     type: String,
     required: true
   },
-  isAsynchronousProcess:{
+  isAsynchronousProcess: {
     type: Boolean,
     default: false
   },

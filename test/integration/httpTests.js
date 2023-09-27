@@ -375,7 +375,6 @@ describe('HTTP tests', () => {
         .auth('testApp', 'password')
         .expect(202)
     })
-        
   })
 
   describe('HTTP body content matching - XML', () => {

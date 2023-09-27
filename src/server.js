@@ -37,7 +37,7 @@ import * as upgradeDB from './upgradeDB'
 import {KeystoreModel} from './model/keystore'
 import {UserModel, createUser, updateTokenUser} from './model/users'
 import {appRoot, config, connectionAgenda} from './config'
-import { resolveStuckProcessingState } from './model/transactions'
+import {resolveStuckProcessingState} from './model/transactions'
 
 mongoose.Promise = Promise
 
@@ -888,7 +888,7 @@ if (cluster.isMaster && !module.parent) {
       return Promise.all(promises)
         .then(() => {
           resolveStuckProcessingState()
-          
+
           let audit = atna.construct.appActivityAudit(
             true,
             himSourceID,

@@ -103,26 +103,21 @@ export async function getClient(ctx, clientId, property) {
   }
 
   try {
-    
-    let result;
-    if(ctx?.query?.byNamedClientID === 'true'){
+    let result
+    if (ctx?.query?.byNamedClientID === 'true') {
       result = await ClientModelAPI.findOne(
         {clientID: clientId},
         projectionRestriction
       )
         .lean()
         .exec()
-    }
-    else{
+    } else {
       clientId = unescape(clientId)
-      result = await ClientModelAPI.findById(
-        clientId,
-        projectionRestriction
-      )
+      result = await ClientModelAPI.findById(clientId, projectionRestriction)
         .lean()
         .exec()
     }
-     
+
     if (result === null) {
       utils.logAndSetResponse(
         ctx,

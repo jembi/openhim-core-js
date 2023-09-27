@@ -172,11 +172,11 @@ describe('API Integration Tests', () => {
           '$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy'
       }
 
-      let clientId;
+      let clientId
 
       beforeEach(async () => {
         const client = await new ClientModelAPI(clientTest).save()
-        clientId = clientTest.clientID;
+        clientId = clientTest.clientID
       })
 
       it('should return the client ID if it exists', async () => {
@@ -200,7 +200,7 @@ describe('API Integration Tests', () => {
           .set('Cookie', rootCookie)
           .expect(500)
       })
-    });
+    })
 
     describe('*getClient(_id)', () => {
       const clientTest = {
