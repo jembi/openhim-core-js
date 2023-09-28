@@ -213,6 +213,10 @@ export function storeNonPrimaryResponse(ctx, route, done) {
  * This should only be called once all routes have responded.
  */
 export function setFinalStatus(ctx, callback) {
+  const isAsynchronousProcess =
+    Boolean(ctx?.matchingChannel?.isAsynchronousProcess) ||
+    Boolean(ctx?.authorisedChannel?.isAsynchronousProcess)
+
   let transactionId = ''
   if (
     ctx.request != null &&
@@ -264,10 +268,7 @@ export function setFinalStatus(ctx, callback) {
           ctx.response.status <= 299 &&
           routeSuccess
         ) {
-          if (
-            ctx?.matchingChannel?.isAsynchronousProcess ||
-            !!ctx?.authorisedChannel?.isAsynchronousProcess
-          ) {
+          if (isAsynchronousProcess) {
             tx.status = transactionStatus.PENDING_ASYNC
           } else {
             tx.status = transactionStatus.SUCCESSFUL
