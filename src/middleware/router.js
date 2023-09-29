@@ -656,6 +656,7 @@ function sendKafkaRequest(ctx, route) {
         const message = {
           method: ctx.request.method,
           path: ctx.request.url,
+          pattern: channel.urlPattern,
           headers: ctx.request.headers,
           body: ctx.body && ctx.body.toString()
         }
