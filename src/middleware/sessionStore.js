@@ -41,7 +41,10 @@ class MongooseStore {
   async set(id, data) {
     const {session} = this
     const record = {_id: id, data, updatedAt: new Date()}
-    await session.findByIdAndUpdate(id, record, {upsert: true, writeConcern: {w: "majority", wtimeout: 10000}})
+    await session.findByIdAndUpdate(id, record, {
+      upsert: true,
+      writeConcern: {w: 'majority', wtimeout: 10000}
+    })
     return data
   }
 

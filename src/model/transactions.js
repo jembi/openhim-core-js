@@ -126,21 +126,23 @@ export const TransactionModel = connectionDefault.model(
  * Resolve a transaction stuck in the processing state
  *
  * If OpenHIM crashes with an inflight transaction, that transaction's status will stay in processing
- * So we run this function at start up and set all those transactions to failed 
+ * So we run this function at start up and set all those transactions to failed
  *
  */
 export const resolveStuckProcessingState = async () => {
-  TransactionModelAPI.find({ status: transactionStatus.PROCESSING })
-  .cursor()
-  .on('data', async (transaction) => {
-    try {
-      if (transaction.$isEmpty('response') && transaction.$isEmpty('error'))
-        TransactionModelAPI.findByIdAndUpdate(transaction.id, { 
-          status: transactionStatus.FAILED,
-          error: { message: 'OpenHIM crashed while still waiting for a response' },
-        }).exec()
-    } catch (err) {
-      console.error(`Error updating transaction stuck in processing: ${err}`)
-    }
-  })
+  TransactionModelAPI.find({status: transactionStatus.PROCESSING})
+    .cursor()
+    .on('data', async transaction => {
+      try {
+        if (transaction.$isEmpty('response') && transaction.$isEmpty('error'))
+          TransactionModelAPI.findByIdAndUpdate(transaction.id, {
+            status: transactionStatus.FAILED,
+            error: {
+              message: 'OpenHIM crashed while still waiting for a response'
+            }
+          }).exec()
+      } catch (err) {
+        console.error(`Error updating transaction stuck in processing: ${err}`)
+      }
+    })
 }

@@ -77,7 +77,6 @@ describe('MessageStore', () => {
     }
   }
 
-
   const req = {}
   req.path = '/api/test/request'
   req.headers = {
@@ -176,17 +175,17 @@ describe('MessageStore', () => {
     })
 
     it('should have a transaction with a status of "Pending Async" if the channel is asynchronous', done => {
-      ctx.path = '/api/test/sample-async';
-      ctx.matchingChannel = { isAsynchronousProcess: true };
+      ctx.path = '/api/test/sample-async'
+      ctx.matchingChannel = {isAsynchronousProcess: true}
 
       messageStore.storeTransaction(ctx, (error, result) => {
         should.not.exist(error)
         TransactionModel.findOne({_id: result._id}, (error, trans) => {
-          trans.status.should.equal("Pending Async")
+          trans.status.should.equal('Pending Async')
           return done()
         })
-      });
-    });
+      })
+    })
 
     it('should be able to save the transaction if the headers contain Mongo reserved characters ($ or .)', done => {
       ctx.header['dot.header'] = '123'

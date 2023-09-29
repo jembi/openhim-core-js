@@ -102,15 +102,22 @@ export async function getClient(ctx, clientId, property) {
     return
   }
 
-  clientId = unescape(clientId)
-
   try {
-    const result = await ClientModelAPI.findById(
-      clientId,
-      projectionRestriction
-    )
-      .lean()
-      .exec()
+    let result
+    if (ctx?.query?.byNamedClientID === 'true') {
+      result = await ClientModelAPI.findOne(
+        {clientID: clientId},
+        projectionRestriction
+      )
+        .lean()
+        .exec()
+    } else {
+      clientId = unescape(clientId)
+      result = await ClientModelAPI.findById(clientId, projectionRestriction)
+        .lean()
+        .exec()
+    }
+
     if (result === null) {
       utils.logAndSetResponse(
         ctx,

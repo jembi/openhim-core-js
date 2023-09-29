@@ -164,7 +164,7 @@ describe('Contact Users', () => {
 
   describe('contactUser', () => {
     it('should throw if passed the incorrect method type', done => {
-      contact.contactUser('none', '', '', '', '', (err) => {
+      contact.contactUser('none', '', '', '', '', err => {
         should.exist(err)
         should.equal(err.message, "Unknown contact method 'none'")
         return done()
@@ -173,11 +173,11 @@ describe('Contact Users', () => {
 
     it('should throw on sms send if sms provider is not listed', done => {
       config.smsGateway.provider = 'none'
-      contact.contactUser('sms', 'test', '', 'test message', '', (err) => {
+      contact.contactUser('sms', 'test', '', 'test message', '', err => {
         should.exist(err)
         should.equal(err.message, "Unknown SMS gateway provider 'none'")
 
-        config.smsGateway.provider = 'clickatell' 
+        config.smsGateway.provider = 'clickatell'
         return done()
       })
     })

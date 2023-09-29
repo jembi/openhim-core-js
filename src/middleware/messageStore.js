@@ -8,7 +8,7 @@ import * as metrics from '../metrics'
 import * as transactions from '../model/transactions'
 import * as utils from '../utils'
 
-const { transactionStatus } = transactions
+const {transactionStatus} = transactions
 
 function copyMapWithEscapedReservedCharacters(map) {
   const escapedMap = {}
@@ -30,7 +30,9 @@ export function storeTransaction(ctx, done) {
   const headers = copyMapWithEscapedReservedCharacters(ctx.header)
 
   const tx = new transactions.TransactionModel({
-    status: ctx?.matchingChannel?.isAsynchronousProcess ? transactionStatus.PENDING_ASYNC:transactionStatus.PROCESSING ,
+    status: ctx?.matchingChannel?.isAsynchronousProcess
+      ? transactionStatus.PENDING_ASYNC
+      : transactionStatus.PROCESSING,
     clientID: ctx.authenticated != null ? ctx.authenticated._id : undefined,
     channelID: ctx.authorisedChannel._id,
     clientIP: ctx.ip,
@@ -87,8 +89,13 @@ export function storeTransaction(ctx, done) {
 
 export function storeResponse(ctx, done) {
   const headers = copyMapWithEscapedReservedCharacters(ctx.response.header)
-  const isAsynchronousProcess = Boolean(ctx?.matchingChannel?.isAsynchronousProcess) || Boolean(ctx?.authorisedChannel?.isAsynchronousProcess);
-  const status = isAsynchronousProcess && ctx.response.status < 400 ? 202 : ctx.response.status
+  const isAsynchronousProcess =
+    Boolean(ctx?.matchingChannel?.isAsynchronousProcess) ||
+    Boolean(ctx?.authorisedChannel?.isAsynchronousProcess)
+  const status =
+    isAsynchronousProcess && ctx.response.status < 400
+      ? 202
+      : ctx.response.status
   // if the channel is asynchronous and the response is successful, change the status to 202 otherwise use the original status
   ctx.response.status = status
 
@@ -206,6 +213,10 @@ export function storeNonPrimaryResponse(ctx, route, done) {
  * This should only be called once all routes have responded.
  */
 export function setFinalStatus(ctx, callback) {
+  const isAsynchronousProcess =
+    Boolean(ctx?.matchingChannel?.isAsynchronousProcess) ||
+    Boolean(ctx?.authorisedChannel?.isAsynchronousProcess)
+
   let transactionId = ''
   if (
     ctx.request != null &&
@@ -257,9 +268,9 @@ export function setFinalStatus(ctx, callback) {
           ctx.response.status <= 299 &&
           routeSuccess
         ) {
-          if(ctx?.matchingChannel?.isAsynchronousProcess || !!ctx?.authorisedChannel?.isAsynchronousProcess){
+          if (isAsynchronousProcess) {
             tx.status = transactionStatus.PENDING_ASYNC
-          }else{
+          } else {
             tx.status = transactionStatus.SUCCESSFUL
           }
         }
@@ -281,7 +292,6 @@ export function setFinalStatus(ctx, callback) {
 
       logger.info(`Final status for transaction ${tx._id} : ${tx.status}`)
       update.status = tx.status
-      
     }
 
     if (ctx.autoRetry != null) {

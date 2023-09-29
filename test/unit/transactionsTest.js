@@ -3,7 +3,11 @@
 /* eslint-env mocha */
 
 import * as transactions from '../../src/api/transactions'
-import {TaskModel, TransactionModel, resolveStuckProcessingState} from '../../src/model'
+import {
+  TaskModel,
+  TransactionModel,
+  resolveStuckProcessingState
+} from '../../src/model'
 import {ObjectId} from 'mongodb'
 
 describe('calculateTransactionBodiesByteLength()', () => {
@@ -102,7 +106,7 @@ describe('TransactionModel tests', () => {
         name: 'Test'
       }
     })
-  
+
     const validProcessingTransaction = Object.freeze({
       status: 'Processing',
       request: {
@@ -132,11 +136,11 @@ describe('TransactionModel tests', () => {
         name: 'Test'
       }
     })
-  
+
     beforeEach(async () => {
       await TransactionModel.deleteMany({})
     })
-  
+
     afterEach(async () => {
       await TransactionModel.deleteMany({})
     })
@@ -145,10 +149,14 @@ describe('TransactionModel tests', () => {
       await TransactionModel(midFlightTransaction).save()
 
       resolveStuckProcessingState()
-      await new Promise((resolve) => setTimeout(() => { resolve() }, 500))
-  
-      const transactions = await TransactionModel.find({ status: 'Processing' });
-      transactions.length.should.be.exactly(0);
+      await new Promise(resolve =>
+        setTimeout(() => {
+          resolve()
+        }, 500)
+      )
+
+      const transactions = await TransactionModel.find({status: 'Processing'})
+      transactions.length.should.be.exactly(0)
     })
 
     it('should not update a transaction processing state if response or error set', async () => {
@@ -156,10 +164,14 @@ describe('TransactionModel tests', () => {
       await TransactionModel(errorProcessingTransaction).save()
 
       resolveStuckProcessingState()
-      await new Promise((resolve) => setTimeout(() => { resolve() }, 500))
+      await new Promise(resolve =>
+        setTimeout(() => {
+          resolve()
+        }, 500)
+      )
 
-      const transactions = await TransactionModel.find({ status: 'Processing' });
-      transactions.length.should.be.exactly(2);
+      const transactions = await TransactionModel.find({status: 'Processing'})
+      transactions.length.should.be.exactly(2)
     })
   })
 })
