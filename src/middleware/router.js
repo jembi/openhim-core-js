@@ -670,7 +670,8 @@ function sendKafkaRequest(ctx, route) {
             resolve({
               status: 200,
               body: JSON.stringify(res),
-              timestamp: +new Date()
+              timestamp: +new Date(),
+              headers: {}
             })
           })
       })
