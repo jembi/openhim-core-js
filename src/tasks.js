@@ -38,7 +38,6 @@ export async function findAndProcessAQueuedTask() {
     const asyncTasks = await TaskModel.find({status: 'Pending Async'});
 
     asyncTasks.forEach(async task => {
-      logger.warn(`Processing async task ${task._id}`);
       await checkAsyncTaskStatus(task);
     })
 
