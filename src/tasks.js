@@ -54,40 +54,23 @@ export async function findAndProcessAQueuedTask() {
 }
 
 async function checkAsyncTaskStatus(task) {
-  const pendingAsyncTransactions = task.transactions.reduce((acc, transaction) => {
-    if (transaction.rerunStatus === 'Pending Async') {
-      return [...acc, transaction];
-    }
-    return acc;
-  },[]);
+  const pendingAsyncTransactions = task.transactions.filter(transaction => transaction.rerunStatus === 'Pending Async');
 
   let remainingAsyncTransactions = pendingAsyncTransactions.length;
 
   pendingAsyncTransactions.forEach(async transaction => {
     const currentTransactionStatus = await TransactionModel.findById(transaction.rerunID);
     
-    if (currentTransactionStatus.status === 'Successful') {
+    if (["Successful", "Completed with error(s)", "Failed"].includes(currentTransactionStatus.status)) {
       transaction.tstatus = 'Completed';
-      transaction.rerunStatus = 'Successful';
-      await task.save();
-      remainingAsyncTransactions--;
-    } 
-    else if (currentTransactionStatus.status === 'Completed with error(s)') {
-      transaction.tstatus = 'Completed';
-      transaction.rerunStatus = 'Completed with error(s)';
-      await task.save();
-      remainingAsyncTransactions--;
-    }
-    else if (currentTransactionStatus.status === 'Failed') {
-      transaction.tstatus = 'Completed';
-      transaction.rerunStatus = 'Failed';
+      transaction.rerunStatus = currentTransactionStatus.status;
       await task.save();
       remainingAsyncTransactions--;
     }
   });
 
 
-  if (pendingAsyncTransactions.length === 0){
+  if (remainingAsyncTransactions === 0){
     task.status = 'Completed';
     task.completedDate = new Date();
     await task.save()
