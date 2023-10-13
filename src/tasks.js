@@ -28,11 +28,19 @@ export async function findAndProcessAQueuedTask() {
       {status: 'Processing'},
       {new: true}
     )
+
     if (task != null) {
       activeTasks++
       await processNextTaskRound(task)
       activeTasks--
     }
+
+    const asyncTasks = await TaskModel.find({status: 'Pending Async'});
+
+    asyncTasks.forEach(async task => {
+      await checkAsyncTaskStatus(task);
+    })
+
   } catch (err) {
     if (task == null) {
       logger.error(`An error occurred while looking for rerun tasks: ${err}`)
@@ -43,6 +51,34 @@ export async function findAndProcessAQueuedTask() {
     }
     activeTasks--
   }
+}
+
+async function checkAsyncTaskStatus(task) {
+  const pendingAsyncTransactions = task.transactions.filter(transaction => transaction.rerunStatus === 'Pending Async');
+
+  let remainingAsyncTransactions = pendingAsyncTransactions.length;
+
+  pendingAsyncTransactions.forEach(async transaction => {
+    const currentTransactionStatus = await TransactionModel.findById(transaction.rerunID);
+    
+    if (["Successful", "Completed with error(s)", "Failed"].includes(currentTransactionStatus.status)) {
+      transaction.tstatus = 'Completed';
+      transaction.rerunStatus = currentTransactionStatus.status;
+      await task.save();
+      remainingAsyncTransactions--;
+    }
+  });
+
+
+  if (remainingAsyncTransactions === 0){
+    task.status = 'Completed';
+    task.completedDate = new Date();
+    await task.save()
+    logger.info(`Async task ${task._id} completed`);
+  }
+
+  return;
+
 }
 
 function rerunTaskProcessor() {
@@ -139,6 +175,8 @@ async function processNextTaskRound(task) {
     return
   }
 
+  let taskHasAsyncTransactions = false
+
   const promises = transactions.map(transaction => {
     task.remainingTransactions--
 
@@ -158,7 +196,11 @@ async function processNextTaskRound(task) {
           logger.error(
             `An error occurred while rerunning transaction ${transaction.tid} for task ${task._id}: ${err}`
           )
-        } else {
+        }else if(response.status === 202){
+          transaction.tstatus = 'Processing'
+          taskHasAsyncTransactions = true
+        }
+        else {
           transaction.tstatus = 'Completed'
         }
         return resolve()
@@ -177,8 +219,8 @@ async function processNextTaskRound(task) {
   if (task.remainingTransactions) {
     await processNextTaskRound(task)
   } else {
-    task.status = 'Completed'
-    task.completedDate = new Date()
+    task.status = taskHasAsyncTransactions ? 'Pending Async' : 'Completed'
+    task.completedDate = taskHasAsyncTransactions ? null : new Date()
     logger.info(`Round completed for rerun task #${task._id} - Task completed`)
 
     await task.save().catch(err => {
