@@ -377,10 +377,10 @@ describe('Rerun Task Tests', () => {
       await tasks.findAndProcessAQueuedTask().should.not.rejected()
     })
 
-    it("should return without processing if active tasks is greater than max active", async () => {
-      const spy = sinon.spy(TaskModel, "findOneAndUpdate")
+    it('should return without processing if active tasks is greater than max active', async () => {
+      const spy = sinon.spy(TaskModel, 'findOneAndUpdate')
       config.rerun.activeConcurrentTasks = -1
-      
+
       await tasks.findAndProcessAQueuedTask()
       spy.called.should.be.false
 

@@ -45,7 +45,9 @@ const createErrorResponse = (ctx, operation, error) => {
 const validateId = (ctx, id) => {
   if (!id.match(/^[0-9a-fA-F]{24}$/)) {
     ctx.statusCode = 400
-    throw Error(`App id "${id}" is invalid. ObjectId should contain 24 characters`)
+    throw Error(
+      `App id "${id}" is invalid. ObjectId should contain 24 characters`
+    )
   }
 }
 
