@@ -12,9 +12,7 @@ const AppSchema = new Schema({
   },
   description: String,
   icon: {
-    data: Buffer,
-    contentType: String
-  },
+    type: String  },
   category: String,
   access_roles: [String],
   url: {
