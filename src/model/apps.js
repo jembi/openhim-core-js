@@ -13,6 +13,10 @@ const AppSchema = new Schema({
   description: String,
   icon: {
     type: String  },
+  type: {
+    type: String,
+    enum: ['link', 'embedded'],
+    },
   category: String,
   access_roles: [String],
   url: {
