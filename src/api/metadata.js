@@ -181,7 +181,7 @@ async function handleMetadataPost(ctx, action) {
 
             // Ideally we should rather use our APIs to insert object rather than go directly to the DB
             // Then we would have to do this sort on thing as it's already covered there.
-            // E.g. https://github.com/jembi/openhim-core-js/blob/cd7d1fbbe0e122101186ecba9cf1de37711580b8/src/api/channels.js#L241-L257
+            // E.g. https://github.com/kagaba/openhim-core-js/blob/cd7d1fbbe0e122101186ecba9cf1de37711580b8/src/api/channels.js#L241-L257
             if (
               key === 'Channels' &&
               result.type === 'polling' &&

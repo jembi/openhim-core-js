@@ -12,7 +12,7 @@ export const connectionAgenda = mongoose.createConnection(
 )
 export const connectionAPI = mongoose.createConnection(
   encodeMongoURI(config.mongo.url),
-  getMongoOptions()
+  //getMongoOptions()
 )
 export const connectionATNA = mongoose.createConnection(
   encodeMongoURI(config.mongo.atnaUrl)

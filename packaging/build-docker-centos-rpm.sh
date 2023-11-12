@@ -4,7 +4,7 @@ RELEASE_VERSION=$1
 if [ -z ${RELEASE_VERSION} ]
 then
   echo "You need so specify the release version you wish to build: e.g './build-docker-centos-rpm.sh 4.0.0'"
-  echo "https://github.com/jembi/openhim-core-js/releases"
+  echo "https://github.com/kagaba/openhim-core-js/releases"
   exit 1
 fi
 
@@ -30,9 +30,9 @@ docker exec -it $containerName sh -c "curl -sL https://rpm.nodesource.com/setup_
 echo "Install needed packages: "
 docker exec -it $containerName sh -c "yum -y install nodejs-12.18.1"
 
-echo "https://github.com/jembi/openhim-core-js/archive/v$RELEASE_VERSION.tar.gz"
+echo "https://github.com/kagaba/openhim-core-js/archive/v$RELEASE_VERSION.tar.gz"
 echo "Fetch release version from Github"
-docker exec -it $containerName sh -c "mkdir /openhim-core-js && curl -sL 'https://github.com/jembi/openhim-core-js/archive/v$RELEASE_VERSION.tar.gz' | tar --strip-components=1 -zxv -C /openhim-core-js"
+docker exec -it $containerName sh -c "mkdir /openhim-core-js && curl -sL 'https://github.com/kagaba/openhim-core-js/archive/v$RELEASE_VERSION.tar.gz' | tar --strip-components=1 -zxv -C /openhim-core-js"
 
 echo "npm install && npm install speculate && npm run build"
 docker exec -it $containerName sh -c "cd /openhim-core-js && npm install && npm install speculate && npm run build && npm run spec"

@@ -35,7 +35,7 @@ Currently supported versions of NodeJS LTS are
 ### Docker Compose
 
 1. Ensure that you have [Docker](https://docs.docker.com/install/) and [Docker Compose](https://docs.docker.com/compose/install/) installed.
-1. Navigate to the [docker-compose.yml](https://github.com/jembi/openhim-core-js/blob/master/infrastructure/docker-compose.yml) file found in the `/infrastructure` directory.
+1. Navigate to the [docker-compose.yml](https://github.com/kagaba/openhim-core-js/blob/master/infrastructure/docker-compose.yml) file found in the `/infrastructure` directory.
 1. Execute the Docker Compose file to pull the docker images and start the services in a detached mode:
 
   ```sh
@@ -48,7 +48,7 @@ Currently supported versions of NodeJS LTS are
 
 ## Developer guide
 
-Clone the `https://github.com/jembi/openhim-core-js.git` repository.
+Clone the `https://github.com/kagaba/openhim-core-js.git` repository.
 
 Ensure you have the following installed:
 
@@ -176,7 +176,7 @@ Refer to this [blog](https://developers.redhat.com/blog/2014/05/05/running-syste
 
 ## Contributing
 
-You may view/add issues here: <https://github.com/jembi/openhim-core-js/issues>
+You may view/add issues here: <https://github.com/kagaba/openhim-core-js/issues>
 
 To contribute code, please fork the repository and submit a pull request. The maintainers will review the code and merge it in if all is well.
 

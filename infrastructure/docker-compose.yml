@@ -3,14 +3,47 @@ networks:
   openhim:
 
 services:
+  postgres:
+    image: postgres:15.3-alpine3.18
+    environment:
+      - POSTGRES_USER=openhim
+      - POSTGRES_PASSWORD=secret
+      - POSTGRES_DB=openhim
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - openhim      
+
   mongo-db:
     container_name: mongo-db
-    image: mongo:4.0
+    image: ghcr.io/ferretdb/ferretdb:1.11.0
+    environment:
+      - MONGODB_DATABASE=openhim
+      - MONGODB_ADVERTISED_HOSTNAME=mongo-db
+      - MONGODB_REPLICA_SET=primary
+      - ALLOW_EMPTY_PASSWORD=yes
+      - FERRETDB_TELEMETRY=disable
+      - FERRETDB_POSTGRESQL_URL=postgres://postgres:5432/openhim?user=openhim&password=secret
     networks:
       - openhim
     volumes:
       - "mongo-data:/data/db"
     restart: unless-stopped
+    ports:
+      - "8081:8081"
+    depends_on:
+      - postgres
+  
+  mongosh:
+    image: mongo:6.0.8-jammy
+    entrypoint: /usr/bin/tail
+    command: ["-f", "/dev/null"]
+    depends_on:
+      - mongo-db
+    networks:
+      - openhim      
 
   openhim-core:
     container_name: openhim-core
@@ -31,6 +64,9 @@ services:
      interval: 30s
      timeout: 30s
      retries: 3
+    depends_on:
+    - mongosh
+
 
   openhim-console:
     container_name: openhim-console
@@ -48,3 +84,4 @@ services:
 
 volumes:
   mongo-data:
+  pgdata:

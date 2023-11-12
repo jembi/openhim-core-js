@@ -120,7 +120,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/jembi/openhim-core-js.git"
+    "url": "https://github.com/kagaba/openhim-core-js"
   },
   "keywords": [
     "openhim",
@@ -132,7 +132,7 @@
   ],
   "author": "Jembi Health Systems NPC",
   "bugs": {
-    "url": "https://github.com/jembi/openhim-core-js/issues"
+    "url": "https://github.com/kagaba/openhim-core-js/issues"
   },
   "homepage": "http://openhim.org",
   "nyc": {

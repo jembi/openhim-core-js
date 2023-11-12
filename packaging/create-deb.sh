@@ -79,7 +79,7 @@ do
     # Update changelog
     cd $TARGETDIR
     echo "Updating changelog for build ..."
-    $DCH -Mv "${OPENHIM_VERSION}-${BUILDNO}~${TARGET}" --distribution "${TARGET}" "Release Debian Build ${OPENHIM_VERSION}-${BUILDNO}. Find v${OPENHIM_VERSION} changelog here: https://github.com/jembi/openhim-core-js/releases"
+    $DCH -Mv "${OPENHIM_VERSION}-${BUILDNO}~${TARGET}" --distribution "${TARGET}" "Release Debian Build ${OPENHIM_VERSION}-${BUILDNO}. Find v${OPENHIM_VERSION} changelog here: https://github.com/kagaba/openhim-core-js/releases"
 
     # Clear and create packaging directory
     PKGDIR=${BUILDDIR}/${BUILD}

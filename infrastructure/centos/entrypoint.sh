@@ -57,7 +57,7 @@ yum install -y nodejs
 npm --version && node -v
 
 # Generate openhim-core rpm package
-git clone https://github.com/jembi/openhim-core-js.git
+git clone https://github.com/kagaba/openhim-core-js.git
 cd openhim-core-js/ && git checkout $CORE_VERSION
 npm install && npm install speculate && npm run build
 # generate SPEC file for rpmbuild
