@@ -84,6 +84,8 @@ The following config option are provided by the OpenHIM. All of these options ha
     "openid": {
       // Openid connect provider realm url link
       "url": "http://localhost:9088/realms/platform-realm",
+      // (Optional) Openid connect provider issuer url incase this is different from the api url e.g. if you are using a proxy
+      "issuerUrl": "http://localhost:9088/realms/platform-realm",
       // Callback URL used by openid connect provider (should be the same callback URL specified in realm)
       "callbackUrl": "http://localhost:9000",
       // CLient ID specified in the realm
