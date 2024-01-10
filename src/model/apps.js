@@ -14,7 +14,7 @@ const AppSchema = new Schema({
   icon: String,
   type: {
     type: String,
-    enum: ['link', 'embedded']
+    enum: ['internal', 'external', 'esmodule']
   },
   category: String,
   access_roles: [String],
