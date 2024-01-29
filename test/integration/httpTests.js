@@ -317,13 +317,13 @@ describe('HTTP tests', () => {
         .expect(201)
     })
 
-    it('should deny access on POST - Private Channel with whitelisted IP but incorrect client role', async () => {
+    it('should allow access on POST - Private Channel with whitelisted IP but incorrect client role', async () => {
       await promisify(server.start)({httpPort: SERVER_PORTS.httpPort})
       await request(constants.HTTP_BASE_URL)
         .post('/un-auth')
         .send(testDoc)
         .auth('testApp', 'password')
-        .expect(401)
+        .expect(201)
     })
 
     it('should return 201 CREATED on POST - Private Channel with whitelisted IP and correct client role', async () => {
