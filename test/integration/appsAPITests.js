@@ -20,7 +20,7 @@ describe('API Integration Tests', () => {
       name: 'Test app',
       description: 'An app for testing the app framework',
       icon: 'data:image/png;base64, <base64>',
-      type: 'link',
+      type: 'external',
       category: 'Operations',
       access_roles: ['test-app-user'],
       url: 'http://test-app.org/app',
