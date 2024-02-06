@@ -625,7 +625,11 @@ function sendHttpRequest(ctx, route, options) {
       routeReq.destroy(new Error(`Request took longer than ${timeout}ms`))
     })
 
-    if (ctx.request.method === 'POST' || ctx.request.method === 'PUT') {
+    if (
+      ctx.request.method === 'POST' ||
+      ctx.request.method === 'PUT' ||
+      ctx.request.method === 'PATCH'
+    ) {
       if (ctx.body != null) {
         // TODO : Should probally add checks to see if the body is a buffer or string
         routeReq.write(ctx.body)
