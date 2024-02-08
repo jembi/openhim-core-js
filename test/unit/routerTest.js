@@ -243,6 +243,37 @@ describe('HTTP Router', () => {
         req.method.should.eql('POST')
       })
 
+      it('should forward PATCH requests correctly', async () => {
+        const response = 'Hello Patch'
+        const patchSpy = sinon.spy(() => response)
+        server = await testUtils.createMockHttpServer(
+          patchSpy,
+          constants.HTTP_PORT,
+          200
+        )
+
+        const channel = {
+          name: 'PATCH channel',
+          urlPattern: '.+',
+          routes: [
+            {
+              host: 'localhost',
+              port: constants.HTTP_PORT,
+              primary: true
+            }
+          ]
+        }
+        const ctx = createContext(channel, '/test', 'PATCH', 'some body')
+        await promisify(router.route)(ctx)
+        Buffer.isBuffer(ctx.response.body).should.be.true()
+        ctx.response.body.toString().should.eql(response)
+
+        patchSpy.callCount.should.be.eql(1)
+        const call = patchSpy.getCall(0)
+        const req = call.args[0]
+        req.method.should.eql('PATCH')
+      })
+
       it('should handle empty put and post requests correctly', async () => {
         const response = 'Hello Empty Post'
         const postSpy = sinon.spy(() => response)
@@ -271,6 +302,36 @@ describe('HTTP Router', () => {
         const call = postSpy.getCall(0)
         const req = call.args[0]
         req.method.should.eql('POST')
+      })
+
+      it('should handle empty patch requests correctly', async () => {
+        const response = 'Hello Empty Patch'
+        const patchSpy = sinon.spy(() => response)
+        server = await testUtils.createMockHttpServer(
+          patchSpy,
+          constants.HTTP_PORT,
+          200
+        )
+        const channel = {
+          name: 'PATCH channel',
+          urlPattern: '.+',
+          routes: [
+            {
+              host: 'localhost',
+              port: constants.HTTP_PORT,
+              primary: true
+            }
+          ]
+        }
+        const ctx = createContext(channel, '/test', 'PATCH')
+        await promisify(router.route)(ctx)
+        Buffer.isBuffer(ctx.response.body).should.be.true()
+        ctx.response.body.toString().should.eql(response)
+
+        patchSpy.callCount.should.be.eql(1)
+        const call = patchSpy.getCall(0)
+        const req = call.args[0]
+        req.method.should.eql('PATCH')
       })
 
       it('should send request params if these where received from the incoming request', async () => {
