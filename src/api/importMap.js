@@ -162,3 +162,25 @@ export async function deleteImportMap(ctx, importMapId) {
         createErrorResponse(ctx, 'delete', e)
     }
 }
+
+/**
+ * Retrieves all import maps from the database and transforms the data into an import map json response
+ * @param {*} ctx 
+ */
+export async function getTransformedImportMap(ctx) {
+    try {
+        const importMaps = await ImportMapModelAPI.find(ctx.request.query)
+
+        logger.info(`User ${ctx.authenticated.email} fetched ${importMaps.length} import maps`)
+
+        const imports = importMaps.reduce((acc, curr) => {
+            acc[curr.name] = curr.url;
+            return acc;
+        }, {});
+
+        ctx.body = { imports }
+        ctx.status = 200
+    } catch (e) {
+        createErrorResponse(ctx, 'retrieve')
+    }
+}

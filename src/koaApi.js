@@ -293,6 +293,7 @@ export function setupApp(done) {
   app.use(route.post('/importmaps', importMap.addImportMap))
   app.use(route.put('/importmaps/:importMapId', importMap.updateImportMap))
   app.use(route.delete('/importmaps/:importMapId', importMap.deleteImportMap))
+  app.use(route.get('/importmap', importMap.getTransformedImportMap))
 
   // Return the result
   return done(app)
