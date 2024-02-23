@@ -28,6 +28,7 @@ import * as tasks from './api/tasks'
 import * as transactions from './api/transactions'
 import * as users from './api/users'
 import * as visualizers from './api/visualizers'
+import * as importMap from './api/importMap'
 import passport from './passport'
 import MongooseStore from './middleware/sessionStore'
 import {config} from './config'
@@ -285,6 +286,13 @@ export function setupApp(done) {
   app.use(
     route.delete('/visualizers/:visualizerId', visualizers.removeVisualizer)
   )
+
+  // Import Map endpoints
+  app.use(route.get('/importmaps', importMap.getImportMaps))
+  app.use(route.get('/importmaps/:importMapId', importMap.getImportMap))
+  app.use(route.post('/importmaps', importMap.addImportMap))
+  app.use(route.put('/importmaps/:importMapId', importMap.updateImportMap))
+  app.use(route.delete('/importmaps/:importMapId', importMap.deleteImportMap))
 
   // Return the result
   return done(app)
