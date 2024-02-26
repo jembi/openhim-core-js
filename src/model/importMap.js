@@ -1,7 +1,8 @@
 'use strict'
 
-import {Schema} from 'mongoose'
+import { Schema } from 'mongoose'
 import { connectionAPI, connectionDefault } from '../config'
+import { AppModel } from './apps'
 
 const ImportMapSchema = new Schema({
     name: {
@@ -18,4 +19,50 @@ const ImportMapSchema = new Schema({
 
 export const ImportMapModelAPI = connectionAPI.model('ImportMap', ImportMapSchema)
 export const ImportMapModel = connectionDefault.model('ImportMap', ImportMapSchema)
+
+
+async function setupAppChangeStream() {
+    const appChangeStream = AppModel.watch()
+
+    appChangeStream.on('change', async (change) => {
+        console.log('Change event:', change)
+
+        if (change.operationType === 'insert') {
+            try {
+                const { name, url } = change.fullDocument
+
+                await ImportMapModel.updateOne(
+                    { name: name },
+                    { url: url },
+                    { upsert: true }
+                )
+            } catch (e) {
+                console.error('Error updating ImportMap:', e);
+            }
+        } else if (change.operationType === 'update') {
+            try {
+                const { name, url } = change.fullDocument;
+                await ImportMapModel.updateOne(
+                    { name: name },
+                    { url: url }
+                );
+            } catch (e) {
+                console.error('Error updating ImportMap:', e);
+            }
+        } else if (change.operationType === 'delete') {
+            try {
+                const { name } = change.documentKey;
+                await ImportMapModel.deleteOne(
+                    { name: name }
+                );
+            } catch (e) {
+                console.error('Error deleting ImportMap:', e);
+            }
+        } else {
+            console.log('Unsupported operation type:', change.operationType);
+        }
+    })
+}
+
+setupAppChangeStream()
 
