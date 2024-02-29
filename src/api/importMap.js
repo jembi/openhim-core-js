@@ -4,6 +4,7 @@ import logger from 'winston'
 import * as authorisation from './authorisation'
 import * as utils from '../utils'
 import {ImportMapModelAPI} from '../model/importMap'
+import {defaultImportmapPaths} from '../constants'
 
 /**
  * Checks admin permission for create, update and delete operations.
@@ -233,7 +234,9 @@ export async function getTransformedImportMap(ctx) {
       return acc
     }, {})
 
-    ctx.body = {imports}
+    const mergedImports = {...defaultImportmapPaths, ...imports}
+
+    ctx.body = {imports: mergedImports}
     ctx.status = 200
   } catch (e) {
     createErrorResponse(ctx, 'retrieve')
