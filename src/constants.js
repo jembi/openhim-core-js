@@ -16,7 +16,7 @@ export const JWT_PATTERN =
 export const CUSTOM_TOKEN_PATTERN =
   /^ *(?:[Cc][Uu][Ss][Tt][Oo][Mm]) +([A-Za-z0-9\-._~+/]+=*) *$/
 
-export const defaultImportmapPaths = {
+export const DEFAULT_IMPORT_MAP_PATHS = {
   '@jembi/openhim-header':
     './libs/@jembi/openhim-header/dist/jembi-openhim-header.js',
   '@jembi/legacy-console': './libs/@jembi/legacy-console/dist/bundle.js',
