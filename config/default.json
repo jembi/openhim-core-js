@@ -81,6 +81,7 @@
     "enableCustomTokenAuthentication": false,
     "enableJWTAuthentication": false,
     "jwt": {
+      "jwksUri": "",
       "secretOrPublicKey": "",
       "algorithms": "",
       "audience": "",
