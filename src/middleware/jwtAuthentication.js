@@ -67,6 +67,9 @@ async function authenticateToken(ctx) {
       logger.info('Using JWKS URI to verify JWT')
       secretOrPublicKey = async (header, callback) => {
         const key = await jwksCache.getKey(header.kid)
+        if (!key) {
+          return callback(new Error('Public key not found in JWKS cache'))
+        }
         callback(null, key.publicKey || key.rsaPublicKey)
       }
     }
