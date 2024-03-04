@@ -3,7 +3,7 @@
   "mongo": {
     "url": "mongodb://localhost/openhim",
     "atnaUrl": "mongodb://localhost/openhim",
-    "connectionOptions": {},
+   "connectionOptions": {},
     "openHIMApiReadPreference": "primaryPreferred",
     "openHIMApiWriteConcern": 1,
     "openHIMApiReadConcern": "local"

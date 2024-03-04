@@ -2,7 +2,6 @@
 
 import logger from 'winston'
 import * as authorisation from './authorisation'
-import * as utils from '../utils'
 import {ImportMapModelAPI} from '../model/importMap'
 import {DEFAULT_IMPORT_MAP_PATHS} from '../constants'
 
@@ -83,8 +82,10 @@ export async function addImportMap(ctx) {
   try {
     checkUserPermission(ctx, 'add')
     const importMapData = ctx.request.body
+    const {_id, name, url} = importMapData
+    const importMap = new ImportMapModelAPI({name, url})
 
-    const importMap = new ImportMapModelAPI(importMapData)
+    importMap.appId = _id
     await importMap.save()
 
     logger.info(

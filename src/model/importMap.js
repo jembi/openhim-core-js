@@ -1,8 +1,9 @@
 'use strict'
 
-import {Schema} from 'mongoose'
-import {connectionAPI, connectionDefault} from '../config'
-import {AppModel} from './apps'
+import { Schema } from 'mongoose'
+import { connectionAPI, connectionDefault } from '../config'
+import { AppModel } from './apps'
+import loggers from 'winston'
 
 const ImportMapSchema = new Schema({
   name: {
@@ -11,6 +12,11 @@ const ImportMapSchema = new Schema({
     unique: true
   },
   url: {
+    type: String,
+    required: true,
+    unique: true
+  },
+  appId: {
     type: String,
     required: true,
     unique: true
@@ -26,43 +32,40 @@ export const ImportMapModel = connectionDefault.model(
   ImportMapSchema
 )
 
+/**
+ * Listens to the changes happen at the App model level and creates/updates a record in ImportMap table
+ */
 async function setupAppChangeStream() {
   const appChangeStream = AppModel.watch()
 
   appChangeStream.on('change', async change => {
-    console.log('Change event:', change)
-
-    // Restart the change stream if it's closed or errored
-    if (appChangeStream.isClosed() || appChangeStream.isPaused()) {
-      console.log('Restarting change stream...')
-      await setupAppChangeStream()
-      return
-    }
+    // loggers.info('Change event received:', change)
+    console.log(('Change event received:', change))
 
     if (change.operationType === 'insert') {
       try {
-        const {name, url} = change.fullDocument
+        const { _id, name, url } = change.fullDocument
 
-        await ImportMapModel.updateOne({name: name}, {url: url}, {upsert: true})
+        await ImportMapModel.updateOne({ name: name, appId: _id }, { url: url }, { upsert: true })
       } catch (e) {
-        console.error('Error updating ImportMap:', e)
+        loggers.error('Error updating ImportMap:', e)
       }
     } else if (change.operationType === 'update') {
       try {
-        const {name, url} = change.fullDocument
-        await ImportMapModel.updateOne({name: name}, {url: url})
+        const { _id, name, url } = change.fullDocument
+        await ImportMapModel.updateOne({ name: name, appId: _id }, { url: url })
       } catch (e) {
-        console.error('Error updating ImportMap:', e)
+        loggers.error('Error updating ImportMap:', e)
       }
     } else if (change.operationType === 'delete') {
       try {
-        const {name} = change.documentKey
-        await ImportMapModel.deleteOne({name: name})
+        const { _id } = change.documentKey
+        await ImportMapModel.deleteOne({ appId: _id })
       } catch (e) {
-        console.error('Error deleting ImportMap:', e)
+        loggers.error('Error deleting ImportMap:', e)
       }
     } else {
-      console.log('Unsupported operation type:', change.operationType)
+      loggers.info('Unsupported operation type:', change.operationType)
     }
   })
 }
