@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 'use strict'
 
 import { Schema } from 'mongoose'
@@ -39,8 +40,7 @@ async function setupAppChangeStream() {
   const appChangeStream = AppModel.watch()
 
   appChangeStream.on('change', async change => {
-    // loggers.info('Change event received:', change)
-    console.log(('Change event received:', change))
+    loggers.info('Change event received')
 
     if (change.operationType === 'insert') {
       try {
