@@ -5,8 +5,12 @@ import logger from 'winston'
 
 import * as client from '../model/clients'
 import * as configIndex from '../config'
-import * as cache from '../jwtSecretOrPublicKeyCache'
+import * as jwtSecretOrPublicKeyCache from '../jwtSecretOrPublicKeyCache'
+import * as jwksCache from '../jwksCache'
 import {JWT_PATTERN} from '../constants'
+import {promisify} from 'util'
+
+const verify = promisify(jwt.verify)
 
 async function authenticateClient(clientID) {
   return client.ClientModel.findOne({clientID}).then(client => {
@@ -53,9 +57,26 @@ async function authenticateToken(ctx) {
   }
 
   try {
-    const decodedToken = jwt.verify(
+    let secretOrPublicKey = jwtSecretOrPublicKeyCache.getSecretOrPublicKey()
+
+    if (
+      !secretOrPublicKey &&
+      configIndex.config.get('authentication:jwt:jwksUri')
+    ) {
+      // If the secretOrPublicKey is not set, then set this to a function that checks the JWKS cache
+      logger.info('Using JWKS URI to verify JWT')
+      secretOrPublicKey = async (header, callback) => {
+        const key = await jwksCache.getKey(header.kid)
+        if (!key) {
+          return callback(new Error('Public key not found in JWKS cache'))
+        }
+        callback(null, key.publicKey || key.rsaPublicKey)
+      }
+    }
+
+    const decodedToken = await verify(
       token[1],
-      cache.getSecretOrPublicKey(),
+      secretOrPublicKey,
       getJwtOptions()
     )
 
