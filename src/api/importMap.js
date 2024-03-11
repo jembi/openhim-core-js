@@ -243,3 +243,23 @@ export async function getTransformedImportMap(ctx) {
     createErrorResponse(ctx, 'retrieve')
   }
 }
+
+/**
+ * Retrieves details of a single Import Map record by App ID
+ * @param {*} ctx
+ * @param {*} appId
+ */
+export async function getImportMapByAppId(ctx, appId) {
+  try {
+    const importMap = await checkImportMapExistsByPropertyName(ctx, appId)
+
+    logger.info(
+      `User ${ctx.authenticated.email} fetched import map with App Id: ${appId}`
+    )
+
+    ctx.body = importMap
+    ctx.status = 200
+  } catch (e) {
+    createErrorResponse(ctx, 'retrieve by App Id', e)
+  }
+}
