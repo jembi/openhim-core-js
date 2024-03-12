@@ -153,7 +153,12 @@ export async function updateImportMap(ctx, importMapId) {
 
     const importMapData = ctx.request.body
 
-    await ImportMapModelAPI.findByIdAndUpdate(importMapId, importMapData).exec()
+    const updateData = {
+      name: importMapData.name,
+      url: importMapData.url
+    }
+
+    await ImportMapModelAPI.findByIdAndUpdate(importMapId, updateData).exec()
 
     logger.info(
       `User ${ctx.authenticated.email} updated Import Map with id ${importMapId}`
