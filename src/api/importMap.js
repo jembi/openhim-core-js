@@ -60,8 +60,14 @@ const createErrorResponse = (ctx, operation, error) => {
  * @param {*} propertyName
  * @returns
  */
-const checkImportMapExistsByPropertyName = async (ctx, propertyName) => {
-  const importMap = await ImportMapModelAPI.findOne({propertyName})
+const checkImportMapExistsByPropertyName = async (
+  ctx,
+  propertyName,
+  propertyValue
+) => {
+  const importMap = await ImportMapModelAPI.findOne({
+    [propertyName]: propertyValue
+  })
 
   if (!importMap) {
     ctx.statusCode = 404
@@ -174,12 +180,16 @@ export async function updateImportMap(ctx, importMapId) {
  * @param {*} ctx
  * @param {*} propertyName
  */
-export async function updateImportMapByPropertyName(ctx, propertyName) {
+export async function updateImportMapByPropertyName(
+  ctx,
+  propertyName,
+  propertyValue
+) {
   try {
     checkUserPermission(ctx, 'update')
 
     // Check if the import map exists by property name
-    await checkImportMapExistsByPropertyName(ctx, propertyName)
+    await checkImportMapExistsByPropertyName(ctx, propertyName, propertyValue)
 
     const importMapData = ctx.request.body
 
@@ -256,7 +266,11 @@ export async function getTransformedImportMap(ctx) {
  */
 export async function getImportMapByAppId(ctx, appId) {
   try {
-    const importMap = await checkImportMapExistsByPropertyName(ctx, appId)
+    const importMap = await checkImportMapExistsByPropertyName(
+      ctx,
+      'appId',
+      appId
+    )
 
     logger.info(
       `User ${ctx.authenticated.email} fetched import map with App Id: ${appId}`
