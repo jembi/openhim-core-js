@@ -28,7 +28,6 @@ import * as tasks from './api/tasks'
 import * as transactions from './api/transactions'
 import * as users from './api/users'
 import * as visualizers from './api/visualizers'
-import * as importMap from './api/importMap'
 import passport from './passport'
 import MongooseStore from './middleware/sessionStore'
 import {config} from './config'
@@ -83,6 +82,9 @@ export function setupApp(done) {
 
   // Check of logged in user
   app.use(route.get('/me', users.me))
+
+  // ImportMaps endpoints
+  app.use(route.get('/importmaps', apps.getTransformedImportMap))
 
   // Expose the authenticate route before the auth middleware so that it is publicly accessible
   // Local authentication
@@ -286,15 +288,6 @@ export function setupApp(done) {
   app.use(
     route.delete('/visualizers/:visualizerId', visualizers.removeVisualizer)
   )
-
-  // Import Map endpoints
-  app.use(route.get('/importmaps', importMap.getImportMaps))
-  app.use(route.get('/importmaps/:importMapId', importMap.getImportMap))
-  app.use(route.post('/importmaps', importMap.addImportMap))
-  app.use(route.put('/importmaps/:importMapId', importMap.updateImportMap))
-  app.use(route.delete('/importmaps/:importMapId', importMap.deleteImportMap))
-  app.use(route.get('/importmap', importMap.getTransformedImportMap))
-  app.use(route.get('/importmaps/apps/:appId', importMap.getImportMapByAppId))
 
   // Return the result
   return done(app)
