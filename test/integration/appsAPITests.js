@@ -11,6 +11,9 @@ import * as constants from '../constants'
 import * as server from '../../src/server'
 import * as testUtils from '../utils'
 import {AppModelAPI} from '../../src/model/apps'
+import { getTransformedImportMap } from '../../src/api/apps'
+import { logger } from 'handlebars'
+import sinon from 'sinon'
 
 const {SERVER_PORTS, BASE_URL} = constants
 
@@ -260,6 +263,51 @@ describe('API Integration Tests', () => {
 
         res.body.success.should.equal(true)
       })
+    })
+
+    describe('*getTransformedImportMap', () => {
+      it('should return a properly formatted import map', async () => {
+        const mockImportMaps = [
+          {name: 'app1', url: 'url1'},
+          {name: 'app2', url: 'url2'}
+        ]
+
+        sinon.stub(AppModelAPI, 'find').resolves(mockImportMaps)
+
+        const ctx = {
+          request: {
+            query: {}
+          },
+          body: {},
+          status: null
+        }
+
+        await getTransformedImportMap(ctx)
+
+        expect(ctx.body.imports).to.deep.equal({
+          'app1': 'url1',
+          'app2': 'url2'
+        })
+        expect(ctx.status).to.equal(200)
+      })
+    })
+
+    it('should handle error when retrieval fails', async () => {
+      const errorMessage = 'Error fetching import maps'
+      sinon.stub(AppModelAPI, 'find').rejects(new Error(errorMessage))
+      const errorSpy = sinon.spy(logger, 'error')
+
+      const ctx = {
+        request: {
+          query: {}
+        },
+        body: {},
+        status: null
+      }
+
+      await getTransformedImportMap(ctx)
+
+      expect(errorSpy.calledOnceWith(`Could not retrieve an enriched import map via the API: ${errorMessage}`)).to.be.true
     })
   })
 })
