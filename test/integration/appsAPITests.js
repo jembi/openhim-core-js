@@ -11,8 +11,11 @@ import * as constants from '../constants'
 import * as server from '../../src/server'
 import * as testUtils from '../utils'
 import {AppModelAPI} from '../../src/model/apps'
+import { getTransformedImportMap } from '../../src/api/apps'
+import { logger } from 'handlebars'
+import sinon from 'sinon'
 
-const {SERVER_PORTS, BASE_URL} = constants
+const {SERVER_PORTS, BASE_URL, DEFAULT_IMPORT_MAP_PATHS} = constants
 
 describe('API Integration Tests', () => {
   describe('Apps REST Api Testing', () => {
@@ -259,6 +262,47 @@ describe('API Integration Tests', () => {
           .expect(200)
 
         res.body.success.should.equal(true)
+      })
+    })
+
+    describe('*getTransformedImportMap', () => {
+      beforeEach(() => {
+        sinon.stub(AppModelAPI, 'find')
+      })
+
+      afterEach(() => {
+        sinon.restore()
+      })
+
+      it('should fetch import maps and merge with default paths', async () => {
+        const importMaps = [{ name: 'map1', url: 'url1' }, { name: 'map2', url: 'url2' }]
+        const ctx = { request: { query: {} }, body: {}, status: 0 }
+    
+        AppModelAPI.find.resolves(importMaps)
+
+        const expectedImports = {
+          ...DEFAULT_IMPORT_MAP_PATHS,
+          map1: 'url1',
+          map2: 'url2'
+        }
+    
+        await getTransformedImportMap(ctx)
+    
+        sinon.assert.calledOnce(AppModelAPI.find)
+        sinon.assert.calledWithExactly(AppModelAPI.find, {}, 'name url')
+    
+        ctx.status.should.equal(200)
+        const imports = ctx.body.imports
+        imports.should.have.property('@jembi/openhim-header', './libs/@jembi/openhim-header/dist/jembi-openhim-header.js')
+        imports.should.have.property('@jembi/legacy-console', './libs/@jembi/legacy-console/dist/bundle.js')
+        imports.should.have.property('@jembi/openhim-core-api', './libs/@jembi/openhim-core-api/dist/jembi-openhim-core-api.js')
+        imports.should.have.property('@jembi/openhim-theme', './libs/@jembi/openhim-theme/dist/jembi-openhim-theme.js')
+        imports.should.have.property('@jembi/portal-admin', './libs/@jembi/portal-admin/dist/jembi-portal-admin.js')
+        imports.should.have.property('@jembi/openhim-portal', './libs/@jembi/openhim-portal/dist/jembi-openhim-portal.js')
+        imports.should.have.property('@jembi/root-config', './libs/@jembi/root-config/dist/jembi-root-config.js')
+        imports.should.have.property('@jembi/openhim-sidebar', './libs/@jembi/openhim-sidebar/dist/jembi-openhim-sidebar.js')
+        imports.should.have.property('map1', 'url1')
+        imports.should.have.property('map2', 'url2')
       })
     })
   })

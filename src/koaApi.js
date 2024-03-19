@@ -83,6 +83,9 @@ export function setupApp(done) {
   // Check of logged in user
   app.use(route.get('/me', users.me))
 
+  // ImportMaps endpoints
+  app.use(route.get('/importmaps', apps.getTransformedImportMap))
+
   // Expose the authenticate route before the auth middleware so that it is publicly accessible
   // Local authentication
   app.use(
