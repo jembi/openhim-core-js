@@ -958,7 +958,7 @@ describe('API Integration Tests', () => {
     })
   })
 
-  describe.only('Authentication and authorisation tests', () => {
+  describe('Authentication and authorisation tests', () => {
     describe('Mutual TLS', () => {
       let mockServer = null
 
