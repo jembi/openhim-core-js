@@ -174,6 +174,6 @@ export async function getTransformedImportMap(ctx) {
     ctx.body = {imports: mergedImports}
     ctx.status = 200
   } catch (e) {
-    logger.error(`Could not retrieve an enriched importamap via the API: ${e}`)
+    logger.error(`Could not retrieve an enriched importmap via the API: ${e}`)
   }
 }

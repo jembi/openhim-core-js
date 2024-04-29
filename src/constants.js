@@ -18,7 +18,7 @@ export const JWT_PATTERN =
 export const CUSTOM_TOKEN_PATTERN =
   /^ *(?:[Cc][Uu][Ss][Tt][Oo][Mm]) +([A-Za-z0-9\-._~+/]+=*) *$/
 
-const OPENHIM_CONSOLE_BASE_URL = config.openhimConsoleBaseUrl || 'http://localhost:9000'
+const OPENHIM_CONSOLE_BASE_URL = config.get('openhimConsoleBaseUrl') 
 
 export const DEFAULT_IMPORT_MAP_PATHS = {
   '@jembi/openhim-header':
