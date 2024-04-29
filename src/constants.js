@@ -1,5 +1,7 @@
 'use strict'
 
+import {config} from './config'
+
 export const DEFAULT_API_PORT = 8080
 
 export const MUTUAL_TLS_AUTH_TYPE = 'mutual-tls-auth'
@@ -16,19 +18,21 @@ export const JWT_PATTERN =
 export const CUSTOM_TOKEN_PATTERN =
   /^ *(?:[Cc][Uu][Ss][Tt][Oo][Mm]) +([A-Za-z0-9\-._~+/]+=*) *$/
 
+const OPENHIM_CONSOLE_BASE_URL = config.openhimConsoleBaseUrl || 'http://localhost:9000'
+
 export const DEFAULT_IMPORT_MAP_PATHS = {
   '@jembi/openhim-header':
-    './libs/@jembi/openhim-header/dist/jembi-openhim-header.js',
-  '@jembi/legacy-console': './libs/@jembi/legacy-console/dist/bundle.js',
+    `${OPENHIM_CONSOLE_BASE_URL}/jembi-openhim-header.js`,
+  '@jembi/legacy-console': `${OPENHIM_CONSOLE_BASE_URL}/bundle.js`,
   '@jembi/openhim-core-api':
-    './libs/@jembi/openhim-core-api/dist/jembi-openhim-core-api.js',
+  `${OPENHIM_CONSOLE_BASE_URL}/jembi-openhim-core-api.js`,
   '@jembi/openhim-theme':
-    './libs/@jembi/openhim-theme/dist/jembi-openhim-theme.js',
+  `${OPENHIM_CONSOLE_BASE_URL}/jembi-openhim-theme.js`,
   '@jembi/portal-admin':
-    './libs/@jembi/portal-admin/dist/jembi-portal-admin.js',
+  `${OPENHIM_CONSOLE_BASE_URL}/jembi-portal-admin.js`,
   '@jembi/openhim-portal':
-    './libs/@jembi/openhim-portal/dist/jembi-openhim-portal.js',
-  '@jembi/root-config': './libs/@jembi/root-config/dist/jembi-root-config.js',
+  `${OPENHIM_CONSOLE_BASE_URL}/jembi-openhim-portal.js`,
+  '@jembi/root-config': `${OPENHIM_CONSOLE_BASE_URL}/jembi-root-config.js`,
   '@jembi/openhim-sidebar':
-    './libs/@jembi/openhim-sidebar/dist/jembi-openhim-sidebar.js'
+  `${OPENHIM_CONSOLE_BASE_URL}/jembi-openhim-sidebar.js`
 }
