@@ -22,17 +22,17 @@ const OPENHIM_CONSOLE_BASE_URL = config.get('openhimConsoleBaseUrl')
 
 export const DEFAULT_IMPORT_MAP_PATHS = {
   '@jembi/openhim-header':
-    `${OPENHIM_CONSOLE_BASE_URL}/jembi-openhim-header.js`,
-  '@jembi/legacy-console': `${OPENHIM_CONSOLE_BASE_URL}/bundle.js`,
+    `${OPENHIM_CONSOLE_BASE_URL}/libs/@jembi/openhim-header/dist/jembi-openhim-header.js`,
+  '@jembi/legacy-console': `${OPENHIM_CONSOLE_BASE_URL}/libs/@jembi/legacy-console/dist/bundle.js`,
   '@jembi/openhim-core-api':
-  `${OPENHIM_CONSOLE_BASE_URL}/jembi-openhim-core-api.js`,
+  `${OPENHIM_CONSOLE_BASE_URL}/libs/@jembi/openhim-core-api/dist/jembi-openhim-core-api.js`,
   '@jembi/openhim-theme':
-  `${OPENHIM_CONSOLE_BASE_URL}/jembi-openhim-theme.js`,
+  `${OPENHIM_CONSOLE_BASE_URL}/libs/@jembi/openhim-theme/dist/jembi-openhim-theme.js`,
   '@jembi/portal-admin':
-  `${OPENHIM_CONSOLE_BASE_URL}/jembi-portal-admin.js`,
+  `${OPENHIM_CONSOLE_BASE_URL}/libs/@jembi/portal-admin/dist/jembi-portal-admin.js`,
   '@jembi/openhim-portal':
-  `${OPENHIM_CONSOLE_BASE_URL}/jembi-openhim-portal.js`,
-  '@jembi/root-config': `${OPENHIM_CONSOLE_BASE_URL}/jembi-root-config.js`,
+  `${OPENHIM_CONSOLE_BASE_URL}/libs/@jembi/openhim-portal/dist/jembi-openhim-portal.js`,
+  '@jembi/root-config': `${OPENHIM_CONSOLE_BASE_URL}/libs/@jembi/root-config/dist/jembi-root-config.js`,
   '@jembi/openhim-sidebar':
-  `${OPENHIM_CONSOLE_BASE_URL}/jembi-openhim-sidebar.js`
+  `${OPENHIM_CONSOLE_BASE_URL}/libs/@jembi/openhim-sidebar/dist/jembi-openhim-sidebar.js`
 }
