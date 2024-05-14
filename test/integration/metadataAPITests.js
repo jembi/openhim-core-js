@@ -44,7 +44,7 @@ const sampleMetadata = {
       passwordHash:
         '$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy',
       certFingerprint:
-        '23:37:6A:5E:A9:13:A4:8C:66:C5:BB:9F:0E:0D:68:9B:99:80:10:FC'
+        '9F:93:D1:96:A2:32:8F:EA:DC:A8:64:AB:CC:E1:13:C2:DA:E0:F4:49'
     }
   ],
   Mediators: [
@@ -778,7 +778,7 @@ describe('API Integration Tests', () => {
             passwordHash:
               '$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy',
             certFingerprint:
-              '23:37:6A:5E:A9:13:A4:8C:66:C5:BB:9F:0E:0D:68:9B:99:80:10:FC'
+              '9F:93:D1:96:A2:32:8F:EA:DC:A8:64:AB:CC:E1:13:C2:DA:E0:F4:49'
           }
         ],
         Mediators: [

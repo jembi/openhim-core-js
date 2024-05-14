@@ -141,7 +141,7 @@ describe('API Integration Tests', () => {
 
       keystore = await KeystoreModelAPI.findOne({})
       keystore.cert.fingerprint.should.be.exactly(
-        '35:B1:95:80:45:F6:39:A8:1E:75:E1:B1:16:16:32:EB:12:EA:1A:24'
+        '9F:93:D1:96:A2:32:8F:EA:DC:A8:64:AB:CC:E1:13:C2:DA:E0:F4:49'
       )
     })
 
