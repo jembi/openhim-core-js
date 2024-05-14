@@ -1,10 +1,7 @@
 'use strict'
 
 import {Schema} from 'mongoose'
-
 import {connectionAPI, connectionDefault} from '../config'
-import { loggers } from 'winston'
-import axios from 'axios'
 
 const AppSchema = new Schema({
   name: {
