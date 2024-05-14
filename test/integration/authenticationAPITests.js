@@ -993,7 +993,7 @@ describe('API Integration Tests', () => {
           roles: ['OpenMRS_PoC', 'PoC'],
           passwordHash: '',
           certFingerprint:
-            '6D:BF:A5:BE:D7:F5:01:C2:EC:D0:BC:74:A4:12:5A:6F:36:C4:77:5C'
+            '96:ED:AF:89:4F:90:FD:FD:A0:45:37:B8:EA:B2:BD:7F:8E:0D:4A:47'
         }
 
         const testClientDoc2 = {
@@ -1018,13 +1018,13 @@ describe('API Integration Tests', () => {
           cert: {
             data: fs.readFileSync('test/resources/server-tls/cert.pem'),
             fingerprint:
-              '23:37:6A:5E:A9:13:A4:8C:66:C5:BB:9F:0E:0D:68:9B:99:80:10:FC'
+              '9F:93:D1:96:A2:32:8F:EA:DC:A8:64:AB:CC:E1:13:C2:DA:E0:F4:49'
           },
           ca: [
             {
               data: fs.readFileSync('test/resources/client-tls/cert.pem'),
               fingerprint:
-                '6D:BF:A5:BE:D7:F5:01:C2:EC:D0:BC:74:A4:12:5A:6F:36:C4:77:5C'
+                '96:ED:AF:89:4F:90:FD:FD:A0:45:37:B8:EA:B2:BD:7F:8E:0D:4A:47'
             },
             {
               data: fs.readFileSync(
