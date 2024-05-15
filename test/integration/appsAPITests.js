@@ -12,7 +12,6 @@ import * as server from '../../src/server'
 import * as testUtils from '../utils'
 import {AppModelAPI} from '../../src/model/apps'
 import { getTransformedImportMap } from '../../src/api/apps'
-import { logger } from 'handlebars'
 import sinon from 'sinon'
 import {config} from '../../src/config'
 
@@ -292,6 +291,8 @@ describe('API Integration Tests', () => {
     
         ctx.status.should.equal(200)
         const imports = ctx.body.imports
+        imports.should.be.an.Object()
+        Object.keys(imports).length.should.be.above(0)
         imports.should.have.property('@jembi/openhim-header', `${OPENHIM_CONSOLE_BASE_URL}/libs/@jembi/openhim-header/dist/jembi-openhim-header.js`)
         imports.should.have.property('@jembi/legacy-console', `${OPENHIM_CONSOLE_BASE_URL}/libs/@jembi/legacy-console/dist/bundle.js`)
         imports.should.have.property('@jembi/openhim-core-api', `${OPENHIM_CONSOLE_BASE_URL}/libs/@jembi/openhim-core-api/dist/jembi-openhim-core-api.js`)
