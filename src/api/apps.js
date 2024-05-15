@@ -106,9 +106,6 @@ export async function updateApp(ctx, appId) {
 export async function getApps(ctx) {
   try {
     const apps = await AppModelAPI.find(ctx.request.query)
-
-    logger.info(`User ${ctx.authenticated.email} fetched ${apps.length} apps`)
-
     ctx.body = apps
     ctx.status = 200
   } catch (e) {
