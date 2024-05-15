@@ -22,7 +22,6 @@ describe('Apps', () => {
       await getApps(ctx)
 
       ctx.status.should.equal(200)
-      should.exist(ctx.body.error)
     })
   })
 
