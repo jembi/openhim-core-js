@@ -267,12 +267,14 @@ describe('API Integration Tests', () => {
     })
 
     describe('*getTransformedImportMap', () => {
+      let findStub;
+
       beforeEach(() => {
-        sinon.stub(AppModelAPI, 'find')
+        findStub = sinon.stub(AppModelAPI, 'find')
       })
 
       afterEach(() => {
-        sinon.restore()
+        findStub.restore();
       })
 
       it('should fetch import maps and merge with default paths', async () => {
@@ -301,6 +303,20 @@ describe('API Integration Tests', () => {
         imports.should.have.property('map1', 'url1')
         imports.should.have.property('map2', 'url2')
       })
+
+      it('should handle error', async () => {
+        const errorMessage = 'Test error';
+        const error = new Error(errorMessage);
+        findStub.rejects(error);
+
+        const ctx = { request: { query: {} }, body: {}, status: 0 };
+
+        await getTransformedImportMap(ctx);
+
+        sinon.assert.calledWithExactly(AppModelAPI.find, {}, 'name url');
+        ctx.status.should.equal(500);
+        ctx.body.should.deepEqual({ error: errorMessage });
+      });
     })
   })
 })
