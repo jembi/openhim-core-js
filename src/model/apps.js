@@ -1,7 +1,5 @@
 'use strict'
-
-import {Schema} from 'mongoose'
-
+import { Schema } from 'mongoose'
 import {connectionAPI, connectionDefault} from '../config'
 
 const AppSchema = new Schema({

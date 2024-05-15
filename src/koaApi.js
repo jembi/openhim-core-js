@@ -83,6 +83,9 @@ export function setupApp(done) {
   // Check of logged in user
   app.use(route.get('/me', users.me))
 
+  // ImportMaps endpoints
+  app.use(route.get('/importmaps', apps.getTransformedImportMap))
+  app.use(route.get('/apps', apps.getApps))
   // Expose the authenticate route before the auth middleware so that it is publicly accessible
   // Local authentication
   app.use(
@@ -137,7 +140,6 @@ export function setupApp(done) {
   app.use(route.get('/logout', users.logout))
 
   // Define the api routes
-  app.use(route.get('/apps', apps.getApps))
   app.use(route.get('/apps/:appId', apps.getApp))
   app.use(route.put('/apps/:appId', apps.updateApp))
   app.use(route.post('/apps', apps.addApp))

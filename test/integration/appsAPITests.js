@@ -11,8 +11,11 @@ import * as constants from '../constants'
 import * as server from '../../src/server'
 import * as testUtils from '../utils'
 import {AppModelAPI} from '../../src/model/apps'
+import { getTransformedImportMap } from '../../src/api/apps'
+import sinon from 'sinon'
+import {config} from '../../src/config'
 
-const {SERVER_PORTS, BASE_URL} = constants
+const {SERVER_PORTS, BASE_URL, DEFAULT_IMPORT_MAP_PATHS} = constants
 
 describe('API Integration Tests', () => {
   describe('Apps REST Api Testing', () => {
@@ -260,6 +263,61 @@ describe('API Integration Tests', () => {
 
         res.body.success.should.equal(true)
       })
+    })
+
+    describe('*getTransformedImportMap', () => {
+      let findStub;
+
+      beforeEach(() => {
+        findStub = sinon.stub(AppModelAPI, 'find')
+      })
+
+      afterEach(() => {
+        findStub.restore();
+      })
+
+      it('should fetch import maps and merge with default paths', async () => {
+        const importMaps = [{ name: 'map1', url: 'url1' }, { name: 'map2', url: 'url2' }]
+        const ctx = { request: { query: {} }, body: {}, status: 0 }
+    
+        AppModelAPI.find.resolves(importMaps)
+    
+        await getTransformedImportMap(ctx)
+    
+        sinon.assert.calledOnce(AppModelAPI.find)
+        sinon.assert.calledWithExactly(AppModelAPI.find, {}, 'name url')
+
+        const OPENHIM_CONSOLE_BASE_URL = config.get('openhimConsoleBaseUrl')
+    
+        ctx.status.should.equal(200)
+        const imports = ctx.body.imports
+        imports.should.be.an.Object()
+        Object.keys(imports).length.should.be.above(0)
+        imports.should.have.property('@jembi/openhim-header', `${OPENHIM_CONSOLE_BASE_URL}/libs/@jembi/openhim-header/dist/jembi-openhim-header.js`)
+        imports.should.have.property('@jembi/legacy-console', `${OPENHIM_CONSOLE_BASE_URL}/libs/@jembi/legacy-console/dist/bundle.js`)
+        imports.should.have.property('@jembi/openhim-core-api', `${OPENHIM_CONSOLE_BASE_URL}/libs/@jembi/openhim-core-api/dist/jembi-openhim-core-api.js`)
+        imports.should.have.property('@jembi/openhim-theme', `${OPENHIM_CONSOLE_BASE_URL}/libs/@jembi/openhim-theme/dist/jembi-openhim-theme.js`)
+        imports.should.have.property('@jembi/portal-admin', `${OPENHIM_CONSOLE_BASE_URL}/libs/@jembi/portal-admin/dist/jembi-portal-admin.js`)
+        imports.should.have.property('@jembi/openhim-portal', `${OPENHIM_CONSOLE_BASE_URL}/libs/@jembi/openhim-portal/dist/jembi-openhim-portal.js`)
+        imports.should.have.property('@jembi/root-config', `${OPENHIM_CONSOLE_BASE_URL}/libs/@jembi/root-config/dist/jembi-root-config.js`)
+        imports.should.have.property('@jembi/openhim-sidebar', `${OPENHIM_CONSOLE_BASE_URL}/libs/@jembi/openhim-sidebar/dist/jembi-openhim-sidebar.js`)
+        imports.should.have.property('map1', 'url1')
+        imports.should.have.property('map2', 'url2')
+      })
+
+      it('should handle error', async () => {
+        const errorMessage = 'Test error';
+        const error = new Error(errorMessage);
+        findStub.rejects(error);
+
+        const ctx = { request: { query: {} }, body: {}, status: 0 };
+
+        await getTransformedImportMap(ctx);
+
+        sinon.assert.calledWithExactly(AppModelAPI.find, {}, 'name url');
+        ctx.status.should.equal(500);
+        ctx.body.should.deepEqual({ error: errorMessage });
+      });
     })
   })
 })

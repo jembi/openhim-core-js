@@ -1,9 +1,9 @@
 'use strict'
 
 import logger from 'winston'
-
 import * as authorisation from './authorisation'
 import {AppModelAPI} from '../model/apps'
+import {DEFAULT_IMPORT_MAP_PATHS} from '../constants'
 
 /*
   Checks admin permission for create, update and delete operations.
@@ -106,9 +106,6 @@ export async function updateApp(ctx, appId) {
 export async function getApps(ctx) {
   try {
     const apps = await AppModelAPI.find(ctx.request.query)
-
-    logger.info(`User ${ctx.authenticated.email} fetched ${apps.length} apps`)
-
     ctx.body = apps
     ctx.status = 200
   } catch (e) {
@@ -149,5 +146,35 @@ export async function deleteApp(ctx, appId) {
     })
   } catch (e) {
     createErrorResponse(ctx, 'delete', e)
+  }
+}
+
+/**
+ * Retrieves all apps from the database and transforms the data into an enriched import map json response
+ * @param {*} ctx
+ */
+export async function getTransformedImportMap(ctx) {
+  try {
+    const importMaps = await AppModelAPI.find(ctx.request.query, 'name url')
+
+    logger.info(
+      `Fetched ${importMaps.length} apps for importmaps`
+    )
+
+    const imports = importMaps.reduce((acc, curr) => {
+      acc[curr.name] = curr.url
+      return acc
+    }, {})
+
+    const mergedImports = {...DEFAULT_IMPORT_MAP_PATHS, ...imports}
+
+    ctx.body = {imports: mergedImports}
+    ctx.status = 200
+  } catch (e) {
+    logger.error(`Could not retrieve an enriched importmap via the API: ${e}`)
+    ctx.status = 500
+    ctx.body = {
+      error: e.message
+    }
   }
 }
