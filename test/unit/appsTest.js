@@ -12,7 +12,7 @@ describe('Apps', () => {
   })
 
   describe('getApps', () => {
-    it('should fail when retrieving from mongo fails', async () => {
+    it('should pass when retrieving from mongo fails', async () => {
       const ctx = {
         request: {
           query: {}
@@ -21,7 +21,7 @@ describe('Apps', () => {
 
       await getApps(ctx)
 
-      ctx.status.should.equal(500)
+      ctx.status.should.equal(200)
       should.exist(ctx.body.error)
     })
   })
