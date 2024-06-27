@@ -6,6 +6,7 @@ import * as authorisation from './authorisation'
 import * as utils from '../utils'
 import {ChannelModelAPI} from '../model/channels'
 import {ClientModelAPI} from '../model/clients'
+import { RoleModelAPI } from '../model/role'
 
 /*
  * Roles is a virtual API; virtual in the sense that it is not linked
@@ -67,20 +68,36 @@ function filterRolesFromChannels(channels, clients) {
 
 export async function getRoles(ctx) {
   // Test if the user is authorised
-  if (!authorisation.inGroup('admin', ctx.authenticated)) {
+  const roleNames = ctx.authenticated.groups || []
+  const roles = await RoleModelAPI.find({name: {$in: roleNames}}).catch(() => [])
+
+  if (!roleNames.length || !roles.length) {
     return utils.logAndSetResponse(
       ctx,
       403,
-      `User ${ctx.authenticated.email} is not an admin, API access to getRoles denied.`,
+      `User ${ctx.authenticated.email} does not have an access role specified.`,
+      'info'
+    )
+  }
+
+  const authorised = roles.find(role =>
+    role.name.match(/admin|manager/) ||
+    role.permissions['user-role-view']
+  )
+  if (!authorised) {
+    return utils.logAndSetResponse(
+      ctx,
+      403,
+      `User ${ctx.authenticated.email} does not have the "user-role-view" permission, API access to getRoles denied.`,
       'info'
     )
   }
 
   try {
-    const channels = await ChannelModelAPI.find({}, {name: 1, allow: 1})
-    const clients = await ClientModelAPI.find({}, {clientID: 1, roles: 1})
+    const roles = await RoleModelAPI.find({})
 
-    ctx.body = filterRolesFromChannels(channels, clients)
+    ctx.body = roles
+    ctx.status = 200
   } catch (e) {
     logger.error(`Could not fetch roles via the API: ${e.message}`)
     ctx.message = e.message
@@ -89,42 +106,36 @@ export async function getRoles(ctx) {
 }
 
 export async function getRole(ctx, name) {
-  // Test if the user is authorised
-  if (!authorisation.inGroup('admin', ctx.authenticated)) {
+  const roleNames = ctx.authenticated.groups || []
+  const roles = await RoleModelAPI.find({name: {$in: roleNames}}).catch(() => [])
+
+  if (!roleNames.length || !roles.length) {
     return utils.logAndSetResponse(
       ctx,
       403,
-      `User ${ctx.authenticated.email} is not an admin, API access to getRole denied.`,
+      `User ${ctx.authenticated.email} does not have an access role specified.`,
+      'info'
+    )
+  }
+
+  const authorised = roles.find(role =>
+    role.name.match(/admin|manager/) ||
+    role.permissions['user-role-view']
+  )
+  if (!authorised) {
+    return utils.logAndSetResponse(
+      ctx,
+      403,
+      `User ${ctx.authenticated.email} does not have the "user-role-view" permission, API access to getRole denied.`,
       'info'
     )
   }
 
   try {
-    const channels = await ChannelModelAPI.find(
-      {allow: {$in: [name]}},
-      {name: 1}
-    )
-    const clients = await ClientModelAPI.find(
-      {roles: {$in: [name]}},
-      {clientID: 1}
-    )
-    if (
-      (channels === null || channels.length === 0) &&
-      (clients === null || clients.length === 0)
-    ) {
-      utils.logAndSetResponse(
-        ctx,
-        404,
-        `Role with name '${name}' could not be found.`,
-        'info'
-      )
-    } else {
-      ctx.body = {
-        name,
-        channels: channels.map(r => ({_id: r._id, name: r.name})),
-        clients: clients.map(c => ({_id: c._id, clientID: c.clientID}))
-      }
-    }
+    const role = await RoleModelAPI.findOne({name})
+
+    ctx.body = role
+    ctx.status = 200
   } catch (e) {
     logger.error(
       `Could not find role with name '${name}' via the API: ${e.message}`
@@ -218,74 +229,14 @@ export async function addRole(ctx) {
   }
 
   const role = ctx.request.body
-  if (!role.name) {
-    return utils.logAndSetResponse(ctx, 400, 'Must specify a role name', 'info')
-  }
 
-  const {clients = [], channels = []} = role || {}
-  if (clients.length === 0 && channels.length === 0) {
-    return utils.logAndSetResponse(
-      ctx,
-      400,
-      'Must specify at least one channel or client to link the role to',
-      'info'
-    )
+  if (!role.name) {
+    return utils.logAndSetResponse(ctx, 400, 'Must specify a role name2', 'info')
   }
 
   try {
-    const chResult = await ChannelModelAPI.find(
-      {allow: {$in: [role.name]}},
-      {name: 1}
-    )
-    const clResult = await ClientModelAPI.find(
-      {roles: {$in: [role.name]}},
-      {clientID: 1}
-    )
-    if (
-      (chResult != null ? chResult.length : undefined) > 0 ||
-      (clResult != null ? clResult.length : undefined) > 0
-    ) {
-      return utils.logAndSetResponse(
-        ctx,
-        400,
-        `Role with name '${role.name}' already exists.`,
-        'info'
-      )
-    }
+    await new RoleModelAPI(role).save()
 
-    const clientConflict = await ClientModelAPI.find(
-      {clientID: role.name},
-      {clientID: 1}
-    )
-    if ((clientConflict != null ? clientConflict.length : undefined) > 0) {
-      return utils.logAndSetResponse(
-        ctx,
-        409,
-        `A clientID conflicts with role name '${role.name}'. A role name cannot be the same as a clientID.`,
-        'info'
-      )
-    }
-
-    if (channels.length > 0) {
-      const chCriteria = buildFindChannelByIdOrNameCriteria(ctx, role)
-      if (!chCriteria) {
-        return
-      }
-      await ChannelModelAPI.updateMany(chCriteria, {
-        $push: {allow: role.name}
-      })
-    }
-    if (clients.length > 0) {
-      const clCriteria = buildFindClientByIdOrClientIDCriteria(ctx, role)
-      if (!clCriteria) {
-        return
-      }
-      await ClientModelAPI.updateMany(clCriteria, {
-        $push: {roles: role.name}
-      })
-    }
-
-    logger.info(`User ${ctx.authenticated.email} setup role '${role.name}'`)
     ctx.body = 'Role successfully created'
     ctx.status = 201
   } catch (e) {
@@ -307,146 +258,10 @@ export async function updateRole(ctx, name) {
   }
 
   const role = ctx.request.body
-  const {channels, clients} = role || {}
 
   try {
-    // request validity checks
-    const chResult = await ChannelModelAPI.find(
-      {allow: {$in: [name]}},
-      {name: 1}
-    )
-    const clResult = await ClientModelAPI.find(
-      {roles: {$in: [name]}},
-      {clientID: 1}
-    )
-    if (chResult.length === 0 && clResult.length === 0) {
-      return utils.logAndSetResponse(
-        ctx,
-        404,
-        `Role with name '${name}' could not be found.`,
-        'info'
-      )
-    }
+    await RoleModelAPI.findOneAndUpdate({name}, role)
 
-    if (
-      channels != null &&
-      channels.length === 0 &&
-      clients != null &&
-      clients.length === 0
-    ) {
-      return utils.logAndSetResponse(
-        ctx,
-        400,
-        `Can't have set role '${name}' to have no channels and clients `,
-        'info'
-      )
-    }
-
-    if (clResult.length === 0 && channels != null && channels.length === 0) {
-      return utils.logAndSetResponse(
-        ctx,
-        400,
-        `Can't clear channels on '${name}' if it has no clients set`,
-        'info'
-      )
-    }
-
-    if (chResult.length === 0 && clients != null && clients.length === 0) {
-      return utils.logAndSetResponse(
-        ctx,
-        400,
-        `Can't clear clients on '${name}' if it has no channels set`,
-        'info'
-      )
-    }
-
-    if (role.name) {
-      // do check here but only perform rename updates later after channel/client updates
-      const foundChannels = await ChannelModelAPI.find(
-        {allow: {$in: [role.name]}},
-        {name: 1}
-      )
-      const foundClients = await ClientModelAPI.find(
-        {roles: {$in: [role.name]}},
-        {name: 1}
-      )
-      if (
-        (foundChannels != null ? foundChannels.length : undefined) > 0 ||
-        (foundClients != null ? foundClients.length : undefined > 0)
-      ) {
-        return utils.logAndSetResponse(
-          ctx,
-          400,
-          `Role with name '${role.name}' already exists.`,
-          'info'
-        )
-      }
-
-      const clientConflict = await ClientModelAPI.find(
-        {clientID: role.name},
-        {clientID: 1}
-      )
-      if (clientConflict != null ? clientConflict.length : undefined > 0) {
-        return utils.logAndSetResponse(
-          ctx,
-          409,
-          `A clientID conflicts with role name '${role.name}'. A role name cannot be the same as a clientID.`,
-          'info'
-        )
-      }
-    }
-
-    // TODO : refactor this
-    if (channels != null) {
-      const chCriteria = buildFindChannelByIdOrNameCriteria(ctx, role)
-      if (!chCriteria) {
-        return
-      }
-      await ChannelModelAPI.updateMany({}, {$pull: {allow: name}})
-      // set role on channels
-      if (role.channels.length > 0) {
-        await ChannelModelAPI.updateMany(chCriteria, {
-          $push: {allow: name}
-        })
-      }
-    }
-
-    if (clients) {
-      const clCriteria = buildFindClientByIdOrClientIDCriteria(ctx, role)
-      if (!clCriteria) {
-        return
-      }
-      // clear role from existing
-      await ClientModelAPI.updateMany({}, {$pull: {roles: name}})
-      // set role on clients
-      if ((role.clients != null ? role.clients.length : undefined) > 0) {
-        await ClientModelAPI.updateMany(clCriteria, {$push: {roles: name}})
-      }
-    }
-
-    // rename role
-    if (role.name) {
-      await ChannelModelAPI.updateMany(
-        {allow: {$in: [name]}},
-        {$push: {allow: role.name}}
-      )
-      await ChannelModelAPI.updateMany(
-        {allow: {$in: [name]}},
-        {$pull: {allow: name}}
-      )
-      await ClientModelAPI.updateMany(
-        {roles: {$in: [name]}},
-        {$push: {roles: role.name}}
-      )
-      await ClientModelAPI.updateMany(
-        {roles: {$in: [name]}},
-        {$pull: {roles: name}}
-      )
-    }
-
-    logger.info(
-      `User ${ctx.authenticated.email} updated role with name '${name}'`
-    )
     ctx.body = 'Successfully updated role'
     ctx.status = 200
   } catch (e) {
@@ -470,37 +285,13 @@ export async function deleteRole(ctx, name) {
   }
 
   try {
-    const channels = await ChannelModelAPI.find(
-      {allow: {$in: [name]}},
-      {name: 1}
-    )
-    const clients = await ClientModelAPI.find(
-      {roles: {$in: [name]}},
-      {clientID: 1}
-    )
-    if (
-      (channels === null || channels.length === 0) &&
-      (clients === null || clients.length === 0)
-    ) {
-      return utils.logAndSetResponse(
-        ctx,
-        404,
-        `Role with name '${name}' could not be found.`,
-        'info'
-      )
-    }
-
-    if (channels && channels.length) {
-      await ChannelModelAPI.updateMany({}, {$pull: {allow: name}})
-    }
-    if (clients && clients.length) {
-      await ClientModelAPI.updateMany({}, {$pull: {roles: name}})
-    }
+    await RoleModelAPI.findOneAndDelete({name})
 
     logger.info(
       `User ${ctx.authenticated.email} deleted role with name '${name}'`
     )
     ctx.body = 'Successfully deleted role'
+    ctx.status = 200
   } catch (e) {
     logger.error(
       `Could not update role with name '${name}' via the API: ${e.message}`
