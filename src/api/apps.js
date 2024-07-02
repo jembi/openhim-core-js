@@ -1,19 +1,35 @@
 'use strict'
 
 import logger from 'winston'
-import * as authorisation from './authorisation'
+
 import {AppModelAPI} from '../model/apps'
+import { RoleModelAPI } from '../model/role'
 import {DEFAULT_IMPORT_MAP_PATHS} from '../constants'
 
 /*
   Checks admin permission for create, update and delete operations.
   Throws error if user does not have admin access
 */
-const checkUserPermission = (ctx, operation) => {
-  if (!authorisation.inGroup('admin', ctx.authenticated)) {
+const checkUserPermission = async (ctx, permission, operation) => {
+  const roleNames = ctx.authenticated.groups || []
+  const roles = await RoleModelAPI.find({name: {$in: roleNames}}).catch(() => [])
+
+  if (!roleNames.length || !roles.length) {
     ctx.statusCode = 403
     throw Error(
-      `User ${ctx.authenticated.email} is not an admin, API access to ${operation} an app denied.`
+      `User ${ctx.authenticated.email} does not have an access role specified.`
+    )
+  }
+
+  const authorised = roles.find(role =>
+    role.name.match(/admin|manager/) ||
+    role.permissions[permission]
+  )
+
+  if (!authorised) {
+    ctx.statusCode = 403
+    throw Error(
+      `User ${ctx.authenticated.email} does not have the "${permission}" permission, API access to ${operation} an app denied.`
     )
   }
 }
@@ -53,7 +69,7 @@ const validateId = (ctx, id) => {
 
 export async function addApp(ctx) {
   try {
-    checkUserPermission(ctx, 'add')
+    checkUserPermission(ctx, 'app-manage-all', 'add')
 
     const app = new AppModelAPI(ctx.request.body)
 
@@ -76,7 +92,7 @@ export async function addApp(ctx) {
 
 export async function updateApp(ctx, appId) {
   try {
-    checkUserPermission(ctx, 'update')
+    checkUserPermission(ctx, 'app-manage-all', 'update')
 
     validateId(ctx, appId)
 
@@ -105,6 +121,8 @@ export async function updateApp(ctx, appId) {
 
 export async function getApps(ctx) {
   try {
+    checkUserPermission(ctx, 'app-view-all', 'get')
+
     const apps = await AppModelAPI.find(ctx.request.query)
     ctx.body = apps
     ctx.status = 200
@@ -115,6 +133,8 @@ export async function getApps(ctx) {
 
 export async function getApp(ctx, appId) {
   try {
+    checkUserPermission(ctx, 'app-view-all', 'get')
+
     validateId(ctx, appId)
 
     const app = await checkAppExists(ctx, appId)
@@ -130,7 +150,7 @@ export async function getApp(ctx, appId) {
 
 export async function deleteApp(ctx, appId) {
   try {
-    checkUserPermission(ctx, 'delete')
+    checkUserPermission(ctx, 'app-manage-all', 'delete')
 
     validateId(ctx, appId)
 
@@ -155,6 +175,8 @@ export async function deleteApp(ctx, appId) {
  */
 export async function getTransformedImportMap(ctx) {
   try {
+    checkUserPermission(ctx, 'app-view-all', 'get')
+
     const importMaps = await AppModelAPI.find(ctx.request.query, 'name url')
 
     logger.info(
