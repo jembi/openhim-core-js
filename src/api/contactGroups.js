@@ -8,20 +8,13 @@ import {ChannelModelAPI} from '../model/channels'
 import {ContactGroupModelAPI} from '../model/contactGroups'
 
 export async function addContactGroup(ctx) {
-  // Must be admin
-  if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to addContactGroup denied.`,
-      'info'
-    )
-    return
-  }
-
-  const contactGroupData = ctx.request.body
-
   try {
+    const authorised = await utils.checkUserPermission(ctx, 'addContactGroup', 'contact-list-manage')
+
+    if (!authorised) return
+
+    const contactGroupData = ctx.request.body
+
     const contactGroup = new ContactGroupModelAPI(contactGroupData)
     await contactGroup.save()
 
@@ -42,20 +35,13 @@ export async function addContactGroup(ctx) {
 }
 
 export async function getContactGroup(ctx, contactGroupId) {
-  // Must be admin
-  if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to getContactGroup denied.`,
-      'info'
-    )
-    return
-  }
-
-  contactGroupId = unescape(contactGroupId)
-
   try {
+    const authorised = await utils.checkUserPermission(ctx, 'getContactGroup', 'contact-list-view')
+
+    if (!authorised) return
+
+    contactGroupId = unescape(contactGroupId)
+
     const result = await ContactGroupModelAPI.findById(contactGroupId).exec()
 
     if (result === null) {
@@ -75,26 +61,19 @@ export async function getContactGroup(ctx, contactGroupId) {
 }
 
 export async function updateContactGroup(ctx, contactGroupId) {
-  // Must be admin
-  if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to updateContactGroup denied.`,
-      'info'
-    )
-    return
-  }
-
-  contactGroupId = unescape(contactGroupId)
-  const contactGroupData = ctx.request.body
-
-  // Ignore _id if it exists, a user shouldnt be able to update the internal id
-  if (contactGroupData._id) {
-    delete contactGroupData._id
-  }
-
   try {
+    const authorised = await utils.checkUserPermission(ctx, 'updateContactGroup', 'contact-list-manage')
+
+    if (!authorised) return
+
+    contactGroupId = unescape(contactGroupId)
+    const contactGroupData = ctx.request.body
+
+    // Ignore _id if it exists, a user shouldnt be able to update the internal id
+    if (contactGroupData._id) {
+      delete contactGroupData._id
+    }
+
     await ContactGroupModelAPI.findByIdAndUpdate(
       contactGroupId,
       contactGroupData
@@ -114,19 +93,13 @@ export async function updateContactGroup(ctx, contactGroupId) {
 }
 
 export async function removeContactGroup(ctx, contactGroupId) {
-  // Must be admin
-  if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to removeContactGroup denied.`,
-      'info'
-    )
-    return
-  }
-
-  contactGroupId = unescape(contactGroupId)
   try {
+    const authorised = await utils.checkUserPermission(ctx, 'removeContactGroup', 'contact-list-manage')
+
+    if (!authorised) return
+
+    contactGroupId = unescape(contactGroupId)
+
     const linkedAlerts = await ChannelModelAPI.find({
       alerts: {
         $elemMatch: {
@@ -157,18 +130,11 @@ export async function removeContactGroup(ctx, contactGroupId) {
 }
 
 export async function getContactGroups(ctx) {
-  // Must be admin
-  if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to getContactGroups denied.`,
-      'info'
-    )
-    return
-  }
-
   try {
+    const authorised = await utils.checkUserPermission(ctx, 'getContactGroups', 'contact-list-view')
+
+    if (!authorised) return
+
     ctx.body = await ContactGroupModelAPI.find().exec()
   } catch (err) {
     utils.logAndSetResponse(
