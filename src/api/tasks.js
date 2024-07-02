@@ -1,7 +1,6 @@
 'use strict'
 
 import logger from 'winston'
-import {promisify} from 'util'
 
 import * as Channels from '../model/channels'
 import * as authorisation from './authorisation'
@@ -9,6 +8,7 @@ import * as utils from '../utils'
 import {AutoRetryModelAPI} from '../model/autoRetry'
 import {TaskModelAPI} from '../model/tasks'
 import {TransactionModelAPI} from '../model/transactions'
+import { UserModelAPI } from '../model'
 
 const {ChannelModelAPI} = Channels
 
@@ -65,18 +65,10 @@ function isRerunPermissionsValid(user, transactions, callback) {
  * Retrieves the list of active tasks
  */
 export async function getTasks(ctx) {
-  // Must be admin
-  if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to getTasks denied.`,
-      'info'
-    )
-    return
-  }
-
   try {
+    // Check users permissions
+    const authorisedSuper = await utils.checkUserPermission(ctx, 'getTasks', 'transaction-rerun-all')
+
     const filtersObject = ctx.request.query
 
     // get limit and page values
@@ -88,6 +80,12 @@ export async function getTasks(ctx) {
 
     // get filters object
     const filters = JSON.parse(filtersObject.filters)
+
+    // Get the specific tasks that user has access to
+    if (!authorisedSuper) {
+      const usersWithSameRoles = await UserModelAPI.find({groups: {$in: ctx.authenticated.groups}}, {email: 1}).exec()
+      filters.user = {user: {$in: usersWithSameRoles}}
+    }
 
     // parse date to get it into the correct format for querying
     if (filters.created) {
@@ -167,71 +165,70 @@ export async function addTask(ctx) {
       taskObject.status = 'Paused'
     }
 
-    // check rerun permission and whether to create the rerun task
-    const isRerunPermsValid = promisify(isRerunPermissionsValid)
-    const allowRerunTaskCreation = await isRerunPermsValid(
-      ctx.authenticated,
-      transactions
-    )
+    const authorisedSuper = await utils.checkUserPermission(ctx, 'addTask', 'transaction-rerun-all')
 
-    // the rerun task may be created
-    if (allowRerunTaskCreation === true) {
-      const areTrxChannelsValid = promisify(areTransactionChannelsValid)
-      const trxChannelsValid = await areTrxChannelsValid(transactions)
+    if (!authorisedSuper) {
+      const userRoles = await RoleModelAPI.find({name: {$in: ctx.authenticated.groups}}, {permissions: {'transaction-rerun-specified': 1}}).exec()
+      const rerunChannelsAllowed = userRoles.reduce((prev, curr) => prev.concat(curr.permissions['transaction-rerun-specified']))
 
-      if (!trxChannelsValid) {
+      if (!rerunChannelsAllowed.length) {
         utils.logAndSetResponse(
           ctx,
-          400,
-          'Cannot queue task as there are transactions with disabled or deleted channels',
+          403,
+          'User is not authorised to create rerun tasks for any channel',
           'info'
         )
         return
       }
 
-      for (const tid of Array.from(transactions.tids)) {
-        transactionsArr.push({tid})
+      const channelsToRerun = await TransactionModelAPI.distinct('channelID', {_id: {$in: transactions.tids}}).exec()
+      const restrictedChannels = channelsToRerun.filter(channel => !rerunChannelsAllowed.includes(channel))
+
+      if (restrictedChannels.length) {
+        utils.logAndSetResponse(
+          ctx,
+          403,
+          `User is not authorised to create rerun tasks for channels ${restrictedChannels.join(', ')}`,
+          'info'
+        )
+        return
       }
-      taskObject.transactions = transactionsArr
-      taskObject.totalTransactions = transactionsArr.length
-
-      /*
-        Update the transactions' auto retry attempt number and the autoRetry flag to false
-        This is to ensure that any transaction to be rerun is auto retried as per the channel's configuration (autoRetryNumber),
-        if there is a failure.
-      */
-      await TransactionModelAPI.updateMany(
-        {_id: {$in: transactions.tids}},
-        {autoRetry: false, autoRetryAttempt: 0}
-      )
-
-      const task = await new TaskModelAPI(taskObject).save()
-
-      // All ok! So set the result
-      utils.logAndSetResponse(
-        ctx,
-        201,
-        `User ${ctx.authenticated.email} created task with id ${task.id}`,
-        'info'
-      )
-
-      // Clear the transactions out of the auto retry queue, in case they're in there
-      return AutoRetryModelAPI.deleteMany({
-        transactionID: {$in: transactions.tids}
-      }).exec(err => {
-        if (err) {
-          return logger.error(err)
-        }
-      })
-    } else {
-      // rerun task creation not allowed
-      utils.logAndSetResponse(
-        ctx,
-        403,
-        'Insufficient permissions prevents this rerun task from being created',
-        'error'
-      )
     }
+
+    for (const tid of Array.from(transactions.tids)) {
+      transactionsArr.push({tid})
+    }
+    taskObject.transactions = transactionsArr
+    taskObject.totalTransactions = transactionsArr.length
+
+    /*
+      Update the transactions' auto retry attempt number and the autoRetry flag to false
+      This is to ensure that any transaction to be rerun is auto retried as per the channel's configuration (autoRetryNumber),
+      if there is a failure.
+    */
+    await TransactionModelAPI.updateMany(
+      {_id: {$in: transactions.tids}},
+      {autoRetry: false, autoRetryAttempt: 0}
+    )
+
+    const task = await new TaskModelAPI(taskObject).save()
+
+    // All ok! So set the result
+    utils.logAndSetResponse(
+      ctx,
+      201,
+      `User ${ctx.authenticated.email} created task with id ${task.id}`,
+      'info'
+    )
+
+    // Clear the transactions out of the auto retry queue, in case they're in there
+    return AutoRetryModelAPI.deleteMany({
+      transactionID: {$in: transactions.tids}
+    }).exec(err => {
+      if (err) {
+        return logger.error(err)
+      }
+    })
   } catch (error) {
     // Error! So inform the user
     const err = error
@@ -297,6 +294,49 @@ export async function getTask(ctx, taskId) {
   taskId = unescape(taskId)
 
   try {
+    const authorisedSuper = await utils.checkUserPermission(ctx, 'addTask', 'transaction-rerun-all')
+
+    let result
+    if (!authorisedSuper) {
+      const userRoles = await RoleModelAPI.find({name: {$in: ctx.authenticated.groups}}, {permissions: {'transaction-rerun-specified': 1}}).exec()
+      const rerunChannelsAllowed = userRoles.reduce((prev, curr) => prev.concat(curr.permissions['transaction-rerun-specified']))
+
+      result = await TaskModelAPI.findById(taskId).lean().exec()
+
+      if (result === null) {
+        // task not found! So inform the user
+        return utils.logAndSetResponse(
+          ctx,
+          404,
+          `We could not find a Task with this ID: ${taskId}.`,
+          'info'
+        )
+      }
+
+      if (!rerunChannelsAllowed.length) {
+        utils.logAndSetResponse(
+          ctx,
+          403,
+          'User is not authorised to get rerun tasks for any channel',
+          'info'
+        )
+        return
+      }
+
+      const channelsToRerun = await TransactionModelAPI.distinct('channelID', {_id: {$in: result.transactions.map(tx => tx.tid)}}).exec()
+      const restrictedChannels = channelsToRerun.filter(channel => !rerunChannelsAllowed.includes(channel))
+
+      if (restrictedChannels.length) {
+        utils.logAndSetResponse(
+          ctx,
+          403,
+          `User is not authorised to get task with channels ${restrictedChannels.join(', ')}`,
+          'info'
+        )
+        return
+      }
+    }
+
     const filtersObject = ctx.request.query
 
     // get limit and page values
@@ -309,7 +349,6 @@ export async function getTask(ctx, taskId) {
     // get filters object
     const filters = JSON.parse(filtersObject.filters)
 
-    const result = await TaskModelAPI.findById(taskId).lean().exec()
     let tempTransactions = result.transactions
 
     // are filters present
@@ -333,24 +372,13 @@ export async function getTask(ctx, taskId) {
     // slice the transactions array to return only the correct amount of records at the correct index
     result.transactions = tempTransactions.slice(sliceFrom, sliceTo)
 
-    // Test if the result if valid
-    if (result === null) {
-      // task not found! So inform the user
-      return utils.logAndSetResponse(
-        ctx,
-        404,
-        `We could not find a Task with this ID: ${taskId}.`,
-        'info'
-      )
-    } else {
-      ctx.body = result
-    }
+    ctx.body = result
     // All ok! So set the result
   } catch (err) {
     utils.logAndSetResponse(
       ctx,
       500,
-      `Could not fetch Task by ID {taskId} via the API: ${err}`,
+      `Could not fetch Task by ID ${taskId} via the API: ${err}`,
       'error'
     )
   }
@@ -381,6 +409,48 @@ export async function updateTask(ctx, taskId) {
   }
 
   try {
+    const authorisedSuper = await utils.checkUserPermission(ctx, 'updateTask', 'transaction-rerun-all')
+
+    if (!authorisedSuper) {
+      const userRoles = await RoleModelAPI.find({name: {$in: ctx.authenticated.groups}}, {permissions: {'transaction-rerun-specified': 1}}).exec()
+      const rerunChannelsAllowed = userRoles.reduce((prev, curr) => prev.concat(curr.permissions['transaction-rerun-specified']))
+
+      const result = await TaskModelAPI.findById(taskId).lean().exec()
+
+      if (result === null) {
+        // task not found! So inform the user
+        return utils.logAndSetResponse(
+          ctx,
+          404,
+          `We could not find a Task with this ID: ${taskId}.`,
+          'info'
+        )
+      }
+
+      if (!rerunChannelsAllowed.length) {
+        utils.logAndSetResponse(
+          ctx,
+          403,
+          'User is not authorised to update rerun tasks for any channel',
+          'info'
+        )
+        return
+      }
+
+      const channelsToRerun = await TransactionModelAPI.distinct('channelID', {_id: {$in: result.transactions.map(tx => tx.tid)}}).exec()
+      const channels = channelsToRerun.filter(channel => rerunChannelsAllowed.includes(channel))
+
+      if (channels.length) {
+        utils.logAndSetResponse(
+          ctx,
+          403,
+          `User is not authorised to update task with channels ${channels.join(', ')}`,
+          'info'
+        )
+        return
+      }
+    }
+
     await TaskModelAPI.findOneAndUpdate({_id: taskId}, taskData).exec()
 
     // All ok! So set the result
@@ -402,21 +472,52 @@ export async function updateTask(ctx, taskId) {
  * Deletes a specific Tasks details
  */
 export async function removeTask(ctx, taskId) {
-  // Must be admin
-  if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to removeTask denied.`,
-      'info'
-    )
-    return
-  }
-
   // Get the values to use
   taskId = unescape(taskId)
 
   try {
+    const authorisedSuper = await utils.checkUserPermission(ctx, 'removeTask', 'transaction-rerun-all')
+
+    if (!authorisedSuper) {
+      const userRoles = await RoleModelAPI.find({name: {$in: ctx.authenticated.groups}}, {permissions: {'transaction-rerun-specified': 1}}).exec()
+      const rerunChannelsAllowed = userRoles.reduce((prev, curr) => prev.concat(curr.permissions['transaction-rerun-specified']))
+
+      const result = await TaskModelAPI.findById(taskId).lean().exec()
+
+      if (result === null) {
+        // task not found! So inform the user
+        return utils.logAndSetResponse(
+          ctx,
+          404,
+          `We could not find a Task with this ID: ${taskId}.`,
+          'info'
+        )
+      }
+
+      if (!rerunChannelsAllowed.length) {
+        utils.logAndSetResponse(
+          ctx,
+          403,
+          'User is not authorised to remove rerun tasks for any channel',
+          'info'
+        )
+        return
+      }
+
+      const channelsToRerun = await TransactionModelAPI.distinct('channelID', {_id: {$in: result.transactions.map(tx => tx.tid)}}).exec()
+      const channels = channelsToRerun.filter(channel => rerunChannelsAllowed.includes(channel))
+
+      if (channels.length) {
+        utils.logAndSetResponse(
+          ctx,
+          403,
+          `User is not authorised to remove task for channels ${channels.join(', ')}`,
+          'info'
+        )
+        return
+      }
+    }
+
     // Try to get the Task (Call the function that emits a promise and Koa will wait for the function to complete)
     await TaskModelAPI.deleteOne({_id: taskId}).exec()
 

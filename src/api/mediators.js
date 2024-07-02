@@ -172,18 +172,11 @@ const validateConfigDefs = configDefs =>
   Array.from(configDefs).map(def => validateConfigDef(def))
 
 export async function addMediator(ctx) {
-  // Must be admin
-  if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to addMediator denied.`,
-      'info'
-    )
-    return
-  }
-
   try {
+    const authorised = await utils.checkUserPermission(ctx, 'addMediator', 'mediator-manage-all')
+
+    if (!authorised) return
+
     let mediatorHost = 'unknown'
     const mediator = ctx.request.body
 
@@ -277,20 +270,13 @@ export async function addMediator(ctx) {
 }
 
 export async function removeMediator(ctx, urn) {
-  // Must be admin
-  if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to removeMediator denied.`,
-      'info'
-    )
-    return
-  }
-
   urn = unescape(urn)
 
   try {
+    const authorised = await utils.checkUserPermission(ctx, 'removeMediator', 'mediator-manage-all', 'mediator-manage-specified', urn)
+
+    if (!authorised) return
+
     await MediatorModelAPI.findOneAndRemove({urn}).exec()
     ctx.body = `Mediator with urn ${urn} has been successfully removed by ${ctx.authenticated.email}`
     return logger.info(
@@ -307,20 +293,13 @@ export async function removeMediator(ctx, urn) {
 }
 
 export async function heartbeat(ctx, urn) {
-  // Must be admin
-  if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to removeMediator denied.`,
-      'info'
-    )
-    return
-  }
-
   urn = unescape(urn)
 
   try {
+    const authorised = await utils.checkUserPermission(ctx, 'mediatorHeartbeat', 'mediator-view-all', 'mediator-view-specified', urn)
+
+    if (!authorised) return
+
     const mediator = await MediatorModelAPI.findOne({urn}).exec()
 
     if (mediator == null) {
@@ -504,21 +483,14 @@ if (process.env.NODE_ENV === 'test') {
 }
 
 export async function setConfig(ctx, urn) {
-  // Must be admin
-  if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to removeMediator denied.`,
-      'info'
-    )
-    return
-  }
-
   urn = unescape(urn)
   const config = ctx.request.body
 
   try {
+    const authorised = await utils.checkUserPermission(ctx, 'setConfig', 'mediator-manage-all', 'mediator-manager-specified', urn)
+
+    if (!authorised) return
+
     const mediator = await MediatorModelAPI.findOne({urn}).exec()
 
     if (mediator == null) {
@@ -564,21 +536,15 @@ function saveDefaultChannelConfig(channels, authenticated) {
 }
 
 export async function loadDefaultChannels(ctx, urn) {
-  // Must be admin
-  if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to removeMediator denied.`,
-      'info'
-    )
-    return
-  }
-
   urn = unescape(urn)
-  const channels = ctx.request.body
 
   try {
+    const authorised = await utils.checkUserPermission(ctx, 'loadDefaultChannel', 'mediator-manage-all', 'mediator-manager-specified', urn)
+
+    if (!authorised) return
+
+    const channels = ctx.request.body
+
     const mediator = await MediatorModelAPI.findOne({urn}).lean().exec()
 
     if (mediator == null) {

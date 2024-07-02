@@ -38,6 +38,7 @@ import {KeystoreModel} from './model/keystore'
 import {UserModel, createUser, updateTokenUser} from './model/users'
 import {appRoot, config, connectionAgenda} from './config'
 import {resolveStuckProcessingState} from './model/transactions'
+import { createDefaultRoles } from './model/role'
 
 mongoose.Promise = Promise
 
@@ -473,8 +474,8 @@ if (cluster.isMaster && !module.parent) {
     return deferred.promise
   }
 
-  // Ensure that a root user always exists
-  const ensureRootUser = async callback =>
+  // Ensure that a root user and the default roles always exists
+  const ensureRootUserAndRoles = async callback =>
     UserModel.findOne({email: 'root@openhim.org'}).exec(async (err, user) => {
       if (err) {
         return callback(err)
@@ -498,6 +499,9 @@ if (cluster.isMaster && !module.parent) {
           )
         })
       }
+
+      await createDefaultRoles(callback)
+
       return callback()
     })
 
@@ -593,7 +597,7 @@ if (cluster.isMaster && !module.parent) {
       apiServer = https.createServer(options, app.callback())
       apiServer.listen(apiPort, bindAddress, () => {
         logger.info(`API HTTPS listening on port ${apiPort}`)
-        return ensureRootUser(() => deferred.resolve())
+        return ensureRootUserAndRoles(() => deferred.resolve())
       })
 
       return apiServer.on('secureConnection', socket =>
@@ -611,7 +615,7 @@ if (cluster.isMaster && !module.parent) {
 
     apiServer.listen(apiPort, bindAddress, () => {
       logger.info(`API HTTP listening on port ${apiPort}`)
-      return ensureRootUser(() => deferred.resolve())
+      return ensureRootUserAndRoles(() => deferred.resolve())
     })
 
     // listen for server error

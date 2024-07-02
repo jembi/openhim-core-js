@@ -5,7 +5,6 @@ import logger from 'winston'
 import os from 'os'
 
 import * as auditing from '../auditing'
-import * as authorisation from './authorisation'
 import * as utils from '../utils'
 import {AuditMetaModel, AuditModel} from '../model/audits'
 import {config} from '../config'
@@ -61,20 +60,13 @@ function auditLogUsed(auditId, outcome, user) {
  * Adds a Audit
  */
 export async function addAudit(ctx) {
-  // Test if the user is authorised
-  if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to addAudit denied.`,
-      'info'
-    )
-    return
-  }
-
-  const auditData = ctx.request.body
-
   try {
+    const authorised = await utils.checkUserPermission(ctx, 'addAudit', 'audit-trail-manage')
+
+    if (!authorised) return
+
+    const auditData = ctx.request.body
+
     const audit = new AuditModel(auditData)
     await audit.save()
     await processAuditMeta(audit)
@@ -99,18 +91,11 @@ function checkPatientID(patientID) {
  * Retrieves the list of Audits
  */
 export async function getAudits(ctx) {
-  // Must be admin
-  if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to getAudits denied.`,
-      'info'
-    )
-    return
-  }
-
   try {
+    const authorised = await utils.checkUserPermission(ctx, 'getAudits', 'audit-trail-view')
+
+    if (!authorised) return
+
     let filters
     const filtersObject = ctx.request.query
 
@@ -237,21 +222,14 @@ export async function getAudits(ctx) {
  * Retrieves the details for a specific Audit Record
  */
 export async function getAuditById(ctx, auditId) {
-  // Must be admin
-  if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to getAuditById denied.`,
-      'info'
-    )
-    return
-  }
-
-  // Get the values to use
-  auditId = unescape(auditId)
-
   try {
+    const authorised = await utils.checkUserPermission(ctx, 'getAuditById', 'audit-trail-view')
+
+    if (!authorised) return
+
+    // Get the values to use
+    auditId = unescape(auditId)
+
     // get projection object
     const projectionFiltersObject = getProjectionObject('full')
 
@@ -296,18 +274,11 @@ export async function getAuditById(ctx, auditId) {
  * construct audit filtering dropdown options
  */
 export async function getAuditsFilterOptions(ctx) {
-  // Must be admin
-  if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to getAudits denied.`,
-      'info'
-    )
-    return
-  }
-
   try {
+    const authorised = await utils.checkUserPermission(ctx, 'getAuditsFilterOptions', 'audit-trail-view')
+
+    if (!authorised) return
+
     ctx.body = await AuditMetaModel.findOne({}).exec()
   } catch (e) {
     utils.logAndSetResponse(
