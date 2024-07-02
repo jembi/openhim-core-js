@@ -15,49 +15,51 @@ const levels = {
 }
 
 export async function getLogs(ctx) {
-  // Only admins can view server logs
-  if (!authorisation.inGroup('admin', ctx.authenticated)) {
+  try {
+    const authorised = await utils.checkUserPermission(ctx, 'getLogs', 'logs-view')
+
+    if (!authorised) return
+
+    let {query} = ctx.request || {}
+    if (query == null) {
+      query = {}
+    }
+
+    // default to info level logs
+    if (query.level == null) {
+      query.level = 'info'
+    }
+
+    const options = {
+      from:
+        query.from != null
+          ? moment(query.from).toDate()
+          : moment().subtract(5, 'minutes').toDate(),
+      until: moment(query.until || undefined).toDate(),
+      order: 'asc',
+      start: parseInt(query.start, 10) || 0,
+      limit: 100000 // limit: 0 doesn't work :/
+    }
+
+    let results = await promisify(logger.query.bind(logger))(options)
+    results = results.mongodb
+
+    if (query.level != null) {
+      results = results.filter(item => levels[item.level] >= levels[query.level])
+    }
+
+    if (query.limit != null) {
+      results.splice(query.limit, results.length - query.limit)
+    }
+
+    ctx.body = results
+    ctx.status = 200
+  } catch (err) {
     utils.logAndSetResponse(
       ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to getLogs denied.`,
-      'info'
+      400,
+      `Could not get logs via the API: ${err}`,
+      'error'
     )
-    return
   }
-
-  let {query} = ctx.request || {}
-  if (query == null) {
-    query = {}
-  }
-
-  // default to info level logs
-  if (query.level == null) {
-    query.level = 'info'
-  }
-
-  const options = {
-    from:
-      query.from != null
-        ? moment(query.from).toDate()
-        : moment().subtract(5, 'minutes').toDate(),
-    until: moment(query.until || undefined).toDate(),
-    order: 'asc',
-    start: parseInt(query.start, 10) || 0,
-    limit: 100000 // limit: 0 doesn't work :/
-  }
-
-  let results = await promisify(logger.query.bind(logger))(options)
-  results = results.mongodb
-
-  if (query.level != null) {
-    results = results.filter(item => levels[item.level] >= levels[query.level])
-  }
-
-  if (query.limit != null) {
-    results.splice(query.limit, results.length - query.limit)
-  }
-
-  ctx.body = results
-  ctx.status = 200
 }
