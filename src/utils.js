@@ -7,6 +7,7 @@ import momentTZ from 'moment-timezone'
 import _ from 'lodash'
 
 import {ChannelModel} from './model/channels'
+import {RoleModelAPI} from './model/role'
 import {KeystoreModel} from './model/keystore'
 import {config} from './config'
 
@@ -227,4 +228,36 @@ export async function hashPassword(password) {
   } else {
     return Promise.reject(new Error("Password wasn't provided"))
   }
+}
+
+export const checkUserPermission = async (ctx, operation, permission, permissionSpeficied, resource) => {
+  const roleNames = ctx.authenticated.groups || []
+  const roles = await RoleModelAPI.find({name: {$in: roleNames}}).catch(() => [])
+
+  if (!roleNames.length || !roles.length) {
+    logAndSetResponse(
+      ctx,
+      403,
+      `User ${ctx.authenticated.email} does not have an access role specified.`,
+      'error'
+    )
+    return false
+  }
+
+  const authorised = roles.find(role =>
+    role.name.match(/admin|manager/) ||
+    role.permissions[permission] ||
+    permissionSpeficied && resource ? role.permissions[permissionSpeficied].includes(resource) : false
+  )
+
+  if (!authorised) {
+    logAndSetResponse(
+      ctx,
+      403,
+      `User ${ctx.authenticated.email} does not have the "${permission}" permission, API access to ${operation} denied.`,
+      'error'
+    )
+    return false
+  }
+  return true
 }
