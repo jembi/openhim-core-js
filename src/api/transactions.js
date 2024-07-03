@@ -11,6 +11,7 @@ import {ChannelModelAPI} from '../model/channels'
 import {TransactionModelAPI} from '../model/transactions'
 import {TaskModelAPI} from '../model/tasks'
 import {config} from '../config'
+import { RoleModelAPI } from '../model/role'
 
 const apiConf = config.get('api')
 const taskTransactionsLength = config.get('rerun').taskTransactionsLength
@@ -116,6 +117,26 @@ function truncateTransactionDetails(trx) {
   }
 }
 
+// Trims transactions' bodies for channels user is not allowed to view the request and response bodies
+const trimTransactions = async (user, transactions) => {
+  const roles = await RoleModelAPI.find({name: {$in: user.groups}}).exec()
+
+  const channelsTotrim = roles.reduce((prev, role) => prev.push(role.permissions['transaction-view-body-specified']), [])
+
+  transactions = transactions.map(trans => {
+    if (channelsTotrim.includes(trans.channelID)) {
+      delete trans.request.body
+      delete trans.response.body
+      trans.orchestrations = trans.orchestrations.map(orch => {
+        delete orch.request.body
+        delete trans.response.body
+      })
+    }
+
+    return trans
+  })
+}
+
 /*
  * Returns intersection of user and channel roles/permission groups
  */
@@ -207,6 +228,7 @@ export async function getTransactions(ctx) {
       .skip(filterSkip)
       .limit(parseInt(filterLimit, 10))
       .sort({'request.timestamp': -1})
+      .lean()
       .exec()
 
     if (filterRepresentation === 'bulkrerun') {
@@ -215,11 +237,11 @@ export async function getTransactions(ctx) {
         count
       }
     } else {
-      ctx.body = transactions
+      ctx.body = await trimTransactions(ctx.authenticated, transactions)
     }
 
     if (filterRepresentation === 'fulltruncate') {
-      Array.from(ctx.body).map(trx => truncateTransactionDetails(trx))
+      ctx.body = Array.from(ctx.body).map(trx => truncateTransactionDetails(trx))
     }
   } catch (e) {
     utils.logAndSetResponse(
@@ -260,7 +282,22 @@ export async function rerunTransactions(ctx) {
           )
         }
       } else {
-        filters.channelID = {$in: getChannelIDsArray(allChannels)}
+        const roles = await RoleModelAPI.find({name: {$in: ctx.authenticated.groups}}).exec()
+        const canRerunAll = roles.find(role => role.permissions['transaction-rerun-all'])
+        let specificRerunChannels
+
+        if (!canRerunAll) {
+          specificRerunChannels = roles.reduce((prev, curr) => prev.push(curr.permissions['transaction-rerun-specific']))
+        }
+        if (!canRerunAll && !specificRerunChannels) {
+          return utils.logAndSetResponse(
+            ctx,
+            403,
+            `Forbidden: User not authorized to rerun transactions for any channel`,
+            'info'
+          )
+        }
+        filters.channelID = {$in: specificRerunChannels ? specificRerunChannels : getChannelIDsArray(allChannels)}
       }
     }
 
@@ -518,11 +555,11 @@ function calculateTransactionBodiesByteLength(lengthObj, obj, ws) {
  */
 export async function addTransaction(ctx) {
   // Test if the user is authorised
-  if (!authorisation.inGroup('admin', ctx.authenticated)) {
+  if (!['admin', 'manager'].find(role => authorisation.inGroup(role, ctx.authenticated))) {
     utils.logAndSetResponse(
       ctx,
       403,
-      `User ${ctx.authenticated.email} is not an admin, API access to addTransaction denied.`,
+      `User ${ctx.authenticated.email} is not an admin or manager, API access to addTransaction denied.`,
       'info'
     )
     return
@@ -616,7 +653,7 @@ export async function getTransactionById(ctx, transactionId) {
     const result = await TransactionModelAPI.findById(
       transactionId,
       projectionFiltersObject
-    ).exec()
+    ).lean().exec()
     if (result && filterRepresentation === 'fulltruncate') {
       truncateTransactionDetails(result)
     }
@@ -633,7 +670,7 @@ export async function getTransactionById(ctx, transactionId) {
       if (
         getChannelIDsArray(channels).indexOf(result.channelID.toString()) >= 0
       ) {
-        ctx.body = result
+        ctx.body = (await trimTransactions(ctx.authenticated, [result]))[0]
       } else {
         return utils.logAndSetResponse(
           ctx,
@@ -680,12 +717,15 @@ export async function findTransactionByClientId(ctx, clientId) {
     }
 
     // execute the query
-    ctx.body = await TransactionModelAPI.find(
+    const result = await TransactionModelAPI.find(
       filtersObject,
       projectionFiltersObject
     )
       .sort({'request.timestamp': -1})
+      .lean()
       .exec()
+
+    ctx.body = await trimTransactions(ctx.authenticated, result)
   } catch (e) {
     utils.logAndSetResponse(
       ctx,
