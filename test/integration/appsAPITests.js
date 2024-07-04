@@ -14,6 +14,8 @@ import {AppModelAPI} from '../../src/model/apps'
 import { getTransformedImportMap } from '../../src/api/apps'
 import sinon from 'sinon'
 import {config} from '../../src/config'
+import { RoleModelAPI } from '../../src/model/role'
+import { url } from 'inspector'
 
 const {SERVER_PORTS, BASE_URL, DEFAULT_IMPORT_MAP_PATHS} = constants
 
@@ -31,7 +33,8 @@ describe('API Integration Tests', () => {
       showInSideBar: true
     }
     let rootCookie = '',
-      nonRootCookie = ''
+      nonRootCookie = '',
+      nonRootCookie2 = ''
 
     before(async () => {
       await promisify(server.start)({apiPort: SERVER_PORTS.apiPort})
@@ -54,6 +57,11 @@ describe('API Integration Tests', () => {
         BASE_URL,
         testUtils.nonRootUser
       )
+      nonRootCookie2 = await testUtils.authenticate(
+        request,
+        BASE_URL,
+        testUtils.nonRootUser1
+      )
     })
 
     afterEach(async () => {
@@ -69,7 +77,7 @@ describe('API Integration Tests', () => {
           .expect(403)
 
         res.body.error.should.equal(
-          'User nonroot@jembi.org is not an admin, API access to add an app denied.'
+          'User nonroot@jembi.org does not have the "app-manage-all" permission, API access to add an app denied.'
         )
       })
 
@@ -81,7 +89,7 @@ describe('API Integration Tests', () => {
           .expect(400)
       })
 
-      it('should create an app', async () => {
+      it('should create an app with admin role', async () => {
         const res = await request(BASE_URL)
           .post('/apps')
           .set('Cookie', rootCookie)
@@ -89,6 +97,45 @@ describe('API Integration Tests', () => {
           .expect(201)
 
         res.body.name.should.equal(testAppDoc.name)
+      })
+
+      it('should create an app with test role that has the app-manage-all permission', async () => {
+        const testRole = new RoleModelAPI({
+          name: 'test',
+          permissions: {
+            "channel-view-all": true,
+            "channel-manage-all": true,
+            "client-view-all": true,
+            "client-manage-all": true,
+            "client-role-view-all": true,
+            "client-role-manage-all": true,
+            "transaction-view-all": true,
+            "transaction-view-body-all": true,
+            "transaction-rerun-all": true,
+            "user-view": true,
+            "user-role-view": true,
+            "audit-trail-view": true,
+            "contact-list-view": true,
+            "contact-list-manage": true,
+            "mediator-view-all": true,
+            "mediator-manage-all": true,
+            "certificates-view": true,
+            "certificates-manage": true,
+            "logs-view": true,
+            "import-export": true,
+            "app-view-all": true,
+            "app-manage-all": true
+          }
+        }
+      )
+      await testRole.save()
+        const res = await request(BASE_URL)
+          .post('/apps')
+          .set('Cookie', nonRootCookie2)
+          .send({...testAppDoc, name: 'test2', url: '/test'})
+          .expect(201)
+
+        res.body.name.should.equal('test2')
       })
     })
 
@@ -137,7 +184,7 @@ describe('API Integration Tests', () => {
       it('should fail when app does not exist', async () => {
         const res = await request(BASE_URL)
           .get('/apps/507f1f77bcf86cd799439011')
-          .set('Cookie', nonRootCookie)
+          .set('Cookie', rootCookie)
           .expect(404)
 
         res.body.error.should.equal(
@@ -171,7 +218,7 @@ describe('API Integration Tests', () => {
           .expect(403)
 
         res.body.error.should.equal(
-          'User nonroot@jembi.org is not an admin, API access to update an app denied.'
+          'User nonroot@jembi.org does not have the "app-manage-all" permission, API access to update an app denied.'
         )
       })
 
@@ -229,7 +276,7 @@ describe('API Integration Tests', () => {
           .expect(403)
 
         res.body.error.should.equal(
-          'User nonroot@jembi.org is not an admin, API access to delete an app denied.'
+          'User nonroot@jembi.org does not have the "app-manage-all" permission, API access to delete an app denied.'
         )
       })
 
