@@ -8,7 +8,8 @@ import {connectionAPI, connectionDefault} from '../config'
 const RoleSchema = new Schema({
   name: {
     type: String,
-    required: true
+    required: true,
+    unique: true,
   },
   permissions: {
     "channel-view-all": {
@@ -73,6 +74,10 @@ const RoleSchema = new Schema({
       default: false
     },
     "audit-trail-view": {
+      type: Boolean,
+      default: false
+    },
+    "audit-trail-manage": {
       type: Boolean,
       default: false
     },
@@ -144,6 +149,7 @@ const roles = {
       "user-role-view": true,
       "user-role-manage": true,
       "audit-trail-view": true,
+      "audit-trail-manage": true,
       "contact-list-view": true,
       "contact-list-manage": true,
       "mediator-view-all": true,
@@ -171,6 +177,7 @@ const roles = {
       "user-view": true,
       "user-role-view": true,
       "audit-trail-view": true,
+      "audit-trail-manage": true,
       "contact-list-view": true,
       "contact-list-manage": true,
       "mediator-view-all": true,
@@ -186,6 +193,7 @@ const roles = {
   operator: {
     name: 'operator',
     permissions: {
+      "channel-view-all": true,
       "transaction-view-all": true,
       "transaction-view-body-all": true,
       "transaction-rerun-all": true,
