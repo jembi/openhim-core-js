@@ -5,6 +5,7 @@
 import fs from 'fs'
 import request from 'supertest'
 import {promisify} from 'util'
+import should from 'should'
 
 import * as constants from '../constants'
 import * as server from '../../src/server'

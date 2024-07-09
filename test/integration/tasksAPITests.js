@@ -5,6 +5,7 @@
 import request from 'supertest'
 import {Types} from 'mongoose'
 import {promisify} from 'util'
+import should from 'should'
 
 import * as constants from '../constants'
 import * as server from '../../src/server'
@@ -13,6 +14,7 @@ import {AutoRetryModelAPI} from '../../src/model/autoRetry'
 import {ChannelModelAPI} from '../../src/model/channels'
 import {TaskModelAPI} from '../../src/model/tasks'
 import {TransactionModelAPI} from '../../src/model/transactions'
+import { RoleModelAPI } from '../../src/model/role'
 
 const {ObjectId} = Types
 
@@ -283,7 +285,8 @@ describe('API Integration Tests', () => {
     })
 
     let rootCookie = '',
-      nonRootCookie = ''
+      nonRootCookie = '',
+      nonRootCookie1 = ''
 
     before(async () => {
       await TaskModelAPI.deleteMany({})
@@ -314,6 +317,11 @@ describe('API Integration Tests', () => {
         request,
         BASE_URL,
         testUtils.nonRootUser
+      )
+      nonRootCookie1 = await testUtils.authenticate(
+        request,
+        BASE_URL,
+        testUtils.nonRootUser1
       )
     })
 
@@ -435,9 +443,38 @@ describe('API Integration Tests', () => {
           ]
         }
 
+        await RoleModelAPI.findOneAndUpdate({name: 'test'}, {
+          name: 'test',
+          permissions: {
+            "channel-view-all": false,
+            "channel-manage-all": true,
+            "client-view-all": true,
+            "client-manage-all": true,
+            "client-role-view-all": true,
+            "client-role-manage-all": true,
+            "transaction-view-all": true,
+            "transaction-view-body-all": true,
+            "transaction-rerun-all": true,
+            "user-view": true,
+            "user-role-view": true,
+            "audit-trail-view": true,
+            "audit-trail-manage": true,
+            "contact-list-view": true,
+            "contact-list-manage": true,
+            "mediator-view-all": true,
+            "mediator-manage-all": true,
+            "certificates-view": true,
+            "certificates-manage": true,
+            "logs-view": true,
+            "import-export": true,
+            "app-view-all": true,
+            "app-manage-all": true
+          }
+        }, {upsert: true})
+
         await request(BASE_URL)
           .post('/tasks')
-          .set('Cookie', nonRootCookie)
+          .set('Cookie', nonRootCookie1)
           .send(newTask)
           .expect(201)
 
@@ -837,6 +874,17 @@ describe('API Integration Tests', () => {
     })
 
     describe('*removeTask(taskId)', () => {
+      it('should not only allow a non admin user to remove a task', async () => {
+        await request(BASE_URL)
+          .del('/tasks/aaa777777bbb66cc5d4444ee')
+          .set('Cookie', nonRootCookie)
+          .expect(403)
+
+        await request(BASE_URL)
+          .del('/tasks/aaa777777bbb66cc5d4444ee')
+          .expect(401)
+      })
+
       it('should remove a specific task by ID', async () => {
         await request(BASE_URL)
           .del('/tasks/aaa777777bbb66cc5d4444ee')
@@ -847,17 +895,6 @@ describe('API Integration Tests', () => {
           _id: 'aaa777777bbb66cc5d4444ee'
         })
         task.should.have.length(0)
-      })
-
-      it('should not only allow a non admin user to remove a task', async () => {
-        await request(BASE_URL)
-          .del('/tasks/890aaS0b93ccccc30dddddd0')
-          .set('Cookie', nonRootCookie)
-          .expect(403)
-
-        await request(BASE_URL)
-          .del('/tasks/890aaS0b93ccccc30dddddd0')
-          .expect(401)
       })
     })
   })

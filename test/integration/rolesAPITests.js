@@ -10,6 +10,7 @@ import * as constants from '../constants'
 import * as server from '../../src/server'
 import * as testUtils from '../utils'
 import {ChannelModel, ClientModel} from '../../src/model'
+import { RoleModelAPI } from '../../src/model/role'
 
 const {SERVER_PORTS, BASE_URL} = constants
 
@@ -106,7 +107,8 @@ describe('API Integration Tests', () => {
     let client3
     let client4
     let rootCookie = ''
-    let nonRootCookie = ''
+    let nonRootCookie = '',
+        nonRootCookie1 = ''
 
     before(async () => {
       await Promise.all([
@@ -145,11 +147,17 @@ describe('API Integration Tests', () => {
         BASE_URL,
         testUtils.nonRootUser
       )
+      nonRootCookie1 = await testUtils.authenticate(
+        request,
+        BASE_URL,
+        testUtils.nonRootUser1
+      )
     })
 
     after(async () => {
       await Promise.all([
         testUtils.cleanupTestUsers(),
+        RoleModelAPI.deleteMany({}),
         promisify(server.stop)()
       ])
     })
@@ -162,147 +170,171 @@ describe('API Integration Tests', () => {
     })
 
     describe('*getRoles()', () => {
-      it('should fetch all roles and list linked channels', async () => {
+      it('should fetch all roles - admin user', async () => {
         const res = await request(BASE_URL)
           .get('/roles')
           .set('Cookie', rootCookie)
           .expect(200)
 
-        res.body.length.should.be.exactly(6)
-        const names = res.body.map(r => r.name)
-        names.should.containEql('role1')
-        names.should.containEql('role2')
-        names.should.containEql('role3')
-        names.should.containEql('other-role')
-
-        const mapChId = chns => chns.map(ch => ch._id)
-        for (const role of res.body) {
-          role.should.have.property('channels')
-
-          if (role.name === 'role1') {
-            mapChId(role.channels).should.containEql(`${channel1._id}`)
-          }
-          if (role.name === 'role2') {
-            mapChId(role.channels).should.containEql(`${channel1._id}`)
-            mapChId(role.channels).should.containEql(`${channel2._id}`)
-          }
-          if (role.name === 'role3') {
-            mapChId(role.channels).should.containEql(`${channel2._id}`)
-          }
-        }
+        res.body.length.should.be.exactly(4)
       })
 
-      it('should fetch all roles and list linked clients', async () => {
-        const res = await request(BASE_URL)
-          .get('/roles')
-          .set('Cookie', rootCookie)
-          .expect(200)
-
-        res.body.length.should.be.exactly(6)
-        const names = res.body.map(r => r.name)
-        names.should.containEql('role1')
-        names.should.containEql('role2')
-        names.should.containEql('role3')
-        names.should.containEql('other-role')
-
-        const mapClId = cls => cls.map(cl => cl._id)
-        for (const role of Array.from(res.body)) {
-          role.should.have.property('clients')
-
-          if (role.name === 'role1') {
-            mapClId(role.clients).should.containEql(`${client1._id}`)
-            mapClId(role.clients).should.containEql(`${client3._id}`)
-          }
-          if (role.name === 'role2') {
-            mapClId(role.clients).should.containEql(`${client2._id}`)
-          }
-          if (role.name === 'role3') {
-            mapClId(role.clients).should.containEql(`${client3._id}`)
-            if (role.name === 'other-role') {
-              mapClId(role.clients).should.containEql(`${client4._id}`)
-            }
-          }
-        }
-      })
-
-      it('should fetch all roles if there are only linked clients', async () => {
-        await ChannelModel.deleteMany({})
-        const res = await request(BASE_URL)
-          .get('/roles')
-          .set('Cookie', rootCookie)
-          .expect(200)
-
-        res.body.length.should.be.exactly(5)
-        const names = res.body.map(r => r.name)
-        names.should.containEql('role1')
-        names.should.containEql('role2')
-        names.should.containEql('role3')
-        names.should.containEql('other-role')
-
-        const mapClId = cls => cls.map(cl => cl._id)
-        for (const role of Array.from(res.body)) {
-          role.should.have.property('clients')
-
-          if (role.name === 'role1') {
-            mapClId(role.clients).should.containEql(`${client1._id}`)
-            mapClId(role.clients).should.containEql(`${client3._id}`)
-          }
-          if (role.name === 'role2') {
-            mapClId(role.clients).should.containEql(`${client2._id}`)
-          }
-          if (role.name === 'role3') {
-            mapClId(role.clients).should.containEql(`${client3._id}`)
-          }
-          if (role.name === 'other-role') {
-            mapClId(role.clients).should.containEql(`${client4._id}`)
-          }
-        }
-      })
-
-      it('should not misinterpret a client as a role', async () => {
-        const res = await request(BASE_URL)
-          .get('/roles')
-          .set('Cookie', rootCookie)
-          .expect(200)
-
-        res.body.length.should.be.exactly(6)
-        const names = res.body.map(r => r.name)
-        names.should.not.containEql('client4')
-      })
-
-      it('should reject a request from a non root user', async () => {
+      it('should reject a request from a non admin user without permission to view', async () => {
         request(BASE_URL).get('/roles').set('Cookie', nonRootCookie).expect(403)
+      })
+
+      it('should fetch all roles - non admin with permission', async () => {
+        await RoleModelAPI.findOneAndUpdate({name: 'test'}, {
+          name: 'test',
+          permissions: {
+            "channel-view-all": false,
+            "channel-manage-all": true,
+            "client-view-all": true,
+            "client-manage-all": true,
+            "client-role-view-all": true,
+            "client-role-manage-all": true,
+            "transaction-view-all": true,
+            "transaction-view-body-all": true,
+            "transaction-rerun-all": true,
+            "user-view": true,
+            "user-role-view": true,
+            "audit-trail-view": true,
+            "audit-trail-manage": true,
+            "contact-list-view": true,
+            "contact-list-manage": true,
+            "mediator-view-all": true,
+            "mediator-manage-all": true,
+            "certificates-view": true,
+            "certificates-manage": true,
+            "logs-view": true,
+            "import-export": true,
+            "app-view-all": true,
+            "app-manage-all": true
+          }
+        }, {upsert: true})
+        const res = await request(BASE_URL)
+          .get('/roles')
+          .set('Cookie', nonRootCookie1)
+          .expect(200)
+
+        res.body.length.should.be.exactly(4)
       })
     })
 
     describe('*getRole()', () => {
-      it('should get a role', async () => {
+      it('should get a role - admin role', async () => {
         const res = await request(BASE_URL)
-          .get('/roles/role2')
+          .get('/roles/admin')
           .set('Cookie', rootCookie)
           .expect(200)
 
-        res.body.should.have.property('name', 'role2')
-        res.body.should.have.property('channels')
-        res.body.should.have.property('clients')
-        res.body.channels.length.should.be.exactly(2)
-        const mapId = arr => arr.map(a => a._id)
-        mapId(res.body.channels).should.containEql(`${channel1._id}`)
-        mapId(res.body.channels).should.containEql(`${channel2._id}`)
-        mapId(res.body.clients).should.containEql(`${client2._id}`)
+        res.body.name.should.equal('admin')
+        const adminPermissions = [
+          'channel-view-all',
+          'channel-manage-all',
+          'client-view-all',
+          'client-manage-all',
+          'client-role-view-all',
+          'client-role-manage-all',
+          'transaction-view-all',
+          'transaction-view-body-all',
+          'transaction-rerun-all',
+          'user-view',
+          'user-manage',
+          'user-role-view',
+          'user-role-manage',
+          'audit-trail-view',
+          'audit-trail-manage',
+          'contact-list-view',
+          'contact-list-manage',
+          'mediator-view-all',
+          'mediator-manage-all',
+          'certificates-view',
+          'certificates-manage',
+          'logs-view',
+          'import-export',
+          'app-view-all',
+          'app-manage-all'
+        ]
+        adminPermissions.forEach(perm => {
+          res.body.permissions[perm].should.be.equal(true)
+        })
       })
 
-      it('should get a role that is just linked to a client', async () => {
+      it('should get a role - manager role', async () => {
         const res = await request(BASE_URL)
-          .get('/roles/other-role')
+          .get('/roles/manager')
           .set('Cookie', rootCookie)
           .expect(200)
 
-        res.body.should.have.property('name', 'other-role')
-        res.body.should.have.property('clients')
-        res.body.clients.length.should.be.exactly(1)
-        const mapId = arr => arr.map(a => a._id)
-        mapId(res.body.clients).should.containEql(`${client4._id}`)
+        res.body.name.should.equal('manager')
+        const managerPerms = [
+          'channel-view-all',
+          'channel-manage-all',
+          'client-view-all',
+          'client-manage-all',
+          'client-role-view-all',
+          'client-role-manage-all',
+          'transaction-view-all',
+          'transaction-view-body-all',
+          'transaction-rerun-all',
+          'user-view',
+          'user-role-view',
+          'audit-trail-view',
+          'audit-trail-manage',
+          'contact-list-view',
+          'contact-list-manage',
+          'mediator-view-all',
+          'mediator-manage-all',
+          'certificates-view',
+          'certificates-manage',
+          'logs-view',
+          'import-export',
+          'app-view-all',
+          'app-manage-all'
+        ]
+        managerPerms.forEach(perm => {
+          res.body.permissions[perm].should.be.equal(true)
+        })
+        res.body.permissions['user-role-manage'].should.be.equal(false)
+        res.body.permissions['user-manage'].should.be.equal(false)
+      })
+
+      it('should get a role - operator role', async () => {
+        const res = await request(BASE_URL)
+          .get('/roles/operator')
+          .set('Cookie', rootCookie)
+          .expect(200)
+
+        res.body.name.should.equal('operator')
+        const perms = [
+          'channel-manage-all',
+          'client-view-all',
+          'client-manage-all',
+          'client-role-view-all',
+          'client-role-manage-all',
+          'user-view',
+          'user-role-view',
+          'audit-trail-view',
+          'audit-trail-manage',
+          'contact-list-view',
+          'contact-list-manage',
+          'mediator-view-all',
+          'mediator-manage-all',
+          'certificates-view',
+          'certificates-manage',
+          'logs-view',
+          'import-export',
+          'app-view-all',
+          'app-manage-all'
+        ]
+        perms.forEach(perm => {
+          res.body.permissions[perm].should.be.equal(false)
+        })
+        res.body.permissions['channel-view-all'].should.be.equal(true)
+        res.body.permissions['transaction-view-all'].should.be.equal(true)
+        res.body.permissions['transaction-view-body-all'].should.be.equal(true)
+        res.body.permissions['transaction-rerun-all'].should.be.equal(true)
       })
 
       it('should respond with 404 Not Found if role does not exist', async () => {
@@ -326,23 +358,20 @@ describe('API Integration Tests', () => {
           .post('/roles')
           .set('Cookie', rootCookie)
           .send({
-            name: 'role1',
-            channels: [{_id: `${channel2._id}`}]
+            name: 'test'
           })
           .expect(400)
       })
 
-      it('should respond with 400 Bad Request if role does not have a channel or client', async () => {
+      it('should respond with 400 Bad Request if role name is not specified', async () => {
         const res = await request(BASE_URL)
           .post('/roles')
           .set('Cookie', rootCookie)
-          .send({
-            name: 'newRole'
-          })
+          .send({})
           .expect(400)
 
         res.text.should.eql(
-          'Must specify at least one channel or client to link the role to'
+          'Must specify a role name'
         )
       })
 
@@ -352,104 +381,8 @@ describe('API Integration Tests', () => {
           .set('Cookie', rootCookie)
           .send({
             name: 'role4',
-            channels: [{_id: `${channel1._id}`}, {_id: `${channel2._id}`}]
           })
           .expect(201)
-
-        const channels = await ChannelModel.find({allow: {$in: ['role4']}})
-        channels.length.should.be.exactly(2)
-
-        const mapChId = chns => chns.map(ch => `${ch._id}`)
-        mapChId(channels).should.containEql(`${channel1._id}`)
-        mapChId(channels).should.containEql(`${channel2._id}`)
-      })
-
-      it('should add a role and update clients', async () => {
-        await request(BASE_URL)
-          .post('/roles')
-          .set('Cookie', rootCookie)
-          .send({
-            name: 'role4',
-            channels: [{_id: `${channel1._id}`}, {_id: `${channel2._id}`}],
-            clients: [{_id: `${client1._id}`}, {_id: `${client2._id}`}]
-          })
-          .expect(201)
-
-        const clients = await ClientModel.find({roles: {$in: ['role4']}})
-        clients.length.should.be.exactly(2)
-        const mapId = arr => arr.map(a => `${a._id}`)
-        mapId(clients).should.containEql(`${client1._id}`)
-        mapId(clients).should.containEql(`${client2._id}`)
-      })
-
-      it('should add a role and update channels specified with either _id or name', async () => {
-        await request(BASE_URL)
-          .post('/roles')
-          .set('Cookie', rootCookie)
-          .send({
-            name: 'role4',
-            channels: [{_id: `${channel1._id}`}, {name: channel2.name}]
-          })
-          .expect(201)
-
-        const channels = await ChannelModel.find({allow: {$in: ['role4']}})
-        channels.length.should.be.exactly(2)
-        const mapChId = chns => chns.map(ch => `${ch._id}`)
-        mapChId(channels).should.containEql(`${channel1._id}`)
-        mapChId(channels).should.containEql(`${channel2._id}`)
-      })
-
-      it('should add a role and update clients specified with either _id or clientID', async () => {
-        await request(BASE_URL)
-          .post('/roles')
-          .set('Cookie', rootCookie)
-          .send({
-            name: 'role4',
-            channels: [{_id: `${channel1._id}`}, {_id: `${channel2._id}`}],
-            clients: [
-              {_id: `${client1._id}`},
-
-              {clientID: `${client2.clientID}`}
-            ]
-          })
-          .expect(201)
-
-        const clients = await ClientModel.find({roles: {$in: ['role4']}})
-        clients.length.should.be.exactly(2)
-        const mapId = arr => arr.map(a => `${a._id}`)
-        mapId(clients).should.containEql(`${client1._id}`)
-        mapId(clients).should.containEql(`${client2._id}`)
-      })
-
-      it('should respond with 400 Bad Request if name is not specified', async () => {
-        await request(BASE_URL)
-          .post('/roles')
-          .set('Cookie', rootCookie)
-          .send({
-            channels: [{_id: `${channel1._id}`}, {_id: `${channel2._id}`}]
-          })
-          .expect(400)
-      })
-
-      it('should respond with 400 Bad Request if channels is empty', async () => {
-        await request(BASE_URL)
-          .post('/roles')
-          .set('Cookie', rootCookie)
-          .send({
-            name: 'role2',
-            channels: []
-          })
-          .expect(400)
-      })
-
-      it('should respond with 400 Bad Request if channels and clients are not specified', async () => {
-        await request(BASE_URL)
-          .post('/roles')
-          .set('Cookie', rootCookie)
-          .send({
-            name: 'role2'
-          })
-          .expect(400)
       })
 
       it('should reject a request from a non root user', async () => {
@@ -463,31 +396,12 @@ describe('API Integration Tests', () => {
           .expect(403)
       })
 
-      it('should add a role for clients', async () => {
-        await request(BASE_URL)
-          .post('/roles')
-          .set('Cookie', rootCookie)
-          .send({
-            name: 'role4',
-            clients: [{_id: `${client1._id}`}, {_id: `${client2._id}`}]
-          })
-          .expect(201)
-
-        const clients = await ClientModel.find({roles: {$in: ['role4']}})
-        clients.length.should.be.exactly(2)
-
-        const mapId = arr => arr.map(a => `${a._id}`)
-        mapId(clients).should.containEql(`${client1._id}`)
-        mapId(clients).should.containEql(`${client2._id}`)
-      })
-
       it('should reject a role that conflicts with a clientID', async () => {
         await request(BASE_URL)
           .post('/roles')
           .set('Cookie', rootCookie)
           .send({
-            name: 'client1',
-            channels: [{_id: `${channel1._id}`}]
+            name: 'client1'
           })
           .expect(409)
       })
@@ -496,7 +410,7 @@ describe('API Integration Tests', () => {
     describe('*updateRole()', () => {
       it("should respond with 404 Not Found if role doesn't exist", async () => {
         await request(BASE_URL)
-          .put('/roles/role4')
+          .put('/roles/role67')
           .set('Cookie', rootCookie)
           .send({
             channels: [{_id: `${channel1._id}`}]
@@ -504,165 +418,22 @@ describe('API Integration Tests', () => {
           .expect(404)
       })
 
-      it('should respond with 400 if channels and clients is empty', async () => {
-        await request(BASE_URL)
-          .put('/roles/role1')
-          .set('Cookie', rootCookie)
-          .send({
-            channels: [],
-            clients: []
-          })
-          .expect(400)
-      })
-
-      it('should respond with 400 if clearing the channels will remove the role', async () => {
-        await request(BASE_URL)
-          .put('/roles/channelOnlyRole')
-          .set('Cookie', rootCookie)
-          .send({
-            channels: []
-          })
-          .expect(400)
-      })
-
-      it('should respond with 400 if clearing the clients will remove the role', async () => {
-        await request(BASE_URL)
-          .put('/roles/clientOnlyRole')
-          .set('Cookie', rootCookie)
-          .send({
-            clients: []
-          })
-          .expect(400)
-      })
-
-      it('should update a role (enable role1 on channel2 and remove from channel1)', async () => {
-        await request(BASE_URL)
-          .put('/roles/role1')
-          .set('Cookie', rootCookie)
-          .send({
-            channels: [{_id: `${channel2._id}`}]
-          })
-          .expect(200)
-        const channels = await ChannelModel.find({allow: {$in: ['role1']}})
-        channels.length.should.be.exactly(1)
-        const mapChId = chns => chns.map(ch => `${ch._id}`)
-        mapChId(channels).should.containEql(`${channel2._id}`)
-      })
-
-      it('should update a role (enable role1 for client2 and client3 and disable for client1)', async () => {
-        await request(BASE_URL)
-          .put('/roles/role1')
-          .set('Cookie', rootCookie)
-          .send({
-            clients: [{_id: `${client2._id}`}, {_id: `${client3._id}`}]
-          })
-          .expect(200)
-
-        const clients = await ClientModel.find({roles: {$in: ['role1']}})
-        clients.length.should.be.exactly(2)
-        const mapId = arr => arr.map(a => `${a._id}`)
-        mapId(clients).should.containEql(`${client2._id}`)
-        mapId(clients).should.containEql(`${client3._id}`)
-      })
-
-      it('should update a role (enable role1 on both channel1 and channel2)', async () => {
-        await request(BASE_URL)
-          .put('/roles/role1')
-          .set('Cookie', rootCookie)
-          .send({
-            channels: [{_id: `${channel1._id}`}, {_id: `${channel2._id}`}]
-          })
-          .expect(200)
-
-        const channels = await ChannelModel.find({allow: {$in: ['role1']}})
-        channels.length.should.be.exactly(2)
-        const mapChId = chns => chns.map(ch => `${ch._id}`)
-        mapChId(channels).should.containEql(`${channel1._id}`)
-        mapChId(channels).should.containEql(`${channel2._id}`)
-      })
-
-      it('should remove a role from all channels that is an update of an empty channel array', async () => {
-        await request(BASE_URL)
-          .put('/roles/role2')
-          .set('Cookie', rootCookie)
-          .send({
-            channels: []
-          })
-          .expect(200)
-
-        const channels = await ChannelModel.find({allow: {$in: ['role2']}})
-        channels.length.should.be.exactly(0)
-      })
-
-      it('should not remove a role from clients if update contains empty channel array', async () => {
-        await request(BASE_URL)
-          .put('/roles/role2')
-          .set('Cookie', rootCookie)
-          .send({
-            channels: []
-          })
-          .expect(200)
-
-        const clients = await ClientModel.find({roles: {$in: ['role2']}})
-        clients.length.should.be.exactly(1)
-      })
-
-      it('should update a role using channel name', async () => {
-        await request(BASE_URL)
-          .put('/roles/role1')
-          .set('Cookie', rootCookie)
-          .send({
-            channels: [{name: channel2.name}]
-          })
-          .expect(200)
-
-        const channels = await ChannelModel.find({allow: {$in: ['role1']}})
-        channels.length.should.be.exactly(1)
-        const mapChId = chns => chns.map(ch => `${ch._id}`)
-        mapChId(channels).should.containEql(`${channel2._id}`)
-      })
-
-      it('should reject a request from a non root user', async () => {
-        await request(BASE_URL)
-          .put('/roles/role1')
-          .set('Cookie', nonRootCookie)
-          .send({
-            channels: [{_id: `${channel2._id}`}]
-          })
-          .expect(403)
-      })
-
       it('should rename a role', async () => {
         await request(BASE_URL)
-          .put('/roles/role1')
+          .put('/roles/role4')
           .set('Cookie', rootCookie)
           .send({
-            name: 'the-new-role-name'
+            name: 'role5'
           })
           .expect(200)
-
-        const channels = await ChannelModel.find({
-          allow: {$in: ['the-new-role-name']}
-        })
-        channels.length.should.be.exactly(1)
-        const mapChId = chns => chns.map(ch => `${ch._id}`)
-        mapChId(channels).should.containEql(`${channel1._id}`)
-
-        const clients = await ClientModel.find({
-          roles: {$in: ['the-new-role-name']}
-        })
-        clients.length.should.be.exactly(2)
-        const mapClId = cls => cls.map(cl => `${cl._id}`)
-        mapClId(clients).should.containEql(`${client1._id}`)
-        mapClId(clients).should.containEql(`${client3._id}`)
       })
 
       it('should reject a request to rename a role into an existing role name', async () => {
         await request(BASE_URL)
-          .put('/roles/role1')
+          .put('/roles/role5')
           .set('Cookie', rootCookie)
           .send({
-            name: 'role2'
+            name: 'test'
           })
           .expect(400)
       })
@@ -681,37 +452,17 @@ describe('API Integration Tests', () => {
     describe('*deleteRole()', () => {
       it("should respond with 404 Not Found if role doesn't exist", async () => {
         await request(BASE_URL)
-          .put('/roles/role4')
+          .delete('/roles/role49')
           .set('Cookie', rootCookie)
-          .send({
-            channels: [{_id: `${channel1._id}`}]
-          })
           .expect(404)
       })
 
       it('should delete a role', async () => {
         await request(BASE_URL)
-          .delete('/roles/role2')
+          .delete('/roles/test')
           .set('Cookie', rootCookie)
           .expect(200)
 
-        const channels = await ChannelModel.find({allow: {$in: ['role2']}})
-        channels.length.should.be.exactly(0)
-
-        const clients = await ClientModel.find({roles: {$in: ['role2']}})
-        clients.length.should.be.exactly(0)
-      })
-
-      it("should delete a role that's only linked to a client", async () => {
-        await request(BASE_URL)
-          .delete('/roles/other-role')
-          .set('Cookie', rootCookie)
-          .expect(200)
-
-        const clients = await ClientModel.find({
-          roles: {$in: ['other-role']}
-        })
-        clients.length.should.be.exactly(0)
       })
 
       it('should reject a request from a non root user', async () => {

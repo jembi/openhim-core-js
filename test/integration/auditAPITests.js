@@ -12,13 +12,15 @@ import * as testUtils from '../utils'
 import {AuditMetaModel, AuditModel} from '../../src/model'
 import {BASE_URL, SERVER_PORTS} from '../constants'
 import {config} from '../../src/config'
+import { RoleModelAPI } from '../../src/model/role'
 
 describe('API Integration Tests', () => {
   const router = config.get('router')
   const api = config.get('api')
 
   let rootCookie = '',
-    nonRootCookie = ''
+    nonRootCookie = '',
+    nonRootCookie1
 
   before(async () => {
     await promisify(server.start)({apiPort: SERVER_PORTS.apiPort})
@@ -39,6 +41,11 @@ describe('API Integration Tests', () => {
       request,
       BASE_URL,
       testUtils.nonRootUser
+    )
+    nonRootCookie1 = await testUtils.authenticate(
+      request,
+      BASE_URL,
+      testUtils.nonRootUser1
     )
   })
 
@@ -133,6 +140,72 @@ describe('API Integration Tests', () => {
         await request(BASE_URL)
           .post('/audits')
           .set('Cookie', rootCookie)
+          .send(auditData)
+          .expect(201)
+
+        const newAudit = await AuditModel.findOne({
+          'eventIdentification.eventDateTime': '2015-02-20T15:38:25.282Z'
+        })
+
+        should(newAudit != null).true()
+        newAudit.eventIdentification.eventActionCode.should.equal('E')
+        newAudit.eventIdentification.eventID.code.should.equal('110112')
+        newAudit.eventIdentification.eventID.displayName.should.equal('Query')
+        newAudit.eventIdentification.eventID.codeSystemName.should.equal('DCM')
+        newAudit.activeParticipant.length.should.equal(2)
+        newAudit.activeParticipant[0].userID.should.equal('pix|pix')
+        newAudit.activeParticipant[0].networkAccessPointID.should.equal(
+          'localhost'
+        )
+        newAudit.auditSourceIdentification.auditSourceID.should.equal('openhim')
+        newAudit.participantObjectIdentification.length.should.equal(2)
+        newAudit.participantObjectIdentification[0].participantObjectID.should.equal(
+          '975cac30-68e5-11e4-bf2a-04012ce65b02^^^ECID&amp;ECID&amp;ISO'
+        )
+        newAudit.participantObjectIdentification[0].participantObjectIDTypeCode.codeSystemName.should.equal(
+          'RFC-3881'
+        )
+        newAudit.participantObjectIdentification[1].participantObjectID.should.equal(
+          'dca6c09e-cc92-4bc5-8741-47bd938fa405'
+        )
+        newAudit.participantObjectIdentification[1].participantObjectIDTypeCode.codeSystemName.should.equal(
+          'IHE Transactions'
+        )
+      })
+
+      it('should add a audit and return status 201 - audit created using user with permission audit-trail-manage', async () => {
+        await RoleModelAPI.findOneAndUpdate({name: 'test'}, {
+          name: 'test',
+          permissions: {
+            "channel-view-all": false,
+            "channel-manage-all": true,
+            "client-view-all": true,
+            "client-manage-all": true,
+            "client-role-view-all": true,
+            "client-role-manage-all": true,
+            "transaction-view-all": true,
+            "transaction-view-body-all": true,
+            "transaction-rerun-all": true,
+            "user-view": true,
+            "user-role-view": true,
+            "audit-trail-view": true,
+            "audit-trail-manage": true,
+            "contact-list-view": true,
+            "contact-list-manage": true,
+            "mediator-view-all": true,
+            "mediator-manage-all": true,
+            "certificates-view": true,
+            "certificates-manage": true,
+            "logs-view": true,
+            "import-export": true,
+            "app-view-all": true,
+            "app-manage-all": true
+          }
+        }, {upsert: true})
+
+        await request(BASE_URL)
+          .post('/audits')
+          .set('Cookie', nonRootCookie1)
           .send(auditData)
           .expect(201)
 

@@ -100,10 +100,10 @@ describe('API Integration Tests', () => {
       })
 
       it('should create an app with test role that has the app-manage-all permission', async () => {
-        const testRole = new RoleModelAPI({
+        await RoleModelAPI.findOneAndUpdate({name: 'test'}, {
           name: 'test',
           permissions: {
-            "channel-view-all": true,
+            "channel-view-all": false,
             "channel-manage-all": true,
             "client-view-all": true,
             "client-manage-all": true,
@@ -115,6 +115,7 @@ describe('API Integration Tests', () => {
             "user-view": true,
             "user-role-view": true,
             "audit-trail-view": true,
+            "audit-trail-manage": true,
             "contact-list-view": true,
             "contact-list-manage": true,
             "mediator-view-all": true,
@@ -126,9 +127,7 @@ describe('API Integration Tests', () => {
             "app-view-all": true,
             "app-manage-all": true
           }
-        }
-      )
-      await testRole.save()
+        }, {upsert: true})
         const res = await request(BASE_URL)
           .post('/apps')
           .set('Cookie', nonRootCookie2)

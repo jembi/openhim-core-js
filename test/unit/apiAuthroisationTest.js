@@ -3,10 +3,12 @@
 /* eslint-env mocha */
 
 import {ObjectId} from 'mongodb'
+import should from 'should'
 
 import * as authorisation from '../../src/api/authorisation'
 import {ChannelModelAPI} from '../../src/model/channels'
 import {UserModelAPI} from '../../src/model/users'
+import { RoleModelAPI } from '../../src/model/role'
 
 describe('API authorisation test', () => {
   const user = new UserModelAPI({
@@ -16,7 +18,7 @@ describe('API authorisation test', () => {
     passwordAlgorithm: 'sha512',
     passwordHash: '3cc90918-7044-4e55-b61d-92ae73cb261e',
     passwordSalt: '22a61686-66f6-483c-a524-185aac251fb0',
-    groups: ['HISP', 'group2']
+    groups: ['HISP', 'test']
   })
 
   const user2 = new UserModelAPI({
@@ -39,8 +41,9 @@ describe('API authorisation test', () => {
     groups: ['admin']
   })
 
+  let channel1, channel2, channel3
   before(async () => {
-    const channel1 = new ChannelModelAPI({
+    channel1 = new ChannelModelAPI({
       name: 'TestChannel1 - api authorisation',
       urlPattern: 'test/sample',
       allow: ['PoC', 'Test1', 'Test2'],
@@ -60,7 +63,7 @@ describe('API authorisation test', () => {
       }
     })
 
-    const channel2 = new ChannelModelAPI({
+    channel2 = new ChannelModelAPI({
       name: 'TestChannel2 - api authorisation',
       urlPattern: 'test/sample',
       allow: ['PoC', 'Test1', 'Test2'],
@@ -80,7 +83,7 @@ describe('API authorisation test', () => {
       }
     })
 
-    const channel3 = new ChannelModelAPI({
+    channel3 = new ChannelModelAPI({
       name: 'TestChannel3 - api authorisation',
       urlPattern: 'test/sample',
       allow: ['PoC', 'Test1', 'Test2'],
@@ -121,6 +124,35 @@ describe('API authorisation test', () => {
 
   describe('.getUserViewableChannels', () => {
     it('should return channels that a user can view', async () => {
+      await RoleModelAPI.findOneAndUpdate({name: 'test'}, {
+        name: 'test',
+        permissions: {
+          "channel-view-all": false,
+          "channel-manage-all": true,
+          "client-view-all": true,
+          "channel-view-specified": [channel1._id, channel2._id],
+          "client-manage-all": true,
+          "client-role-view-all": true,
+          "client-role-manage-all": true,
+          "transaction-view-all": true,
+          "transaction-view-body-all": true,
+          "transaction-rerun-all": true,
+          "user-view": true,
+          "user-role-view": true,
+          "audit-trail-view": true,
+          "audit-trail-manage": true,
+          "contact-list-view": true,
+          "contact-list-manage": true,
+          "mediator-view-all": true,
+          "mediator-manage-all": true,
+          "certificates-view": true,
+          "certificates-manage": true,
+          "logs-view": true,
+          "import-export": true,
+          "app-view-all": true,
+          "app-manage-all": true
+        }
+      }, {upsert: true})
       const channels = await authorisation.getUserViewableChannels(user)
       channels.should.have.length(2)
     })
@@ -138,8 +170,37 @@ describe('API authorisation test', () => {
 
   describe('.getUserRerunableChannels', () => {
     it('should return channels that a user can rerun', async () => {
+      await RoleModelAPI.findOneAndUpdate({name: 'test'}, {
+        name: 'test',
+        permissions: {
+          "channel-view-all": true,
+          "channel-manage-all": true,
+          "client-view-all": true,
+          "transaction-rerun-specified": [channel1._id, channel2._id],
+          "client-manage-all": true,
+          "client-role-view-all": true,
+          "client-role-manage-all": true,
+          "transaction-view-all": true,
+          "transaction-view-body-all": true,
+          "transaction-rerun-all": false,
+          "user-view": true,
+          "user-role-view": true,
+          "audit-trail-view": true,
+          "audit-trail-manage": true,
+          "contact-list-view": true,
+          "contact-list-manage": true,
+          "mediator-view-all": true,
+          "mediator-manage-all": true,
+          "certificates-view": true,
+          "certificates-manage": true,
+          "logs-view": true,
+          "import-export": true,
+          "app-view-all": true,
+          "app-manage-all": true
+        }
+      }, {upsert: true})
       const channels = await authorisation.getUserRerunableChannels(user)
-      channels.should.have.length(1)
+      channels.should.have.length(2)
     })
 
     it('should return an empty array when there are no channel that a user can rerun', async () => {

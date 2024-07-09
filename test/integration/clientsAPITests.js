@@ -11,6 +11,7 @@ import * as constants from '../constants'
 import * as server from '../../src/server'
 import * as testUtils from '../utils'
 import {ClientModelAPI} from '../../src/model/clients'
+import { RoleModelAPI } from '../../src/model/role'
 
 const {SERVER_PORTS, BASE_URL} = constants
 
@@ -28,7 +29,8 @@ describe('API Integration Tests', () => {
     }
 
     let rootCookie = '',
-      nonRootCookie = ''
+      nonRootCookie = '',
+      nonRootCookie1 = ''
 
     before(async () => {
       await promisify(server.start)({apiPort: SERVER_PORTS.apiPort})
@@ -50,6 +52,11 @@ describe('API Integration Tests', () => {
         request,
         BASE_URL,
         testUtils.nonRootUser
+      )
+      nonRootCookie1 = await testUtils.authenticate(
+        request,
+        BASE_URL,
+        testUtils.nonRootUser1
       )
     })
 
@@ -139,13 +146,41 @@ describe('API Integration Tests', () => {
       })
 
       it('should reject a client that conflicts with a role', async () => {
+        await RoleModelAPI.findOneAndUpdate({name: 'test'}, {
+          name: 'test',
+          permissions: {
+            "channel-view-all": false,
+            "channel-manage-all": true,
+            "client-view-all": true,
+            "client-manage-all": true,
+            "client-role-view-all": true,
+            "client-role-manage-all": true,
+            "transaction-view-all": true,
+            "transaction-view-body-all": true,
+            "transaction-rerun-all": true,
+            "user-view": true,
+            "user-role-view": true,
+            "audit-trail-view": true,
+            "audit-trail-manage": true,
+            "contact-list-view": true,
+            "contact-list-manage": true,
+            "mediator-view-all": true,
+            "mediator-manage-all": true,
+            "certificates-view": true,
+            "certificates-manage": true,
+            "logs-view": true,
+            "import-export": true,
+            "app-view-all": true,
+            "app-manage-all": true
+          }
+        }, {upsert: true})
         const client = await new ClientModelAPI(testAppDoc)
         await client.save()
         const conflict = await Object.assign({}, testAppDoc)
-        conflict.clientID = 'PoC'
+        conflict.clientID = 'test'
         await request(BASE_URL)
           .post('/clients')
-          .set('Cookie', rootCookie)
+          .set('Cookie', nonRootCookie1)
           .send(conflict)
           .expect(409)
       })
@@ -271,7 +306,7 @@ describe('API Integration Tests', () => {
       it('should allow a non admin user to fetch a limited view of a client', async () => {
         const res = await request(BASE_URL)
           .get(`/clients/${clientId}/clientName`)
-          .set('Cookie', nonRootCookie)
+          .set('Cookie', nonRootCookie1)
           .expect(200)
         res.body.name.should.equal('OpenHIE NodeJs')
 
@@ -309,6 +344,7 @@ describe('API Integration Tests', () => {
       })
 
       it('should not allow a non admin user to fetch a client by domain', async () => {
+        await new ClientModelAPI(clientTest).save()
         await request(BASE_URL)
           .get('/clients/domain/www.zedmusic-unique.co.zw')
           .set('Cookie', nonRootCookie)
@@ -502,10 +538,10 @@ describe('API Integration Tests', () => {
 
       it('should reject a client that conflicts with a role', async () => {
         const client = await new ClientModelAPI(testAppDoc).save()
-        const conflict = {clientID: 'PoC'}
+        const conflict = {clientID: 'test'}
         await request(BASE_URL)
           .put(`/clients/${client._id}`)
-          .set('Cookie', rootCookie)
+          .set('Cookie', nonRootCookie1)
           .send(conflict)
           .expect(409)
       })

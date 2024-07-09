@@ -338,8 +338,8 @@ describe('API Integration Tests', () => {
           .set('Cookie', cookie)
           .expect(200)
 
-        // user1, user2, newUser, newUserExpired, keycloakUser + the 2 API test users and the root user
-        res.body.length.should.be.eql(8)
+        // user1, user2, user3, newUser, newUserExpired, keycloakUser + the 2 API test users and the root user
+        res.body.length.should.be.eql(9)
       })
 
       it('should not allow non admin user to fetch all users', async () => {
