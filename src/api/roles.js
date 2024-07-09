@@ -134,6 +134,14 @@ export async function getRole(ctx, name) {
   try {
     const role = await RoleModelAPI.findOne({name})
 
+    if (!role) {
+      return utils.logAndSetResponse(
+        ctx,
+        404,
+        `Role ${name} does not exist`,
+        'info'
+      )
+    }
     ctx.body = role
     ctx.status = 200
   } catch (e) {
@@ -231,10 +239,16 @@ export async function addRole(ctx) {
   const role = ctx.request.body
 
   if (!role.name) {
-    return utils.logAndSetResponse(ctx, 400, 'Must specify a role name2', 'info')
+    return utils.logAndSetResponse(ctx, 400, 'Must specify a role name', 'info')
   }
 
   try {
+    const client = await ClientModelAPI.findOne({clientID: role.name}).exec()
+
+    if (client) {
+      return utils.logAndSetResponse(ctx, 409, 'Role name matches an existing clientID', 'info')
+    }
+
     await new RoleModelAPI(role).save()
 
     ctx.body = 'Role successfully created'
@@ -260,6 +274,26 @@ export async function updateRole(ctx, name) {
   const role = ctx.request.body
 
   try {
+    if (role.name) {
+      const client = await ClientModelAPI.findOne({clientID: role.name}).exec()
+
+      if (client) {
+        return utils.logAndSetResponse(ctx, 409, 'Role name matches an existing clientID', 'info')
+      }
+
+      const conflictRole = await RoleModelAPI.findOne({name: role.name}).exec()
+
+      if (conflictRole && role.name != name) {
+        return utils.logAndSetResponse(ctx, 400, 'Cannot rename role to existing role name', 'info')
+      }
+    }
+
+    const roleExists = await RoleModelAPI.findOne({name}).exec()
+
+    if (!roleExists) {
+      return utils.logAndSetResponse(ctx, 404, `Role ${name} does not exist`, 'info')
+    }
+
     await RoleModelAPI.findOneAndUpdate({name}, role)
 
     ctx.body = 'Successfully updated role'
@@ -285,6 +319,12 @@ export async function deleteRole(ctx, name) {
   }
 
   try {
+    const roleExists = await RoleModelAPI.findOne({name}).exec()
+
+    if (!roleExists) {
+      return utils.logAndSetResponse(ctx, 404, `Role ${name} does not exist`, 'info')
+    }
+
     await RoleModelAPI.findOneAndDelete({name})
 
     logger.info(

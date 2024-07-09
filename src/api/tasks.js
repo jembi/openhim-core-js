@@ -9,6 +9,7 @@ import {AutoRetryModelAPI} from '../model/autoRetry'
 import {TaskModelAPI} from '../model/tasks'
 import {TransactionModelAPI} from '../model/transactions'
 import { UserModelAPI } from '../model'
+import { RoleModelAPI } from '../model/role'
 
 const {ChannelModelAPI} = Channels
 
@@ -167,9 +168,11 @@ export async function addTask(ctx) {
 
     const authorisedSuper = await utils.checkUserPermission(ctx, 'addTask', 'transaction-rerun-all')
 
+    const channelsToRerun = await TransactionModelAPI.distinct('channelID', {_id: {$in: transactions.tids}}).exec()
+
     if (!authorisedSuper) {
       const userRoles = await RoleModelAPI.find({name: {$in: ctx.authenticated.groups}}, {permissions: {'transaction-rerun-specified': 1}}).exec()
-      const rerunChannelsAllowed = userRoles.reduce((prev, curr) => prev.concat(curr.permissions['transaction-rerun-specified']))
+      const rerunChannelsAllowed = userRoles.reduce((prev, curr) => prev.concat(curr.permissions['transaction-rerun-specified']), [])
 
       if (!rerunChannelsAllowed.length) {
         utils.logAndSetResponse(
@@ -181,7 +184,6 @@ export async function addTask(ctx) {
         return
       }
 
-      const channelsToRerun = await TransactionModelAPI.distinct('channelID', {_id: {$in: transactions.tids}}).exec()
       const restrictedChannels = channelsToRerun.filter(channel => !rerunChannelsAllowed.includes(channel))
 
       if (restrictedChannels.length) {
@@ -193,6 +195,14 @@ export async function addTask(ctx) {
         )
         return
       }
+    }
+
+    const disabledChannels = await ChannelModelAPI.find({_id: {$in: channelsToRerun}, status: {$in: ['disabled','deleted']}}).exec()
+
+    if (disabledChannels.length) {
+      const msg = `Cannot rerun transactions for disabled or deleted channels - ${disabledChannels.map(chan => chan.name).join(', ')}`
+
+      return utils.logAndSetResponse(ctx, 400, msg, 'info')
     }
 
     for (const tid of Array.from(transactions.tids)) {
@@ -296,22 +306,21 @@ export async function getTask(ctx, taskId) {
   try {
     const authorisedSuper = await utils.checkUserPermission(ctx, 'addTask', 'transaction-rerun-all')
 
-    let result
+    const result = await TaskModelAPI.findById(taskId).lean().exec()
+
+    if (result === null) {
+      // task not found! So inform the user
+      return utils.logAndSetResponse(
+        ctx,
+        404,
+        `We could not find a Task with this ID: ${taskId}.`,
+        'info'
+      )
+    }
+
     if (!authorisedSuper) {
       const userRoles = await RoleModelAPI.find({name: {$in: ctx.authenticated.groups}}, {permissions: {'transaction-rerun-specified': 1}}).exec()
-      const rerunChannelsAllowed = userRoles.reduce((prev, curr) => prev.concat(curr.permissions['transaction-rerun-specified']))
-
-      result = await TaskModelAPI.findById(taskId).lean().exec()
-
-      if (result === null) {
-        // task not found! So inform the user
-        return utils.logAndSetResponse(
-          ctx,
-          404,
-          `We could not find a Task with this ID: ${taskId}.`,
-          'info'
-        )
-      }
+      const rerunChannelsAllowed = userRoles.reduce((prev, curr) => prev.concat(curr.permissions['transaction-rerun-specified']), [])
 
       if (!rerunChannelsAllowed.length) {
         utils.logAndSetResponse(
@@ -411,21 +420,21 @@ export async function updateTask(ctx, taskId) {
   try {
     const authorisedSuper = await utils.checkUserPermission(ctx, 'updateTask', 'transaction-rerun-all')
 
+    const result = await TaskModelAPI.findById(taskId).lean().exec()
+
+    if (result === null) {
+      // task not found! So inform the user
+      return utils.logAndSetResponse(
+        ctx,
+        404,
+        `We could not find a Task with this ID: ${taskId}.`,
+        'info'
+      )
+    }
+
     if (!authorisedSuper) {
       const userRoles = await RoleModelAPI.find({name: {$in: ctx.authenticated.groups}}, {permissions: {'transaction-rerun-specified': 1}}).exec()
-      const rerunChannelsAllowed = userRoles.reduce((prev, curr) => prev.concat(curr.permissions['transaction-rerun-specified']))
-
-      const result = await TaskModelAPI.findById(taskId).lean().exec()
-
-      if (result === null) {
-        // task not found! So inform the user
-        return utils.logAndSetResponse(
-          ctx,
-          404,
-          `We could not find a Task with this ID: ${taskId}.`,
-          'info'
-        )
-      }
+      const rerunChannelsAllowed = userRoles.reduce((prev, curr) => prev.concat(curr.permissions['transaction-rerun-specified']), [])
 
       if (!rerunChannelsAllowed.length) {
         utils.logAndSetResponse(
@@ -478,21 +487,21 @@ export async function removeTask(ctx, taskId) {
   try {
     const authorisedSuper = await utils.checkUserPermission(ctx, 'removeTask', 'transaction-rerun-all')
 
+    const result = await TaskModelAPI.findById(taskId).lean().exec()
+
+    if (result === null) {
+      // task not found! So inform the user
+      return utils.logAndSetResponse(
+        ctx,
+        404,
+        `We could not find a Task with this ID: ${taskId}.`,
+        'info'
+      )
+    }
+
     if (!authorisedSuper) {
       const userRoles = await RoleModelAPI.find({name: {$in: ctx.authenticated.groups}}, {permissions: {'transaction-rerun-specified': 1}}).exec()
-      const rerunChannelsAllowed = userRoles.reduce((prev, curr) => prev.concat(curr.permissions['transaction-rerun-specified']))
-
-      const result = await TaskModelAPI.findById(taskId).lean().exec()
-
-      if (result === null) {
-        // task not found! So inform the user
-        return utils.logAndSetResponse(
-          ctx,
-          404,
-          `We could not find a Task with this ID: ${taskId}.`,
-          'info'
-        )
-      }
+      const rerunChannelsAllowed = userRoles.reduce((prev, curr) => prev.concat(curr.permissions['transaction-rerun-specified']), [])
 
       if (!rerunChannelsAllowed.length) {
         utils.logAndSetResponse(

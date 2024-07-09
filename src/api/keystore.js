@@ -165,6 +165,7 @@ export async function setServerKey(ctx) {
 }
 
 export async function addTrustedCert(ctx) {
+  let err
   try {
     const authorised = await utils.checkUserPermission(ctx, 'addTrustedCert', 'certificates-manage')
 

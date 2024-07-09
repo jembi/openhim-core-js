@@ -133,10 +133,11 @@ export async function findClientByDomain(ctx, clientDomain) {
         `Could not find client with clientDomain ${clientDomain}`,
         'info'
       )
+      return
     } else {
+      await utils.checkUserPermission(ctx, 'getClientByDomain', 'client-view-all', 'client-view-specified', result.clientID)
       ctx.body = result
     }
-    await utils.checkUserPermission(ctx, 'getClientByDomain', 'client-view-all', 'client-view-specified', result.clientID)
   } catch (e) {
     logger.error(
       `Could not find client by client Domain ${clientDomain} via the API: ${e.message}`
@@ -221,7 +222,7 @@ export async function getClients(ctx) {
     if (authorised) {
       clients = await ClientModelAPI.find().lean().exec()
     } else {
-      const roles = RoleModelAPI.find({name: {$in: user.groups}}).exec()
+      const roles = await RoleModelAPI.find({name: {$in: ctx.authenticated.groups}}).exec()
       const specifiedClients = roles.reduce((prev, curr) =>
         prev.concat(curr.permissions['client-view-specified']),
         []

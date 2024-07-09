@@ -121,7 +121,7 @@ function truncateTransactionDetails(trx) {
 const trimTransactions = async (user, transactions) => {
   const roles = await RoleModelAPI.find({name: {$in: user.groups}}).exec()
 
-  const channelsTotrim = roles.reduce((prev, role) => prev.push(role.permissions['transaction-view-body-specified']), [])
+  const channelsTotrim = roles.reduce((prev, role) => prev.concat(role.permissions['transaction-view-body-specified']), [])
 
   transactions = transactions.map(trans => {
     if (channelsTotrim.includes(trans.channelID)) {
@@ -135,6 +135,8 @@ const trimTransactions = async (user, transactions) => {
 
     return trans
   })
+
+  return transactions
 }
 
 /*
@@ -241,7 +243,7 @@ export async function getTransactions(ctx) {
     }
 
     if (filterRepresentation === 'fulltruncate') {
-      ctx.body = Array.from(ctx.body).map(trx => truncateTransactionDetails(trx))
+      Array.from(ctx.body).map(trx => truncateTransactionDetails(trx))
     }
   } catch (e) {
     utils.logAndSetResponse(
