@@ -21,9 +21,6 @@ export async function getLogs(ctx) {
     if (!authorised) return
 
     let {query} = ctx.request || {}
-    if (query == null) {
-      query = {}
-    }
 
     // default to info level logs
     if (query.level == null) {

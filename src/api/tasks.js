@@ -158,14 +158,8 @@ export async function addTask(ctx) {
     // Clear the transactions out of the auto retry queue, in case they're in there
     return AutoRetryModelAPI.deleteMany({
       transactionID: {$in: transactions.tids}
-    }).exec(err => {
-      if (err) {
-        return logger.error(err)
-      }
     })
-  } catch (error) {
-    // Error! So inform the user
-    const err = error
+  } catch (err) {
     utils.logAndSetResponse(
       ctx,
       500,
