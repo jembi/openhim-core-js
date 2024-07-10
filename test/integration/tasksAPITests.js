@@ -959,6 +959,7 @@ describe('API Integration Tests', () => {
     describe('*updateTask(taskId)', () => {
       it('should update a specific task by ID', async () => {
         const updates = {
+          _id: '123333',
           status: 'Completed',
           completed: '2014-06-18T13:30:00.929Z'
         }

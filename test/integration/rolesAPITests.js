@@ -5,6 +5,7 @@
 import request from 'supertest'
 import {ObjectId} from 'mongodb'
 import {promisify} from 'util'
+import should from 'should'
 
 import * as constants from '../constants'
 import * as server from '../../src/server'
@@ -180,7 +181,43 @@ describe('API Integration Tests', () => {
       })
 
       it('should reject a request from a non admin user without permission to view', async () => {
-        request(BASE_URL).get('/roles').set('Cookie', nonRootCookie).expect(403)
+        await request(BASE_URL).get('/roles').set('Cookie', nonRootCookie).expect(403)
+      })
+
+      it('should fail to fetch all roles - non admin without permission', async () => {
+        await RoleModelAPI.findOneAndUpdate({name: 'test'}, {
+          name: 'test',
+          permissions: {
+            "channel-view-all": false,
+            "channel-manage-all": true,
+            "client-view-all": true,
+            "client-manage-all": true,
+            "client-role-view-all": true,
+            "client-role-manage-all": true,
+            "transaction-view-all": true,
+            "transaction-view-body-all": true,
+            "transaction-rerun-all": true,
+            "user-view": true,
+            "user-role-view": false,
+            "audit-trail-view": true,
+            "audit-trail-manage": true,
+            "contact-list-view": true,
+            "contact-list-manage": true,
+            "mediator-view-all": true,
+            "mediator-manage-all": true,
+            "certificates-view": true,
+            "certificates-manage": true,
+            "logs-view": true,
+            "import-export": true,
+            "app-view-all": true,
+            "app-manage-all": true
+          }
+        }, {upsert: true})
+
+        await request(BASE_URL)
+          .get('/roles')
+          .set('Cookie', nonRootCookie1)
+          .expect(403)
       })
 
       it('should fetch all roles - non admin with permission', async () => {
@@ -350,6 +387,42 @@ describe('API Integration Tests', () => {
           .set('Cookie', nonRootCookie)
           .expect(403)
       })
+
+      it('should reject a request from a non root user without permission', async () => {
+        await RoleModelAPI.findOneAndUpdate({name: 'test'}, {
+          name: 'test',
+          permissions: {
+            "channel-view-all": false,
+            "channel-manage-all": true,
+            "client-view-all": true,
+            "client-manage-all": true,
+            "client-role-view-all": true,
+            "client-role-manage-all": true,
+            "transaction-view-all": true,
+            "transaction-view-body-all": true,
+            "transaction-rerun-all": true,
+            "user-view": true,
+            "user-role-view": false,
+            "audit-trail-view": true,
+            "audit-trail-manage": true,
+            "contact-list-view": true,
+            "contact-list-manage": true,
+            "mediator-view-all": true,
+            "mediator-manage-all": true,
+            "certificates-view": true,
+            "certificates-manage": true,
+            "logs-view": true,
+            "import-export": true,
+            "app-view-all": true,
+            "app-manage-all": true
+          }
+        }, {upsert: true})
+
+        await request(BASE_URL)
+          .get('/roles/admin')
+          .set('Cookie', nonRootCookie1)
+          .expect(403)
+      })
     })
 
     describe('*addRole()', () => {
@@ -446,6 +519,16 @@ describe('API Integration Tests', () => {
             name: 'client1'
           })
           .expect(409)
+      })
+
+      it('should reject a role that conflicts with a clientID', async () => {
+        await request(BASE_URL)
+          .put('/roles/role1')
+          .set('Cookie', nonRootCookie)
+          .send({
+            name: 'client1'
+          })
+          .expect(403)
       })
     })
 
