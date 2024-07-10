@@ -14,55 +14,6 @@ import { RoleModelAPI } from '../model/role'
 const {ChannelModelAPI} = Channels
 
 /**
- * Function to check if rerun task creation is valid
- */
-
-function isRerunPermissionsValid(user, transactions, callback) {
-  // if 'admin' - set rerun permissions to true
-  if (authorisation.inGroup('admin', user) === true) {
-    // admin user allowed to rerun any transactions
-    return callback(null, true)
-  } else {
-    return TransactionModelAPI.distinct(
-      'channelID',
-      {_id: {$in: transactions.tids}},
-      (err, transChannels) => {
-        if (err) {
-          return callback(err)
-        }
-        ChannelModelAPI.distinct(
-          '_id',
-          {txRerunAcl: {$in: user.groups}},
-          (err, allowedChannels) => {
-            if (err) {
-              return callback(err)
-            }
-            // for each transaction channel found to be rerun
-            for (const trx of Array.from(transChannels)) {
-              // assume transaction channnel is not allowed at first
-              let matchFound = false
-
-              // for each user allowed channel to be rerun
-              for (const chan of Array.from(allowedChannels)) {
-                if (trx.equals(chan)) {
-                  matchFound = true
-                }
-              }
-
-              // if one channel not allowed then rerun NOT allowed
-              if (!matchFound) {
-                return callback(null, false)
-              }
-            }
-            return callback(null, true)
-          }
-        )
-      }
-    )
-  }
-}
-
-/**
  * Retrieves the list of active tasks
  */
 export async function getTasks(ctx) {
@@ -110,33 +61,6 @@ export async function getTasks(ctx) {
     )
   }
 }
-
-const areTransactionChannelsValid = (transactions, callback) =>
-  TransactionModelAPI.distinct(
-    'channelID',
-    {_id: {$in: transactions.tids}},
-    (err, trxChannelIDs) => {
-      if (err) {
-        return callback(err)
-      }
-      return ChannelModelAPI.find(
-        {_id: {$in: trxChannelIDs}},
-        {status: 1},
-        (err, trxChannels) => {
-          if (err) {
-            return callback(err)
-          }
-
-          for (const chan of Array.from(trxChannels)) {
-            if (!Channels.isChannelEnabled(chan)) {
-              return callback(null, false)
-            }
-          }
-          return callback(null, true)
-        }
-      )
-    }
-  )
 
 /**
  * Creates a new Task
@@ -447,13 +371,13 @@ export async function updateTask(ctx, taskId) {
       }
 
       const channelsToRerun = await TransactionModelAPI.distinct('channelID', {_id: {$in: result.transactions.map(tx => tx.tid)}}).exec()
-      const channels = channelsToRerun.filter(channel => rerunChannelsAllowed.includes(channel))
+      const restrictedChannels = channelsToRerun.filter(channel => !rerunChannelsAllowed.includes(channel))
 
-      if (channels.length) {
+      if (restrictedChannels.length) {
         utils.logAndSetResponse(
           ctx,
           403,
-          `User is not authorised to update task with channels ${channels.join(', ')}`,
+          `User is not authorised to update task with channels ${restrictedChannels.join(', ')}`,
           'info'
         )
         return
@@ -514,13 +438,13 @@ export async function removeTask(ctx, taskId) {
       }
 
       const channelsToRerun = await TransactionModelAPI.distinct('channelID', {_id: {$in: result.transactions.map(tx => tx.tid)}}).exec()
-      const channels = channelsToRerun.filter(channel => rerunChannelsAllowed.includes(channel))
+      const restrictedChannels = channelsToRerun.filter(channel => !rerunChannelsAllowed.includes(channel))
 
-      if (channels.length) {
+      if (restrictedChannels.length) {
         utils.logAndSetResponse(
           ctx,
           403,
-          `User is not authorised to remove task for channels ${channels.join(', ')}`,
+          `User is not authorised to remove task for channels ${restrictedChannels.join(', ')}`,
           'info'
         )
         return
