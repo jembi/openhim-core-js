@@ -230,7 +230,7 @@ export async function hashPassword(password) {
   }
 }
 
-export const checkUserPermission = async (ctx, operation, permission, permissionSpeficied, resource) => {
+export const checkUserPermission = async (ctx, operation, permission, permissionSpecified, resource) => {
   const roleNames = ctx.authenticated.groups || []
   const roles = await RoleModelAPI.find({name: {$in: roleNames}}).catch(() => [])
 
@@ -247,7 +247,7 @@ export const checkUserPermission = async (ctx, operation, permission, permission
   const authorised = roles.find(role =>
     role.name.match(/admin|manager/) ||
     role.permissions[permission] ||
-    (permissionSpeficied && resource ? role.permissions[permissionSpeficied]?.includes(resource) : false)
+    (permissionSpecified && resource ? role.permissions[permissionSpecified]?.includes(resource) : false)
   )
 
   if (!authorised) {
