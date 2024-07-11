@@ -161,7 +161,7 @@ describe('API authorisation test', () => {
       await RoleModelAPI.findOneAndUpdate({name: 'test'}, {
         name: 'test',
         permissions: {
-          "channel-view-all": false,
+          "channel-view-all": true,
           "channel-manage-all": true,
           "client-view-all": true,
           "channel-view-specified": [channel1._id, channel2._id],
@@ -188,7 +188,7 @@ describe('API authorisation test', () => {
         }
       }, {upsert: true})
       const channels = await authorisation.getUserViewableChannels(user)
-      channels.should.have.length(2)
+      channels.should.have.length(3)
     })
 
     it('should return an empty array when there are no channel that a user can view', async () => {

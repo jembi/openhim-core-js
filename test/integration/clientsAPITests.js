@@ -296,6 +296,13 @@ describe('API Integration Tests', () => {
           .expect(404)
       })
 
+      it('should return status 400 when projection property is incorrect', async () => {
+        await request(BASE_URL)
+          .get(`/clients/${clientId}/incorrect`)
+          .set('Cookie', rootCookie)
+          .expect(404)
+      })
+
       it('should not allow a non admin user to fetch a client', async () => {
         await request(BASE_URL)
           .get(`/clients/${clientId}`)
@@ -341,6 +348,14 @@ describe('API Integration Tests', () => {
         res.body.passwordHash.should.equal(
           '$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy'
         )
+      })
+
+      it('should return status 404 when client does not exist', async () => {
+        await new ClientModelAPI(clientTest).save()
+        await request(BASE_URL)
+          .get('/clients/domain/usic-unique.co.zw')
+          .set('Cookie', rootCookie)
+          .expect(404)
       })
 
       it('should not allow a non admin user to fetch a client by domain', async () => {
