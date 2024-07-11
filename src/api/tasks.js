@@ -3,7 +3,6 @@
 import logger from 'winston'
 
 import * as Channels from '../model/channels'
-import * as authorisation from './authorisation'
 import * as utils from '../utils'
 import {AutoRetryModelAPI} from '../model/autoRetry'
 import {TaskModelAPI} from '../model/tasks'
@@ -36,7 +35,7 @@ export async function getTasks(ctx) {
     // Get the specific tasks that user has access to
     if (!authorisedSuper) {
       const usersWithSameRoles = await UserModelAPI.find({groups: {$in: ctx.authenticated.groups}}, {email: 1}).exec()
-      filters.user = {user: {$in: usersWithSameRoles}}
+      filters.user = {$in: usersWithSameRoles.map(user => user.email)}
     }
 
     // parse date to get it into the correct format for querying
@@ -52,6 +51,7 @@ export async function getTasks(ctx) {
       .skip(filterSkip)
       .limit(parseInt(filterLimit, 10))
       .sort({created: -1})
+    ctx.status = 200
   } catch (err) {
     utils.logAndSetResponse(
       ctx,
@@ -315,17 +315,6 @@ export async function getTask(ctx, taskId) {
  * Updates the details for a specific Task
  */
 export async function updateTask(ctx, taskId) {
-  // Must be admin
-  if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to updateTask denied.`,
-      'info'
-    )
-    return
-  }
-
   // Get the values to use
   taskId = unescape(taskId)
   const taskData = ctx.request.body
@@ -385,6 +374,7 @@ export async function updateTask(ctx, taskId) {
     logger.info(
       `User ${ctx.authenticated.email} updated task with id ${taskId}`
     )
+    ctx.status = 200
   } catch (err) {
     utils.logAndSetResponse(
       ctx,

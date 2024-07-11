@@ -5,10 +5,10 @@ import logger from 'winston'
 import semver from 'semver'
 
 import * as auditing from '../auditing'
-import * as authorisation from './authorisation'
 import * as utils from '../utils'
 import {ChannelModelAPI} from '../model/channels'
 import {MediatorModelAPI} from '../model/mediators'
+import { RoleModelAPI } from '../model/role'
 
 const mask = '**********'
 
@@ -59,21 +59,32 @@ function restoreMaskedPasswords(defs, maskedConfig, config) {
 }
 
 export async function getAllMediators(ctx) {
-  // Must be admin
-  if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to getAllMediators denied.`,
-      'info'
-    )
-    return
-  }
-
   try {
-    const mediator = await MediatorModelAPI.find().exec()
+    const authorised = await utils.checkUserPermission(ctx, 'getAllMediators', 'mediator-view-all')
+
+    const filters = {}
+
+    if (!authorised) {
+      const roles = await RoleModelAPI.find({name: {$in: ctx.authenticated.groups || []}})
+
+      const urns = roles.reduce((prev, curr) => prev.concat(curr.permissions['mediator-view-specified']), [])
+
+      if (!urns.length) {
+        return utils.logAndSetResponse(
+          ctx,
+          403,
+          `Could not fetch mediators via the API: User does not have the right permissions`,
+          'error'
+        )
+      }
+
+      filters.urn = {$in: urns}
+    }
+
+    const mediator = await MediatorModelAPI.find(filters).exec()
     maskPasswords(mediator.configDefs, mediator.config)
     ctx.body = mediator
+    ctx.status = 200
   } catch (err) {
     utils.logAndSetResponse(
       ctx,
@@ -85,20 +96,13 @@ export async function getAllMediators(ctx) {
 }
 
 export async function getMediator(ctx, mediatorURN) {
-  // Must be admin
-  if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to getMediator denied.`,
-      'info'
-    )
-    return
-  }
-
   const urn = unescape(mediatorURN)
 
   try {
+    const authorised = await utils.checkUserPermission(ctx, 'getMediator', 'mediator-view-all', 'mediator-view-specified', urn)
+
+    if (!authorised) return
+
     const result = await MediatorModelAPI.findOne({urn}).exec()
     if (result === null) {
       ctx.status = 404
