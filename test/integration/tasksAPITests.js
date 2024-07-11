@@ -368,6 +368,34 @@ describe('API Integration Tests', () => {
         res.body.length.should.be.eql(3)
       })
 
+      it('should fetch zero tasks for user without access to tasks', async () => {
+        const obj = {
+          filterPage: 0,
+          filterLimit: 10,
+          filters: {},
+          created: '2017/12/12'
+        }
+
+        let params = ''
+        for (const k in obj) {
+          let v = obj[k]
+          v = JSON.stringify(v)
+          if (params.length > 0) {
+            params += '&'
+          }
+          params += `${k}=${v}`
+        }
+
+        params = encodeURI(params)
+
+        const res = await request(BASE_URL)
+          .get(`/tasks?${params}`)
+          .set('Cookie', nonRootCookie)
+          .expect(200)
+
+        res.body.length.should.be.eql(0)
+      })
+
       it('should fetch all tasks that are currently Paused', async () => {
         const obj = {
           filterPage: 0,
@@ -496,6 +524,21 @@ describe('API Integration Tests', () => {
         task.should.have.property('status', 'Queued')
         task.transactions.should.have.length(3)
         task.should.have.property('remainingTransactions', 3)
+      })
+
+      it("should fail to add task that has batchsize 0", async () => {
+        const tids = [
+          '888888888888888888888888',
+          '999999999999999999999999',
+          '101010101010101010101010'
+        ]
+        const newTask = {tids, batchSize: 0}
+
+        await request(BASE_URL)
+          .post('/tasks')
+          .set('Cookie', rootCookie)
+          .send(newTask)
+          .expect(400)
       })
 
       it("should add a new task and update the transactions' autoRetry attempt number", async () => {
@@ -976,16 +1019,22 @@ describe('API Integration Tests', () => {
         task.transactions.should.have.length(3)
       })
 
-      it('should fail to update a specific task by ID when task contains channels user does not have access to', async () => {
-        const updates = {
+      it('should fail to remove a specific task by ID when it contains a channel user does not have access to', async () => {
+        const newTask = await new TaskModelAPI({
           status: 'Completed',
-          completed: '2014-06-18T13:30:00.929Z'
-        }
+          remainingTransactions: 0,
+          totalTransactions: 1,
+          transactions: [
+            {tid: transaction4._id, tstatus: 'Failed'},
+          ],
+          created: '2014-06-18T12:00:00.929Z',
+          completed: '12014-06-18T12:01:00.929Z',
+          user: 'root@openhim.org'
+        }).save()
 
         await request(BASE_URL)
-          .put('/tasks/aaa777777bbb66cc5d4444ee')
+          .put(`/tasks/${newTask._id}`)
           .set('Cookie', nonRootCookie1)
-          .send(updates)
           .expect(403)
       })
 
@@ -999,14 +1048,14 @@ describe('API Integration Tests', () => {
       it('should not allow a non admin user to update a task', async () => {
         const updates = {}
 
-        request(BASE_URL)
-          .put('/tasks/890aaS0b93ccccc30dddddd0')
+        await request(BASE_URL)
+          .put('/tasks/aaa777777bbb66cc5d4444ee')
           .set('Cookie', nonRootCookie)
           .send(updates)
           .expect(403)
 
-        request(BASE_URL)
-          .put('/tasks/890aaS0b93ccccc30dddddd0')
+        await request(BASE_URL)
+          .put('/tasks/aaa777777bbb66cc5d4444ee')
           .send(updates)
           .expect(401)
       })

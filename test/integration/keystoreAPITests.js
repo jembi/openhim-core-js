@@ -369,5 +369,31 @@ describe('API Integration Tests', () => {
 
       res.body.valid.should.be.exactly(false)
     })
+
+    it('Should set passphrase', async () => {
+      keystore.key = fs.readFileSync('test/resources/protected/test.key')
+      keystore.cert.data = fs.readFileSync('test/resources/protected/test.crt')
+      keystore.passphrase = undefined
+      await keystore.save()
+
+      await request(BASE_URL)
+        .post('/keystore/passphrase')
+        .set('Cookie', rootCookie)
+        .send({passphrase: 'Test'})
+        .expect(201)
+    })
+
+    it('Should fail to set passphrase - no permission', async () => {
+      keystore.key = fs.readFileSync('test/resources/protected/test.key')
+      keystore.cert.data = fs.readFileSync('test/resources/protected/test.crt')
+      keystore.passphrase = undefined
+      await keystore.save()
+
+      await request(BASE_URL)
+        .post('/keystore/passphrase')
+        .set('Cookie', nonRootCookie)
+        .send({passphrase: 'Test'})
+        .expect(403)
+    })
   })
 })

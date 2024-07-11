@@ -16,6 +16,7 @@ import {ClientModelAPI} from '../../src/model/clients'
 import {MediatorModelAPI} from '../../src/model/mediators'
 import {TransactionModelAPI} from '../../src/model/transactions'
 import {config} from '../../src/config'
+import { RoleModelAPI } from '../../src/model/role'
 
 describe('API Integration Tests', () => {
   const {SERVER_PORTS, BASE_URL} = constants
@@ -102,7 +103,8 @@ describe('API Integration Tests', () => {
     }
 
     let rootCookie = '',
-      nonRootCookie = ''
+      nonRootCookie = '',
+      nonRootCookie1 = ''
 
     before(async () => {
       await testUtils.setupTestUsers()
@@ -126,6 +128,11 @@ describe('API Integration Tests', () => {
         request,
         BASE_URL,
         testUtils.nonRootUser
+      )
+      nonRootCookie1 = await testUtils.authenticate(
+        request,
+        BASE_URL,
+        testUtils.nonRootUser1
       )
     })
 
@@ -152,6 +159,47 @@ describe('API Integration Tests', () => {
           .set('Cookie', nonRootCookie)
           .expect(403)
       })
+
+      it('should allow non root user to fetch specific mediators they are permitted to', async () => {
+        await new MediatorModelAPI(mediator1).save()
+        await new MediatorModelAPI(mediator2).save()
+
+        await RoleModelAPI.findOneAndUpdate({name: 'test'}, {
+          name: 'test',
+          permissions: {
+            "channel-view-all": false,
+            "channel-manage-all": true,
+            "client-view-all": true,
+            "client-manage-all": true,
+            "client-role-view-all": true,
+            "client-role-manage-all": true,
+            "transaction-view-all": true,
+            "transaction-view-body-all": true,
+            "transaction-rerun-all": false,
+            "user-view": true,
+            "user-role-view": true,
+            "audit-trail-view": true,
+            "audit-trail-manage": true,
+            "contact-list-view": true,
+            "contact-list-manage": true,
+            "mediator-view-specified": [mediator1.urn],
+            "mediator-manage-all": true,
+            "certificates-view": true,
+            "certificates-manage": true,
+            "logs-view": true,
+            "import-export": true,
+            "app-view-all": true,
+            "app-manage-all": true
+          }
+        }, {upsert: true})
+
+        const res = await request(BASE_URL)
+          .get('/mediators')
+          .set('Cookie', nonRootCookie1)
+          .expect(200)
+
+        res.body.length.should.be.eql(1)
+      })
     })
 
     describe('*getMediator()', () => {
@@ -175,6 +223,86 @@ describe('API Integration Tests', () => {
         await request(BASE_URL)
           .get(`/mediators/${mediator1.urn}`)
           .set('Cookie', nonRootCookie)
+          .expect(403)
+      })
+
+      it('should allow non root user to fetch specific mediators', async () => {
+        await new MediatorModelAPI(mediator1).save()
+        await new MediatorModelAPI(mediator2).save()
+
+        await RoleModelAPI.findOneAndUpdate({name: 'test'}, {
+          name: 'test',
+          permissions: {
+            "channel-view-all": false,
+            "channel-manage-all": true,
+            "client-view-all": true,
+            "client-manage-all": true,
+            "client-role-view-all": true,
+            "client-role-manage-all": true,
+            "transaction-view-all": true,
+            "transaction-view-body-all": true,
+            "transaction-rerun-all": false,
+            "user-view": true,
+            "user-role-view": true,
+            "audit-trail-view": true,
+            "audit-trail-manage": true,
+            "contact-list-view": true,
+            "contact-list-manage": true,
+            "mediator-view-specified": [mediator1.urn, mediator2.urn],
+            "mediator-manage-all": true,
+            "certificates-view": true,
+            "certificates-manage": true,
+            "logs-view": true,
+            "import-export": true,
+            "app-view-all": true,
+            "app-manage-all": true
+          }
+        }, {upsert: true})
+
+        const res = await request(BASE_URL)
+          .get(`/mediators/${mediator1.urn}`)
+          .set('Cookie', nonRootCookie1)
+          .expect(200)
+
+        res.body.urn.should.be.exactly(mediator1.urn)
+      })
+
+      it('should not allow non root user to get mediator they do not have permission to view', async () => {
+        await new MediatorModelAPI(mediator1).save()
+        await new MediatorModelAPI(mediator2).save()
+
+        await RoleModelAPI.findOneAndUpdate({name: 'test'}, {
+          name: 'test',
+          permissions: {
+            "channel-view-all": false,
+            "channel-manage-all": true,
+            "client-view-all": true,
+            "client-manage-all": true,
+            "client-role-view-all": true,
+            "client-role-manage-all": true,
+            "transaction-view-all": true,
+            "transaction-view-body-all": true,
+            "transaction-rerun-all": false,
+            "user-view": true,
+            "user-role-view": true,
+            "audit-trail-view": true,
+            "audit-trail-manage": true,
+            "contact-list-view": true,
+            "contact-list-manage": true,
+            "mediator-view-specified": [mediator2.urn],
+            "mediator-manage-all": true,
+            "certificates-view": true,
+            "certificates-manage": true,
+            "logs-view": true,
+            "import-export": true,
+            "app-view-all": true,
+            "app-manage-all": true
+          }
+        }, {upsert: true})
+
+        await request(BASE_URL)
+          .get(`/mediators/${mediator1.urn}`)
+          .set('Cookie', nonRootCookie1)
           .expect(403)
       })
     })
