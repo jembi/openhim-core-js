@@ -494,15 +494,13 @@ if (cluster.isMaster && !module.parent) {
                 return callback(res.error)
               }
               logger.info('Root user created.')
-              return callback()
+              return createDefaultRoles(callback)
             }
           )
         })
       }
 
-      await createDefaultRoles(callback)
-
-      return callback()
+      return createDefaultRoles(callback)
     })
 
   // Ensure that a default keystore always exists and is up to date
