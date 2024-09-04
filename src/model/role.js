@@ -1,5 +1,3 @@
-'use strict'
-
 import {Schema} from 'mongoose'
 import logger from 'winston'
 
