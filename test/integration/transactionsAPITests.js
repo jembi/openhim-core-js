@@ -965,7 +965,7 @@ describe('API Integration Tests', () => {
           name: 'group1',
           permissions: {
             "channel-view-all": false,
-            "channel-manage-all": true,
+            "channel-manage-all": false,
             "client-view-all": true,
             "channel-view-specified": [channel3._id],
             "client-manage-all": true,
@@ -1330,7 +1330,8 @@ describe('API Integration Tests', () => {
       it('should only allow admin users to remove transactions', async () => {
         const {_id: transactionId} = await new TransactionModel(
           Object.assign({}, transactionData, {
-            clientID: '222222222222222222222222'
+            clientID: '222222222222222222222222',
+            channelID: channel3._id
           })
         ).save()
 

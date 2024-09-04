@@ -15,6 +15,7 @@ import * as testUtils from '../utils'
 import {UserModelAPI, createUser, updateTokenUser} from '../../src/model/users'
 import {PassportModelAPI} from '../../src/model'
 import {config} from '../../src/config'
+import { RoleModelAPI } from '../../src/model/role'
 
 describe('API Integration Tests', () => {
   const {SERVER_PORTS, BASE_URL} = constants
@@ -343,7 +344,35 @@ describe('API Integration Tests', () => {
       })
 
       it('should not allow non admin user to fetch all users', async () => {
-        const user = testUtils.nonRootUser
+        const user = testUtils.nonRootUser1
+        await RoleModelAPI.findOneAndUpdate({name: 'test'}, {
+          name: 'test',
+          permissions: {
+            "channel-view-all": false,
+            "channel-manage-all": false,
+            "client-view-all": true,
+            "client-manage-all": true,
+            "client-role-view-all": true,
+            "client-role-manage-all": true,
+            "transaction-view-all": true,
+            "transaction-view-body-all": true,
+            "transaction-rerun-all": true,
+            "user-view": false,
+            "user-role-view": true,
+            "audit-trail-view": true,
+            "audit-trail-manage": true,
+            "contact-list-view": true,
+            "contact-list-manage": true,
+            "mediator-view-all": true,
+            "mediator-manage-all": true,
+            "certificates-view": true,
+            "certificates-manage": true,
+            "logs-view": true,
+            "import-export": true,
+            "app-view-all": true,
+            "app-manage-all": true
+          }
+        }, {upsert: true})
         const cookie = await testUtils.authenticate(request, BASE_URL, user)
 
         await request(BASE_URL).get('/users').set('Cookie', cookie).expect(403)
@@ -436,7 +465,7 @@ describe('API Integration Tests', () => {
       })
 
       it('should not allow a non admin user to find a user to email', async () => {
-        const authUser = testUtils.nonRootUser
+        const authUser = testUtils.nonRootUser1
         const cookie = await testUtils.authenticate(request, BASE_URL, authUser)
 
         await request(BASE_URL)
@@ -576,7 +605,7 @@ describe('API Integration Tests', () => {
       })
 
       it('should not allow non admin users to update a user', async () => {
-        const authUser = testUtils.nonRootUser
+        const authUser = testUtils.nonRootUser1
         const cookie = await testUtils.authenticate(request, BASE_URL, authUser)
 
         const updates = {}
@@ -594,7 +623,7 @@ describe('API Integration Tests', () => {
       })
 
       it('should always allow a user to update their own details', async () => {
-        const authUser = testUtils.nonRootUser
+        const authUser = testUtils.nonRootUser1
         const cookie = await testUtils.authenticate(request, BASE_URL, authUser)
 
         const updates = {
@@ -603,19 +632,19 @@ describe('API Integration Tests', () => {
         }
 
         await request(BASE_URL)
-          .put(`/users/${testUtils.nonRootUser.email}`)
+          .put(`/users/${testUtils.nonRootUser1.email}`)
           .set('Cookie', cookie)
           .send(updates)
           .expect(200)
 
         const user = await UserModelAPI.findOne({
-          email: testUtils.nonRootUser.email
+          email: testUtils.nonRootUser1.email
         })
         user.should.have.property('surname', 'Root-updated')
       })
 
       it('should NOT allow a non-admin user to update their groups', async () => {
-        const authUser = testUtils.nonRootUser
+        const authUser = testUtils.nonRootUser1
         const cookie = await testUtils.authenticate(request, BASE_URL, authUser)
 
         const updates = {
@@ -623,7 +652,7 @@ describe('API Integration Tests', () => {
           groups: ['admin']
         }
         await request(BASE_URL)
-          .put(`/users/${testUtils.nonRootUser.email}`)
+          .put(`/users/${testUtils.nonRootUser1.email}`)
           .set('Cookie', cookie)
           .send(updates)
           .expect(200)
@@ -969,6 +998,34 @@ describe('API Integration Tests', () => {
       })
 
       it('should not allow non admin user to fetch all users', async () => {
+        await RoleModelAPI.findOneAndUpdate({name: 'group1'}, {
+          name: 'group1',
+          permissions: {
+            "channel-view-all": false,
+            "channel-manage-all": false,
+            "client-view-all": true,
+            "client-manage-all": true,
+            "client-role-view-all": true,
+            "client-role-manage-all": true,
+            "transaction-view-all": true,
+            "transaction-view-body-all": true,
+            "transaction-rerun-all": true,
+            "user-view": false,
+            "user-role-view": true,
+            "audit-trail-view": true,
+            "audit-trail-manage": true,
+            "contact-list-view": true,
+            "contact-list-manage": true,
+            "mediator-view-all": true,
+            "mediator-manage-all": true,
+            "certificates-view": true,
+            "certificates-manage": true,
+            "logs-view": true,
+            "import-export": true,
+            "app-view-all": true,
+            "app-manage-all": true
+          }
+        }, {upsert: true})
         await request(BASE_URL)
           .get('/users')
           .set('auth-username', testUtils.nonRootUser.email)

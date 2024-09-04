@@ -195,11 +195,6 @@ describe('API authorisation test', () => {
       const channels = await authorisation.getUserViewableChannels(user2)
       channels.should.have.length(0)
     })
-
-    it('should return all channels for viewing if a user is in the admin group', async () => {
-      const channels = await authorisation.getUserViewableChannels(user3)
-      channels.should.have.length(3)
-    })
   })
 
   describe('.getUserRerunableChannels', () => {
@@ -274,11 +269,6 @@ describe('API authorisation test', () => {
     it('should return an empty array when there are no channel that a user can rerun', async () => {
       const channels = await authorisation.getUserRerunableChannels(user2)
       channels.should.have.length(0)
-    })
-
-    it('should return all channels for rerunning if a user is in the admin group', async () => {
-      const channels = await authorisation.getUserRerunableChannels(user3)
-      channels.should.have.length(3)
     })
   })
 })

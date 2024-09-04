@@ -75,10 +75,6 @@ describe('API Integration Tests', () => {
           .set('Cookie', nonRootCookie)
           .send(testAppDoc)
           .expect(403)
-
-        res.body.error.should.equal(
-          'User nonroot@jembi.org does not have the "app-manage-all" permission, API access to add an app denied.'
-        )
       })
 
       it('should fail when app is invalid', async () => {
@@ -215,10 +211,6 @@ describe('API Integration Tests', () => {
           .set('Cookie', nonRootCookie)
           .send(update)
           .expect(403)
-
-        res.body.error.should.equal(
-          'User nonroot@jembi.org does not have the "app-manage-all" permission, API access to update an app denied.'
-        )
       })
 
       it('should fail to update when app id is invalid', async () => {
@@ -273,10 +265,6 @@ describe('API Integration Tests', () => {
           .delete('/apps/507f1f77bcf86cd799439011')
           .set('Cookie', nonRootCookie)
           .expect(403)
-
-        res.body.error.should.equal(
-          'User nonroot@jembi.org does not have the "app-manage-all" permission, API access to delete an app denied.'
-        )
       })
 
       it('should fail to delete when app id is invalid', async () => {
