@@ -12,25 +12,16 @@ export function inGroup(group, user) {
  * of viewable channels for a user.
  */
 export function getUserViewableChannels(user) {
-  // if admin or manager find all channels
-  const superRoles = ['admin', 'manager']
-
-  if (superRoles.find(role => {
-    return inGroup(role, user)
-  })) {
-    return ChannelModelAPI.find({}).exec()
-  } else {
-    return RoleModelAPI.find({name: {$in: user.groups}}, {permissions: {"channel-view-all": 1, "channel-view-specified": 1}}).then(roles => {
-      if (roles.find(role => role.permissions['channel-view-all'])) {
-        return ChannelModelAPI.find({}).exec()
-      }
-      const specifiedChannels = roles.reduce((prev, curr) =>
-        prev.concat(curr.permissions['channel-view-specified']),
-        []
-      )
-      return ChannelModelAPI.find({_id: {$in: specifiedChannels}}).exec()
-    })
-  }
+  return RoleModelAPI.find({name: {$in: user.groups}}, {permissions: {"channel-view-all": 1, "channel-view-specified": 1}}).then(roles => {
+    if (roles.find(role => role.permissions['channel-view-all'])) {
+      return ChannelModelAPI.find({}).exec()
+    }
+    const specifiedChannels = roles.reduce((prev, curr) =>
+      prev.concat(curr.permissions['channel-view-specified']),
+      []
+    )
+    return ChannelModelAPI.find({_id: {$in: specifiedChannels}}).exec()
+  })
 }
 
 /**
@@ -38,22 +29,14 @@ export function getUserViewableChannels(user) {
  * of rerunnable channels for a user.
  */
 export function getUserRerunableChannels(user) {
-  // if admin or manager find all channels
-  const superRoles = ['admin', 'manager']
-  if (superRoles.find(role => {
-    return inGroup(role, user)
-  })) {
-    return ChannelModelAPI.find({}).exec()
-  } else {
-    return RoleModelAPI.find({name: {$in: user.groups}}, {permissions: {"transaction-rerun-all": 1, "transaction-rerun-specified": 1}}).then(roles => {
-      if (roles.find(role => role.permissions['transaction-rerun-all'])) {
-        return ChannelModelAPI.find({}).exec()
-      }
-      const specifiedChannels = roles.reduce((prev, curr) =>
-        prev.concat(curr.permissions['transaction-rerun-specified']),
-        []
-      )
-      return ChannelModelAPI.find({_id: {$in: specifiedChannels}}).exec()
-    })
-  }
+  return RoleModelAPI.find({name: {$in: user.groups}}, {permissions: {"transaction-rerun-all": 1, "transaction-rerun-specified": 1}}).then(roles => {
+    if (roles.find(role => role.permissions['transaction-rerun-all'])) {
+      return ChannelModelAPI.find({}).exec()
+    }
+    const specifiedChannels = roles.reduce((prev, curr) =>
+      prev.concat(curr.permissions['transaction-rerun-specified']),
+      []
+    )
+    return ChannelModelAPI.find({_id: {$in: specifiedChannels}}).exec()
+  })
 }

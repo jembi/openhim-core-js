@@ -418,16 +418,9 @@ const htmlMessageTemplate = (firstname, setPasswordLink) => `\
  * Adds a user
  */
 export async function addUser(ctx) {
-  // Test if the user is authorised
-  if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to addUser denied.`,
-      'info'
-    )
-    return
-  }
+  const authorised = await utils.checkUserPermission(ctx, 'addUser', 'user-manage')
+
+  if (!authorised) return
 
   const userData = ctx.request.body
   // Generate the new user token here
@@ -530,19 +523,13 @@ export async function addUser(ctx) {
 export async function getUser(ctx, email) {
   email = unescape(email)
 
+  const adminAccess = await utils.checkUserPermission(ctx, 'getUser', 'user-view')
+
   // Test if the user is authorised, allow a user to fetch their own details
   if (
-    !authorisation.inGroup('admin', ctx.authenticated) &&
+    !adminAccess &&
     ctx.authenticated.email !== email
-  ) {
-    utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to getUser denied.`,
-      'info'
-    )
-    return
-  }
+  ) return
 
   try {
     const result = await UserModelAPI.findOne({
@@ -553,6 +540,7 @@ export async function getUser(ctx, email) {
       ctx.status = 404
     } else {
       ctx.body = result
+      ctx.status = 200
     }
   } catch (e) {
     utils.logAndSetResponse(
@@ -568,18 +556,12 @@ export async function updateUser(ctx, email) {
   email = unescape(email)
 
   // Test if the user is authorised, allow a user to update their own details
+  const adminAccess = await utils.checkUserPermission(ctx, 'updateUser', 'user-manage')
+
   if (
-    !authorisation.inGroup('admin', ctx.authenticated) &&
+    !adminAccess &&
     ctx.authenticated.email !== email
-  ) {
-    utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to updateUser denied.`,
-      'info'
-    )
-    return
-  }
+  ) return
 
   let userDetails
 
@@ -620,7 +602,7 @@ export async function updateUser(ctx, email) {
   // Don't allow a non-admin user to change their groups & Update only if groups exist
   if (
     (ctx.authenticated.email === email &&
-      !authorisation.inGroup('admin', ctx.authenticated)) ||
+      !adminAccess) ||
     ctx.request.body.groups === undefined
   ) {
     delete userData.groups
@@ -665,6 +647,7 @@ export async function updateUser(ctx, email) {
 
     if (user) {
       ctx.body = 'Successfully updated user.'
+      ctx.status = 200
       logger.info(
         `User ${ctx.authenticated.email} updated user ${userData.email}`
       )
@@ -682,16 +665,9 @@ export async function updateUser(ctx, email) {
 }
 
 export async function removeUser(ctx, email) {
-  // Test if the user is authorised
-  if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to removeUser denied.`,
-      'info'
-    )
-    return
-  }
+  const authorised = await utils.checkUserPermission(ctx, 'removeUsers', 'user-manage')
+
+  if (!authorised) return
 
   email = unescape(email)
 
@@ -723,16 +699,9 @@ export async function removeUser(ctx, email) {
 }
 
 export async function getUsers(ctx) {
-  // Test if the user is authorised
-  if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to getUsers denied.`,
-      'info'
-    )
-    return
-  }
+  const authorised = await utils.checkUserPermission(ctx, 'getUsers', 'user-view')
+
+  if (!authorised) return
 
   try {
     ctx.body = await UserModelAPI.find()

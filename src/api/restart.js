@@ -19,16 +19,9 @@ config.tcpAdapter = config.get('tcpAdapter')
  * restart the server
  */
 export async function restart(ctx) {
-  // Test if the user is authorised
-  if (authorisation.inGroup('admin', ctx.authenticated) === false) {
-    utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to restart the server denied.`,
-      'info'
-    )
-    return
-  }
+  const authorised = await utils.checkUserPermission(ctx, 'restartService', 'service-manage')
+
+  if (!authorised) return
 
   try {
     const emailAddr = ctx.authenticated.email

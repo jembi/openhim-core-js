@@ -22,7 +22,6 @@ export async function getRoles(ctx) {
   }
 
   const authorised = roles.find(role =>
-    role.name.match(/admin|manager/) ||
     role.permissions['user-role-view']
   )
   if (!authorised) {
@@ -60,7 +59,6 @@ export async function getRole(ctx, name) {
   }
 
   const authorised = roles.find(role =>
-    role.name.match(/admin|manager/) ||
     role.permissions['user-role-view']
   )
   if (!authorised) {
@@ -95,15 +93,9 @@ export async function getRole(ctx, name) {
 }
 
 export async function addRole(ctx) {
-  // Test if the user is authorised
-  if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    return utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to addRole denied.`,
-      'info'
-    )
-  }
+  const authorised = await utils.checkUserPermission(ctx, 'addRole', 'user-role-manage')
+
+  if (!authorised) return
 
   const role = ctx.request.body
 
@@ -130,15 +122,9 @@ export async function addRole(ctx) {
 }
 
 export async function updateRole(ctx, name) {
-  // Test if the user is authorised
-  if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    return utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to updateRole denied.`,
-      'info'
-    )
-  }
+  const authorised = await utils.checkUserPermission(ctx, 'updateRole', 'user-role-manage')
+
+  if (!authorised) return
 
   const role = ctx.request.body
 
@@ -177,15 +163,9 @@ export async function updateRole(ctx, name) {
 }
 
 export async function deleteRole(ctx, name) {
-  // Test if the user is authorised
-  if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    return utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to updateRole denied.`,
-      'info'
-    )
-  }
+  const authorised = await utils.checkUserPermission(ctx, 'deleteRole', 'user-role-manage')
+
+  if (!authorised) return
 
   try {
     const roleExists = await RoleModelAPI.findOne({name}).exec()

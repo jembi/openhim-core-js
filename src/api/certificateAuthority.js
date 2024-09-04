@@ -3,7 +3,6 @@
 import logger from 'winston'
 import pem from 'pem'
 
-import * as authorisation from './authorisation'
 import * as utils from '../utils'
 import {KeystoreModelAPI} from '../model/keystore'
 import {promisify} from 'util'
@@ -12,17 +11,12 @@ const readCertificateInfo = promisify(pem.readCertificateInfo)
 const getFingerprint = promisify(pem.getFingerprint)
 
 export async function generateCert(ctx) {
-  // Must be admin
+  const authorised = await utils.checkUserPermission(ctx, 'generateCert', 'certificates-manage')
+
+  if (!authorised) return
+
   let result
-  if (authorisation.inGroup('admin', ctx.authenticated) === false) {
-    utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to getServerKey by id denied.`,
-      'info'
-    )
-    return
-  }
+
   const {
     request: {body: options}
   } = ctx
