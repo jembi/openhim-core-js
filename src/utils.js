@@ -245,7 +245,6 @@ export const checkUserPermission = async (ctx, operation, permission, permission
   }
 
   const authorised = roles.find(role =>
-    role.name.match(/admin|manager/) ||
     role.permissions[permission] ||
     (permissionSpecified && resource ? role.permissions[permissionSpecified]?.includes(resource) : false)
   )
