@@ -5,34 +5,8 @@ import logger from 'winston'
 import {AppModelAPI} from '../model/apps'
 import { RoleModelAPI } from '../model/role'
 import {DEFAULT_IMPORT_MAP_PATHS} from '../constants'
+import * as utils from '../utils'
 
-/*
-  Checks admin permission for create, update and delete operations.
-  Throws error if user does not have admin access
-*/
-const checkUserPermission = async (ctx, permission, operation) => {
-  const roleNames = ctx.authenticated?.groups || []
-  const roles = await RoleModelAPI.find({name: {$in: roleNames}}).catch(() => [])
-
-  if (!roleNames.length) {
-    ctx.statusCode = 403
-    throw Error(
-      `User ${ctx.authenticated.email} does not have an access role specified.`
-    )
-  }
-
-  const authorised = roles.find(role =>
-    role.name.match(/admin|manager/) ||
-    role.permissions[permission]
-  )
-
-  if (!authorised) {
-    ctx.statusCode = 403
-    throw Error(
-      `User ${ctx.authenticated.email} does not have the "${permission}" permission, API access to ${operation} an app denied.`
-    )
-  }
-}
 
 /*
   Returns app if it exists, if not it throws an error
@@ -69,7 +43,9 @@ const validateId = (ctx, id) => {
 
 export async function addApp(ctx) {
   try {
-    await checkUserPermission(ctx, 'app-manage-all', 'add')
+    const authorised = await utils.checkUserPermission(ctx, 'addApp', 'app-manage-all')
+
+    if (!authorised) return
 
     const app = new AppModelAPI(ctx.request.body)
 
@@ -92,7 +68,9 @@ export async function addApp(ctx) {
 
 export async function updateApp(ctx, appId) {
   try {
-    await checkUserPermission(ctx, 'app-manage-all', 'update')
+    const authorised = await utils.checkUserPermission(ctx, 'updateApp', 'app-manage-all')
+
+    if (!authorised) return
 
     validateId(ctx, appId)
 
@@ -131,7 +109,9 @@ export async function getApps(ctx) {
 
 export async function getApp(ctx, appId) {
   try {
-    await checkUserPermission(ctx, 'app-view-all', 'get')
+    const authorised = await utils.checkUserPermission(ctx, 'getApp', 'app-view-all', 'app-view-specified', appId)
+
+    if (!authorised) return
 
     validateId(ctx, appId)
 
@@ -148,7 +128,9 @@ export async function getApp(ctx, appId) {
 
 export async function deleteApp(ctx, appId) {
   try {
-    await checkUserPermission(ctx, 'app-manage-all', 'delete')
+    const authorised = await utils.checkUserPermission(ctx, 'deleteApp', 'app-manage-all')
+
+    if (!authorised) return
 
     validateId(ctx, appId)
 
