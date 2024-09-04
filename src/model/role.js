@@ -124,7 +124,35 @@ const RoleSchema = new Schema({
       type: Boolean,
       default: false
     },
-    "app-manage-specified": [String]
+    "app-manage-specified": [String],
+    "auth-type-view-all": {
+      type: Boolean,
+      default: false
+    },
+    "events-view-all": {
+      type: Boolean,
+      default: false
+    },
+    "metadata-view-all": {
+      type: Boolean,
+      default: false
+    },
+    "metadata-manage-all": {
+      type: Boolean,
+      default: false
+    },
+    "service-manage": {
+      type: Boolean,
+      default: false
+    },
+    "visualizer-manage": {
+      type: Boolean,
+      default: false
+    },
+    "visualizer-view": {
+      type: Boolean,
+      default: false
+    }
   }
 })
 
@@ -159,7 +187,14 @@ const roles = {
       "logs-view": true,
       "import-export": true,
       "app-view-all": true,
-      "app-manage-all": true
+      "app-manage-all": true,
+      "auth-type-view-all": true,
+      "events-view-all": true,
+      "metadata-view-all": true,
+      "metadata-manage-all": true,
+      "service-manage": true,
+      "visualizer-manage": true,
+      "visualizer-view": true
     }
   },
   manager: {
@@ -187,7 +222,9 @@ const roles = {
       "logs-view": true,
       "import-export": true,
       "app-view-all": true,
-      "app-manage-all": true
+      "app-manage-all": true,
+      "visualizer-manage": true,
+      "visualizer-view": true
     }
   },
   operator: {
