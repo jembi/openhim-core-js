@@ -894,7 +894,7 @@ describe('API Integration Tests', () => {
           name: 'test',
           permissions: {
             "channel-view-all": false,
-            "channel-manage-all": true,
+            "channel-manage-all": false,
             "client-view-all": true,
             "channel-view-specified": [channel._id],
             "client-manage-all": true,
