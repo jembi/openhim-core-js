@@ -247,7 +247,7 @@ export const checkUserPermission = async (ctx, operation, permission, permission
   const authorised = roles.find(role =>
     role.permissions[permission] ||
     role.permissions[permission.replace('view', 'manage')] ||
-    (permissionSpecified && resource ? role.permissions[permissionSpecified]?.includes(resource) : false)
+    (permissionSpecified && resource ? role.permissions[permissionSpecified]?.includes(resource) || role.permissions[permissionSpecified.replace('view', 'manage')]?.includes(resource) : false)
   )
 
   if (!authorised) {
