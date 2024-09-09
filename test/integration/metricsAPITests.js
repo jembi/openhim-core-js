@@ -166,7 +166,7 @@ describe('API Metrics Tests', () =>
           name: 'test',
           permissions: {
             "channel-view-all": false,
-            "channel-manage-all": true,
+            "channel-manage-all": false,
             "client-view-all": true,
             "channel-view-specified": [channel1Doc._id],
             "client-manage-all": true,
