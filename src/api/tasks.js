@@ -95,7 +95,7 @@ export async function addTask(ctx) {
     const channelsToRerun = await TransactionModelAPI.distinct('channelID', {_id: {$in: transactions.tids}}).exec()
 
     if (!authorisedSuper) {
-      const userRoles = await RoleModelAPI.find({name: {$in: ctx.authenticated.groups}}, {permissions: {'transaction-rerun-specified': 1}}).exec()
+      const userRoles = await RoleModelAPI.find({name: {$in: ctx.authenticated.groups}}).exec()
       const rerunChannelsAllowed = userRoles.reduce((prev, curr) => prev.concat(curr.permissions['transaction-rerun-specified']), [])
 
       if (!rerunChannelsAllowed.length) {
@@ -237,7 +237,7 @@ export async function getTask(ctx, taskId) {
     }
 
     if (!authorisedSuper) {
-      const userRoles = await RoleModelAPI.find({name: {$in: ctx.authenticated.groups}}, {permissions: {'transaction-rerun-specified': 1}}).exec()
+      const userRoles = await RoleModelAPI.find({name: {$in: ctx.authenticated.groups}}).exec()
       const rerunChannelsAllowed = userRoles.reduce((prev, curr) => prev.concat(curr.permissions['transaction-rerun-specified']), [])
 
       if (!rerunChannelsAllowed.length) {
@@ -340,7 +340,7 @@ export async function updateTask(ctx, taskId) {
     }
 
     if (!authorisedSuper) {
-      const userRoles = await RoleModelAPI.find({name: {$in: ctx.authenticated.groups}}, {permissions: {'transaction-rerun-specified': 1}}).exec()
+      const userRoles = await RoleModelAPI.find({name: {$in: ctx.authenticated.groups}}).exec()
       const rerunChannelsAllowed = userRoles.reduce((prev, curr) => prev.concat(curr.permissions['transaction-rerun-specified']), [])
 
       if (!rerunChannelsAllowed.length) {
@@ -408,7 +408,7 @@ export async function removeTask(ctx, taskId) {
     }
 
     if (!authorisedSuper) {
-      const userRoles = await RoleModelAPI.find({name: {$in: ctx.authenticated.groups}}, {permissions: {'transaction-rerun-specified': 1}}).exec()
+      const userRoles = await RoleModelAPI.find({name: {$in: ctx.authenticated.groups}}).exec()
       const rerunChannelsAllowed = userRoles.reduce((prev, curr) => prev.concat(curr.permissions['transaction-rerun-specified']), [])
 
       if (!rerunChannelsAllowed.length) {

@@ -8,7 +8,7 @@ export function inGroup(group, user) {
 }
 
 const getUserChannelsByPermissions = (user, allPermission, specifiedPermission) =>
-  RoleModelAPI.find({name: {$in: user.groups}}, {permissions: {[allPermission]: 1, [specifiedPermission]: 1}}).then(roles => {
+  RoleModelAPI.find({name: {$in: user.groups}}).then(roles => {
     if (roles.find(role => role.permissions[allPermission] || role.permissions[allPermission.replace('view', 'manage')])) {
       return ChannelModelAPI.find({}).exec()
     }
