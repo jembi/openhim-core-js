@@ -8,6 +8,7 @@ import session from 'koa-session'
 import compose from 'koa-compose'
 
 import * as about from './api/about'
+import * as apps from './api/apps'
 import * as audits from './api/audits'
 import * as authentication from './api/authentication'
 import * as certificateAuthority from './api/certificateAuthority'
@@ -40,11 +41,11 @@ export function setupApp(done) {
 
   // Configure Sessions Middleware
   app.keys = [config.api.sessionKey]
-  
+
   if (config.api.trustProxy) {
     app.proxy = true
   }
-  
+
   app.use(
     session(
       {
@@ -82,6 +83,9 @@ export function setupApp(done) {
   // Check of logged in user
   app.use(route.get('/me', users.me))
 
+  // ImportMaps endpoints
+  app.use(route.get('/importmaps', apps.getTransformedImportMap))
+  app.use(route.get('/apps', apps.getApps))
   // Expose the authenticate route before the auth middleware so that it is publicly accessible
   // Local authentication
   app.use(
@@ -107,6 +111,20 @@ export function setupApp(done) {
   // @deprecated: Token authentication
   app.use(route.get('/authenticate/:username', users.authenticateToken))
 
+  // Publicly exposed Prometheus metrics endpoint
+  // only invoked if the accept header is correct else passes to the next middleware
+  app.use(async (ctx, next) => {
+    if (
+      ctx.request.headers['accept']?.includes('application/openmetrics-text') &&
+      ctx.request.path === '/metrics' &&
+      ctx.request.method === 'GET'
+    ) {
+      metrics.getPrometheusMetrics(ctx)
+    } else {
+      await next()
+    }
+  })
+
   // Authenticate the API request
   app.use(authentication.authenticate)
 
@@ -122,6 +140,11 @@ export function setupApp(done) {
   app.use(route.get('/logout', users.logout))
 
   // Define the api routes
+  app.use(route.get('/apps/:appId', apps.getApp))
+  app.use(route.put('/apps/:appId', apps.updateApp))
+  app.use(route.post('/apps', apps.addApp))
+  app.use(route.delete('/apps/:appId', apps.deleteApp))
+
   app.use(route.get('/users', users.getUsers))
   app.use(route.get('/users/:email', users.getUser))
   app.use(route.post('/users', users.addUser))

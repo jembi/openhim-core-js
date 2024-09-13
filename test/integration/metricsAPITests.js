@@ -195,4 +195,21 @@ describe('API Metrics Tests', () =>
           .expect(400)
       })
     })
+
+    describe('*getPrometheusMetrics()', () => {
+      it('should PUBLICLY fetch prometheus metrics and return custom metric types defined', async () => {
+        const res = await request(BASE_URL)
+          .get('/metrics')
+          .set('Accept', 'application/openmetrics-text')
+          .expect(200)
+
+        should.exist(res.text)
+        res.text
+          .includes('# TYPE openhim_transactions_total counter')
+          .should.be.true('should contain openhim_transactions_total metric')
+        res.text
+          .includes('# TYPE openhim_request_duration histogram')
+          .should.be.true('should contain openhim_request_duration metric')
+      })
+    })
   }))

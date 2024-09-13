@@ -24,7 +24,7 @@ describe('API Integration Tests', () => {
       passwordHash:
         '$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy',
       certFingerprint:
-        '23:37:6A:5E:A9:13:A4:8C:66:C5:BB:9F:0E:0D:68:9B:99:80:10:FC'
+        '9F:93:D1:96:A2:32:8F:EA:DC:A8:64:AB:CC:E1:13:C2:DA:E0:F4:49'
     }
 
     let rootCookie = '',
@@ -76,7 +76,7 @@ describe('API Integration Tests', () => {
           '$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy'
         )
         client.certFingerprint.should.equal(
-          '23:37:6A:5E:A9:13:A4:8C:66:C5:BB:9F:0E:0D:68:9B:99:80:10:FC'
+          '9F:93:D1:96:A2:32:8F:EA:DC:A8:64:AB:CC:E1:13:C2:DA:E0:F4:49'
         )
       })
 
@@ -159,6 +159,46 @@ describe('API Integration Tests', () => {
           .set('Cookie', rootCookie)
           .send(clientWithConflict)
           .expect(400)
+      })
+    })
+
+    describe('Getting a client ID by the named "clientID" field on the document in the database', () => {
+      const clientTest = {
+        clientID: 'testClient',
+        clientDomain: 'www.zedmusic-unique.co.zw',
+        name: 'OpenHIE NodeJs',
+        roles: ['test_role_PoC', 'monitoring'],
+        passwordHash:
+          '$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy'
+      }
+
+      let clientId
+
+      beforeEach(async () => {
+        const client = await new ClientModelAPI(clientTest).save()
+        clientId = clientTest.clientID
+      })
+
+      it('should return the client ID if it exists', async () => {
+        const client = await new ClientModelAPI(testAppDoc).save()
+        const res = await request(BASE_URL)
+          .get(`/clients/${clientId}?byNamedClientID=true`)
+          .set('Cookie', rootCookie)
+          .expect(200)
+      })
+
+      it('should return 404 if the client ID does not exist', async () => {
+        await request(BASE_URL)
+          .get('/clients/nonExistentClientID?byNamedClientID=true')
+          .set('Cookie', rootCookie)
+          .expect(404)
+      })
+
+      it('should fail when sending clientID with "byNamedClientID" param set to false', async () => {
+        await request(BASE_URL)
+          .get(`/clients/${clientId}?byNamedClientID=false`)
+          .set('Cookie', rootCookie)
+          .expect(500)
       })
     })
 

@@ -859,7 +859,8 @@ describe('API Integration Tests', () => {
             convertedPatch._id = convertedPatch._id.toString()
             convertedPatch.ref = convertedPatch.ref.toString()
             convertedPatch.date = convertedPatch.date.toISOString()
-            convertedPatch.updatedBy._id = convertedPatch.updatedBy._id.toString()
+            convertedPatch.updatedBy._id =
+              convertedPatch.updatedBy._id.toString()
             return convertedPatch
           })
       })

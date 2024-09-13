@@ -52,7 +52,7 @@ passport.loadStrategies = function () {
     openid: {
       strategy: passportOpenid.Strategy,
       options: {
-        issuer: openidConfig.url,
+        issuer: openidConfig.issuerUrl || openidConfig.url,
         authorizationURL: `${openidConfig.url}/protocol/openid-connect/auth`,
         tokenURL: `${openidConfig.url}/protocol/openid-connect/token`,
         userInfoURL: `${openidConfig.url}/protocol/openid-connect/userinfo`,

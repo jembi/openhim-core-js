@@ -84,6 +84,8 @@ The following config option are provided by the OpenHIM. All of these options ha
     "openid": {
       // Openid connect provider realm url link
       "url": "http://localhost:9088/realms/platform-realm",
+      // (Optional) Openid connect provider issuer url incase this is different from the api url e.g. if you are using a proxy
+      "issuerUrl": "http://localhost:9088/realms/platform-realm",
       // Callback URL used by openid connect provider (should be the same callback URL specified in realm)
       "callbackUrl": "http://localhost:9000",
       // CLient ID specified in the realm
@@ -135,15 +137,18 @@ The following config option are provided by the OpenHIM. All of these options ha
     "enableJWTAuthentication": false,
     // JWT specific config
     "jwt": {
-      // The secret or public key used by the encryption algorithm in signing the token
+      // The URL to the JSON Web Key Set (JWKS) endpoint. Either this or the secretOrPublicKey must be provided.
+      "jwksUri": "",
+      // The secret or public key used by the encryption algorithm in signing the token. The value is either
+      // The secret as a string or a path to a public key. Either this or the jwksUri must be provided.
       "secretOrPublicKey": "",
-    // The algorithm used to sign the token. i.e. HS256, RS256, ES256, PS256, etc
+      // (required) The algorithm used to sign the token. i.e. HS256, RS256, ES256, PS256, etc
       "algorithms": "",
-    // The JWT Audience (aud) is a registered claim field in the payload.
-    // It identifies the intended recipients of the JWT. These values are usually case sensitive strings.
+      // (optional) The JWT Audience (aud) is a registered claim field in the payload.
+      // It identifies the intended recipients of the JWT. These values are usually case sensitive strings.
       "audience": "",
-    // The JWT Issuer (iss) is a registered claim field in the payload.
-    // It identifiers the principal JWT issuer. This value is a case sensitive string.
+      // (required) The JWT Issuer (iss) is a registered claim field in the payload.
+      // It identifiers the principal JWT issuer. This value is a case sensitive string.
       "issuer": ""
     }
   },

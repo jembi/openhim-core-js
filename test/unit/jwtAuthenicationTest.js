@@ -10,6 +10,7 @@ import * as configIndex from '../../src/config'
 import * as client from '../../src/model/clients'
 import * as jwtAuthentication from '../../src/middleware/jwtAuthentication'
 import * as cache from '../../src/jwtSecretOrPublicKeyCache'
+import * as jwksCache from '../../src/jwksCache'
 
 describe('JWT Authorisation Test', () => {
   describe('koa middleware', () => {
@@ -74,6 +75,108 @@ describe('JWT Authorisation Test', () => {
       should(ctx.authenticated).be.ok()
       should(ctx.authenticationType).eql('token')
       should(ctx.header['X-OpenHIM-ClientID']).eql('test')
+    })
+
+    it('should succeed when JWT is decoded and client is returned when using JWKS to fetch key', async () => {
+      const ctx = {
+        header: {},
+        request: {
+          header: {
+            authorization:
+              'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0IiwiYXVkIjpbInRlc3RBdWRpZW5jZSJdLCJpc3MiOiJ0ZXN0SXNzdWVyIn0._bUjvzaXWkyYlxV81lVU1dsbZpH_jlW7sda7zsnORwg'
+          }
+        }
+      }
+      const next = sandbox.spy()
+
+      const cacheStub = sandbox.stub(cache, 'getSecretOrPublicKey').returns('')
+
+      const jwksCacheStub = sandbox.stub(jwksCache, 'getKey').resolves({
+        kid: 'test',
+        publicKey: 'test'
+      })
+
+      const loggerStub = sandbox.stub(logger, 'info')
+
+      const mockJwtConfig = {
+        algorithms: 'HS256',
+        audience: 'testAudience',
+        issuer: 'testIssuer'
+      }
+      const configStub = sandbox
+        .stub(configIndex.config, 'get')
+        .callsFake(arg => {
+          if (arg === 'authentication:jwt') {
+            return mockJwtConfig
+          } else if (arg === 'authentication:jwt:jwksUri') {
+            return 'testJWKSUri'
+          }
+        })
+
+      const clientStub = sandbox
+        .stub(client.ClientModel, 'findOne')
+        .resolves({name: 'Test', clientID: 'test'})
+
+      await jwtAuthentication.koaMiddleware(ctx, next)
+
+      next.callCount.should.eql(1, 'next middleware should be called')
+      cacheStub.callCount.should.eql(1, 'cache should be called')
+      jwksCacheStub.callCount.should.eql(1, 'jwksCache should be called')
+      clientStub.callCount.should.eql(1, 'find client should be called')
+      configStub.callCount.should.eql(2, 'get config should be called twice')
+      loggerStub.callCount.should.eql(2, 'logger should be called twice')
+      should(ctx.authenticated).be.ok()
+      should(ctx.authenticationType).eql('token')
+      should(ctx.header['X-OpenHIM-ClientID']).eql('test')
+    })
+
+    it('should fail when JWKS Cache doesnt find a key', async () => {
+      const ctx = {
+        header: {},
+        request: {
+          header: {
+            authorization:
+              'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0IiwiYXVkIjpbInRlc3RBdWRpZW5jZSJdLCJpc3MiOiJ0ZXN0SXNzdWVyIn0._bUjvzaXWkyYlxV81lVU1dsbZpH_jlW7sda7zsnORwg'
+          }
+        }
+      }
+      const next = sandbox.spy()
+
+      const cacheStub = sandbox.stub(cache, 'getSecretOrPublicKey').returns('')
+
+      const jwksCacheStub = sandbox
+        .stub(jwksCache, 'getKey')
+        .resolves(undefined)
+
+      const loggerStub = sandbox
+        .stub(logger, 'error')
+        .withArgs(
+          'JWT could not be verified: error in secret or public key callback: Public key not found in JWKS cache'
+        )
+
+      const mockJwtConfig = {
+        algorithms: 'HS256',
+        audience: 'testAudience',
+        issuer: 'testIssuer'
+      }
+      const configStub = sandbox
+        .stub(configIndex.config, 'get')
+        .callsFake(arg => {
+          if (arg === 'authentication:jwt') {
+            return mockJwtConfig
+          } else if (arg === 'authentication:jwt:jwksUri') {
+            return 'testJWKSUri'
+          }
+        })
+
+      await jwtAuthentication.koaMiddleware(ctx, next)
+
+      jwksCacheStub.callCount.should.eql(1, 'jwksCache should be called')
+      next.callCount.should.eql(1, 'next middleware should be called')
+      cacheStub.callCount.should.eql(1, 'cache should be called')
+      configStub.callCount.should.eql(2, 'get config should be called twice')
+      loggerStub.callCount.should.eql(1, 'logger should be called')
+      should(ctx.authenticated).be.undefined()
     })
 
     // The jsonwebtoken package is forgiving as it won't fail when unsupported Algorithms are supplied.

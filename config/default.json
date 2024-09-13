@@ -81,6 +81,7 @@
     "enableCustomTokenAuthentication": false,
     "enableJWTAuthentication": false,
     "jwt": {
+      "jwksUri": "",
       "secretOrPublicKey": "",
       "algorithms": "",
       "audience": "",
@@ -164,5 +165,6 @@
     "watchFSForCert": false,
     "certPath": "/etc/letsencrypt/live/openhim.jembi.org/cert.pem",
     "keyPath": "/etc/letsencrypt/live/openhim.jembi.org/privkey.pem"
-  }
+  },
+  "openhimConsoleBaseUrl": "http://localhost:9000"
 }

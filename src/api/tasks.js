@@ -216,13 +216,13 @@ export async function addTask(ctx) {
       )
 
       // Clear the transactions out of the auto retry queue, in case they're in there
-      return AutoRetryModelAPI
-        .deleteMany({transactionID: {$in: transactions.tids}})
-        .exec(err => {
-          if (err) {
-            return logger.error(err)
-          }
-        })
+      return AutoRetryModelAPI.deleteMany({
+        transactionID: {$in: transactions.tids}
+      }).exec(err => {
+        if (err) {
+          return logger.error(err)
+        }
+      })
     } else {
       // rerun task creation not allowed
       utils.logAndSetResponse(

@@ -8,7 +8,7 @@ const TaskSchema = new Schema({
   status: {
     type: String,
     required: true,
-    enum: ['Queued', 'Processing', 'Paused', 'Cancelled', 'Completed'],
+    enum: ['Queued', 'Processing', 'Paused', 'Cancelled', 'Completed', "Pending Async"],
     default: 'Queued',
     index: true
   },

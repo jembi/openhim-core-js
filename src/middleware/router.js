@@ -635,7 +635,7 @@ function sendHttpRequest(ctx, route, options) {
       routeReq.destroy(new Error(`Request took longer than ${timeout}ms`))
     })
 
-    if (ctx.request.method === 'POST' || ctx.request.method === 'PUT') {
+    if (['POST', 'PUT', 'PATCH'].includes(ctx.request.method)) {
       if (ctx.body != null) {
         // TODO : Should probally add checks to see if the body is a buffer or string
         routeReq.write(ctx.body)
@@ -666,6 +666,7 @@ function sendKafkaRequest(ctx, route) {
         const message = {
           method: ctx.request.method,
           path: ctx.request.url,
+          pattern: channel.urlPattern,
           headers: ctx.request.headers,
           requestBody: ctx.reqBody ?? '',
           responseBody: ctx.resBody ?? ''
@@ -680,7 +681,8 @@ function sendKafkaRequest(ctx, route) {
             resolve({
               status: 200,
               body: JSON.stringify(res),
-              timestamp: +new Date()
+              timestamp: +new Date(),
+              headers: {}
             })
           })
       })

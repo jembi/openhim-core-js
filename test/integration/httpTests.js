@@ -223,13 +223,34 @@ describe('HTTP tests', () => {
         }
       })
 
+      const asyncChannel = new ChannelModelAPI({
+        name: 'TEST DATA - Mock async endpoint async',
+        urlPattern: '/async',
+        allow: ['PoC'],
+        methods: ['POST', 'PUT'],
+        routes: [
+          {
+            name: 'test route async',
+            host: 'localhost',
+            port: constants.MEDIATOR_PORT,
+            primary: true
+          }
+        ],
+        isAsynchronousProcess: true,
+        updatedBy: {
+          id: new ObjectId(),
+          name: 'Test'
+        }
+      })
+
       await Promise.all([
         channel1.save(),
         channel2.save(),
         channel3.save(),
         channel4.save(),
         channel5.save(),
-        channel6.save()
+        channel6.save(),
+        asyncChannel.save()
       ])
 
       const testAppDoc = {
@@ -344,6 +365,15 @@ describe('HTTP tests', () => {
         .expect(201)
         .expect('content-encoding', 'gzip')
         .expect(testDoc)
+    })
+
+    it('should return 202 CREATED on POST Request for Channel Set as Async Process - async', async () => {
+      await promisify(server.start)({httpPort: SERVER_PORTS.httpPort})
+      await request(constants.HTTP_BASE_URL)
+        .post('/async')
+        .send(testDoc)
+        .auth('testApp', 'password')
+        .expect(202)
     })
   })
 

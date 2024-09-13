@@ -17,9 +17,16 @@ services:
     image: jembi/openhim-core:latest
     restart: unless-stopped
     environment:
-      mongo_url: "mongodb://mongo-db/openhim-development"
-      mongo_atnaUrl: "mongodb://mongo-db/openhim-development"
-      NODE_ENV: "development"
+      - mongo_url="mongodb://mongo-db/openhim-development"
+      - mongo_atnaUrl="mongodb://mongo-db/openhim-development"
+      - NODE_ENV="development"
+      - api_authenticationTypes=["token", "basic", "openid", "local"]
+      - authentication_enableCustomTokenAuthentication=true
+      - authentication_enableJWTAuthentication=true
+      - authentication_jwt_secretOrPublicKey=secret
+      - authentication_jwt_algorithms=HS256
+      - authentication_jwt_issuer=openhim
+      - openhimConsoleBaseUrl="http://localhost:9000"
     ports:
       - "8080:8080"
       - "5000:5000"
