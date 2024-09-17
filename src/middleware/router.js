@@ -61,6 +61,15 @@ function setKoaResponse(ctx, response) {
     }
   }
 
+  // Save response details of the primary route
+  ctx.resDetails = {
+    status: response.status,
+    headers: response.headers,
+    body: Buffer.isBuffer(response.body)
+      ? response.body.toString()
+      : response.body
+  }
+
   for (const key in response.headers) {
     const value = response.headers[key]
     switch (key.toLowerCase()) {
@@ -294,6 +303,10 @@ function sendRequestToRoutes(ctx, routes, next) {
 
       if (route.primary) {
         ctx.primaryRoute = route
+
+        // Save request body of the primary route
+        ctx.reqBody = Buffer.isBuffer(ctx.body) ? ctx.body.toString() : ctx.body
+
         promise = sendRequest(ctx, route, options)
           .then(response => {
             logger.info(`executing primary route : ${route.name}`)
@@ -658,7 +671,8 @@ function sendKafkaRequest(ctx, route) {
           path: ctx.request.url,
           pattern: channel.urlPattern,
           headers: ctx.request.headers,
-          body: ctx.body && ctx.body.toString()
+          body: ctx.reqBody ?? '',
+          response: ctx.resDetails ?? {}
         }
 
         return producer
