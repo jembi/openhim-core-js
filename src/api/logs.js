@@ -53,7 +53,7 @@ export async function getLogs(ctx) {
   } catch (err) {
     utils.logAndSetResponse(
       ctx,
-      400,
+      500,
       `Could not get logs via the API: ${err}`,
       'error'
     )
