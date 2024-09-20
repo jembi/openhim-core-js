@@ -491,7 +491,7 @@ export async function setConfig(ctx, urn) {
   const config = ctx.request.body
 
   try {
-    const authorised = await utils.checkUserPermission(ctx, 'setConfig', 'mediator-manage-all', 'mediator-manager-specified', urn)
+    const authorised = await utils.checkUserPermission(ctx, 'setConfig', 'mediator-manage-all', 'mediator-manage-specified', urn)
 
     if (!authorised) return
 
