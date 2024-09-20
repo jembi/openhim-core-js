@@ -543,7 +543,7 @@ export async function loadDefaultChannels(ctx, urn) {
   urn = unescape(urn)
 
   try {
-    const authorised = await utils.checkUserPermission(ctx, 'loadDefaultChannel', 'mediator-manage-all', 'mediator-manager-specified', urn)
+    const authorised = await utils.checkUserPermission(ctx, 'loadDefaultChannel', 'mediator-manage-all', 'mediator-manage-specified', urn)
 
     if (!authorised) return
 
