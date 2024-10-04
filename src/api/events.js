@@ -5,7 +5,7 @@ import * as utils from '../utils'
 import {EventModelAPI} from '../model/events'
 
 export async function getLatestEvents(ctx, receivedTime) {
-  const authorised = await utils.checkUserPermission(ctx, 'getEvents', 'events-view-all')
+  const authorised = await utils.checkUserPermission(ctx, 'getEvents', 'visualizer-view')
 
   if (!authorised) return
 

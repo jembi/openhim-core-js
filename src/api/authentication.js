@@ -201,7 +201,7 @@ export async function authenticate(ctx, next) {
 }
 
 export async function getEnabledAuthenticationTypes(ctx, next) {
-  const authorised = await checkUserPermission(ctx, 'getAuthType', 'auth-type-view-all')
+  const authorised = await checkUserPermission(ctx, 'getAuthType', 'client-manage-all')
 
   if (!authorised) return
 

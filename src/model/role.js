@@ -123,26 +123,6 @@ const RoleSchema = new Schema({
       default: false
     },
     "app-manage-specified": [String],
-    "auth-type-view-all": {
-      type: Boolean,
-      default: false
-    },
-    "events-view-all": {
-      type: Boolean,
-      default: false
-    },
-    "metadata-view-all": {
-      type: Boolean,
-      default: false
-    },
-    "metadata-manage-all": {
-      type: Boolean,
-      default: false
-    },
-    "service-manage": {
-      type: Boolean,
-      default: false
-    },
     "visualizer-manage": {
       type: Boolean,
       default: false
@@ -186,11 +166,6 @@ const roles = {
       "import-export": true,
       "app-view-all": true,
       "app-manage-all": true,
-      "auth-type-view-all": true,
-      "events-view-all": true,
-      "metadata-view-all": true,
-      "metadata-manage-all": true,
-      "service-manage": true,
       "visualizer-manage": true,
       "visualizer-view": true
     }

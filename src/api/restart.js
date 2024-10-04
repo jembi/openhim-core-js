@@ -19,7 +19,7 @@ config.tcpAdapter = config.get('tcpAdapter')
  * restart the server
  */
 export async function restart(ctx) {
-  const authorised = await utils.checkUserPermission(ctx, 'restartService', 'service-manage')
+  const authorised = await utils.checkUserPermission(ctx, 'restartService', 'certificates-manage')
 
   if (!authorised) return
 

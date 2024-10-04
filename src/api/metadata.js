@@ -86,7 +86,7 @@ function buildResponseObject(model, doc, status, message, uid) {
 
 // API endpoint that returns metadata for export
 export async function getMetadata(ctx) {
-  const authorised = await utils.checkUserPermission(ctx, 'getMetadata', 'metadata-view-all')
+  const authorised = await utils.checkUserPermission(ctx, 'getMetadata', 'import-export')
 
   if (!authorised) return
 
@@ -117,7 +117,7 @@ export async function getMetadata(ctx) {
 }
 
 async function handleMetadataPost(ctx, action) {
-  const authorised = await utils.checkUserPermission(ctx, 'addMetadata', 'metadata-manage-all')
+  const authorised = await utils.checkUserPermission(ctx, 'addMetadata', 'import-export')
 
   if (!authorised) return
 
