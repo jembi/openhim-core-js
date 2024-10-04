@@ -372,6 +372,51 @@ async function upgradeDbInternal() {
   }
 }
 
+upgradeFuncs.push({
+  description: 'Create default roles with permissions and update user groups',
+  func() {
+    return new Promise(async (resolve, reject) => {
+      try {
+        // Create default roles with permissions
+        for (const [roleName, roleData] of Object.entries(roles)) {
+          await RoleModel.findOneAndUpdate(
+            { name: roleName },
+            roleData,
+            { upsert: true, new: true }
+          );
+          logger.info(`Role ${roleName} created or updated`);
+        }
+
+        const users = await UserModel.find();
+
+        const userPromises = users.map(async (user) => {
+          // Convert old boolean flags to new role system
+          let newGroup = 'manager';
+          if ((user.groups && user.groups.includes('admin')) || user.superUser) {
+            newGroup = 'admin';
+          }
+
+          // Update user's groups
+          user.groups = [newGroup];
+          
+          // Remove old superUser field
+          user.superUser = undefined;
+
+          return user.save();
+        });
+
+        await Promise.all(userPromises);
+
+        logger.info('Successfully updated user groups based on new role model');
+        resolve();
+      } catch (err) {
+        logger.error(`Error updating user groups: ${err}`);
+        reject(err);
+      }
+    });
+  }
+});
+
 export function upgradeDb(callback) {
   return upgradeDbInternal()
     .then((...values) => {

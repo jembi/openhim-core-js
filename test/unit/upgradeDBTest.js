@@ -13,7 +13,8 @@ import {
   KeystoreModel,
   PassportModel,
   UserModel,
-  VisualizerModel
+  VisualizerModel,
+  RoleModel
 } from '../../src/model'
 
 describe('Upgrade DB Tests', () => {
@@ -544,6 +545,102 @@ describe('Upgrade DB Tests', () => {
 
       const passports = await PassportModel.find()
       passports.length.should.eql(2)
+    })
+  })
+
+  describe(`updateFunction4 - Create default roles`, () => {
+    const upgradeFunc = originalUpgradeFuncs[4].func
+
+    afterEach(async () => {
+      await RoleModel.deleteMany({})
+    })
+
+    it('should create default roles if they do not exist', async () => {
+      await upgradeFunc()
+
+      const roles = await RoleModel.find()
+      roles.length.should.be.exactly(4)
+
+      const roleNames = roles.map(r => r.name)
+      roleNames.should.containEql('manager')
+      roleNames.should.containEql('admin')
+      roleNames.should.containEql('operator')
+    })
+
+    it('should not create duplicate roles if they already exist', async () => {
+      // Create an existing role
+      await new RoleModel({ name: 'admin' }).save()
+
+      await upgradeFunc()
+
+      const roles = await RoleModel.find()
+      roles.length.should.be.exactly(3)
+
+      const adminRoles = roles.filter(r => r.name === 'admin')
+      adminRoles.length.should.be.exactly(1)
+    })
+
+    it('should set correct permissions for each role', async () => {
+      await upgradeFunc()
+
+      const managerRole = await RoleModel.findOne({ name: 'manager' })
+      const adminRole = await RoleModel.findOne({ name: 'admin' })
+      const operatorRole = await RoleModel.findOne({ name: 'operator' })
+
+      // Helper function to check permissions
+      const checkPermissions = (role, expectedPermissions) => {
+        Object.entries(expectedPermissions).forEach(([key, value]) => {
+          if (typeof value === 'boolean') {
+            should(role.permissions[key]).equal(value)
+          } else if (Array.isArray(value)) {
+            should(role.permissions[key]).deepEqual(value)
+          }
+        })
+      }
+
+      // Admin role permissions
+      checkPermissions(adminRole, {
+        "channel-view-all": true,
+        "channel-manage-all": true,
+        "client-view-all": true,
+        "client-manage-all": true,
+        "transaction-view-all": true,
+        "transaction-view-body-all": true,
+        "transaction-rerun-all": true,
+        "user-view": true,
+        "user-manage": true,
+        "visualizer-manage": true,
+        "visualizer-view": true
+        // Add other admin permissions as needed
+      })
+
+      // Manager role permissions
+      checkPermissions(managerRole, {
+        "channel-view-all": true,
+        "channel-manage-all": true,
+        "client-view-all": true,
+        "client-manage-all": true,
+        "transaction-view-all": true,
+        "transaction-view-body-all": true,
+        "transaction-rerun-all": true,
+        "user-view": true,
+        "visualizer-manage": true,
+        "visualizer-view": true
+        // Add other manager permissions as needed
+      })
+
+      // Operator role permissions
+      checkPermissions(operatorRole, {
+        "channel-view-all": true,
+        "transaction-view-all": true,
+        "transaction-view-body-all": true,
+        "transaction-rerun-all": true
+        // Add other operator permissions as needed
+      })
+
+      // Check that operator doesn't have certain permissions
+      should(operatorRole.permissions["user-manage"]).be.false()
+      should(operatorRole.permissions["client-manage-all"]).be.false()
     })
   })
 })
