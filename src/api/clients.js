@@ -2,59 +2,42 @@
 
 import logger from 'winston'
 
-import * as authorisation from './authorisation'
 import * as utils from '../utils'
-import {ChannelModelAPI} from '../model/channels'
 import {ClientModelAPI} from '../model/clients'
+import { RoleModelAPI } from '../model/role'
 
 /*
  * Adds a client
  */
 export async function addClient(ctx) {
-  // Test if the user is authorised
-  if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to addClient denied.`,
-      'info'
-    )
-    return
-  }
+  try{
+    const authorised = await utils.checkUserPermission(ctx, 'addClient', 'client-manage-all')
 
-  const clientData = ctx.request.body
+    if (!authorised) return
 
-  if (clientData.clientID) {
-    const chResult = await ChannelModelAPI.find(
-      {allow: {$in: [clientData.clientID]}},
-      {name: 1}
-    ).exec()
-    const clResult = await ClientModelAPI.find(
-      {roles: {$in: [clientData.clientID]}},
-      {clientID: 1}
-    ).exec()
-    if (
-      (chResult != null ? chResult.length : undefined) > 0 ||
-      (clResult != null ? clResult.length : undefined) > 0
-    ) {
-      return utils.logAndSetResponse(
-        ctx,
-        409,
-        `A role name conflicts with clientID '${clientData.clientID}'. A role name cannot be the same as a clientID.`,
-        'info'
-      )
+    const clientData = ctx.request.body
+
+    if (clientData.clientID) {
+      const role = await RoleModelAPI.findOne({name: clientData.clientID}).exec()
+
+      if (role) {
+        return utils.logAndSetResponse(
+          ctx,
+          409,
+          `A role name conflicts with clientID '${clientData.clientID}'. A role name cannot be the same as a clientID.`,
+          'info'
+        )
+      }
+      if (clientData.roles.includes(clientData.clientID)) {
+        return utils.logAndSetResponse(
+          ctx,
+          400,
+          `ClientID '${clientData.clientID}' cannot be the same as a role name.`,
+          'info'
+        )
+      }
     }
-    if (clientData.roles.includes(clientData.clientID)) {
-      return utils.logAndSetResponse(
-        ctx,
-        400,
-        `ClientID '${clientData.clientID}' cannot be the same as a role name.`,
-        'info'
-      )
-    }
-  }
 
-  try {
     const client = new ClientModelAPI(clientData)
     await client.save()
 
@@ -74,35 +57,31 @@ export async function addClient(ctx) {
  * Retrieves the details of a specific client
  */
 export async function getClient(ctx, clientId, property) {
-  let projectionRestriction = null
+  try {
+    const authorised = await utils.checkUserPermission(ctx, 'getClient', 'client-view-all', 'client-view-specified', clientId)
 
-  // if property - Setup client projection and bypass authorization
-  if (typeof property === 'string') {
-    if (property === 'clientName') {
-      projectionRestriction = {
-        _id: 0,
-        name: 1
+    let projectionRestriction = null
+
+    // if property - Setup client projection and bypass authorization
+    if (typeof property === 'string') {
+      if (property === 'clientName') {
+        projectionRestriction = {
+          _id: 0,
+          name: 1
+        }
+      } else {
+        utils.logAndSetResponse(
+          ctx,
+          404,
+          `The property (${property}) you are trying to retrieve is not found.`,
+          'info'
+        )
+        return
       }
-    } else {
-      utils.logAndSetResponse(
-        ctx,
-        404,
-        `The property (${property}) you are trying to retrieve is not found.`,
-        'info'
-      )
+    } else if (!authorised) {
       return
     }
-  } else if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to findClientById denied.`,
-      'info'
-    )
-    return
-  }
 
-  try {
     let result
     if (ctx?.query?.byNamedClientID === 'true') {
       result = await ClientModelAPI.findOne(
@@ -143,17 +122,6 @@ export async function getClient(ctx, clientId, property) {
 }
 
 export async function findClientByDomain(ctx, clientDomain) {
-  // Test if the user is authorised
-  if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to findClientByDomain denied.`,
-      'info'
-    )
-    return
-  }
-
   clientDomain = unescape(clientDomain)
 
   try {
@@ -165,7 +133,9 @@ export async function findClientByDomain(ctx, clientDomain) {
         `Could not find client with clientDomain ${clientDomain}`,
         'info'
       )
+      return
     } else {
+      await utils.checkUserPermission(ctx, 'getClientByDomain', 'client-view-all', 'client-view-specified', result.clientID)
       ctx.body = result
     }
   } catch (e) {
@@ -178,41 +148,34 @@ export async function findClientByDomain(ctx, clientDomain) {
 }
 
 export async function updateClient(ctx, clientId) {
-  // Test if the user is authorised
-  if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to updateClient denied.`,
-      'info'
-    )
-    return
-  }
-
-  clientId = unescape(clientId)
-  const clientData = ctx.request.body
-
-  // Ignore _id if it exists, a user shouldn't be able to update the internal id
-  if (clientData._id) {
-    delete clientData._id
-  }
-
-  if (clientData.clientID) {
-    const clResult = await ClientModelAPI.find(
-      {roles: {$in: [clientData.clientID]}},
-      {clientID: 1}
-    ).exec()
-    if ((clResult != null ? clResult.length : undefined) > 0) {
-      return utils.logAndSetResponse(
-        ctx,
-        409,
-        `A role name conflicts with clientID '${clientData.clientID}'. A role name cannot be the same as a clientID.`,
-        'info'
-      )
-    }
-  }
-
   try {
+    clientId = unescape(clientId)
+
+    // Test if the user is authorised
+    const authorised = await utils.checkUserPermission(ctx, 'updateClient', 'client-manage-all', 'client-manage-specified', clientId)
+
+    if (!authorised) return
+
+    const clientData = ctx.request.body
+
+    // Ignore _id if it exists, a user shouldn't be able to update the internal id
+    if (clientData._id) {
+      delete clientData._id
+    }
+
+    if (clientData.clientID) {
+      const role = await RoleModelAPI.findOne({name: clientData.clientID}).exec()
+
+      if (role) {
+        return utils.logAndSetResponse(
+          ctx,
+          409,
+          `A role name conflicts with clientID '${clientData.clientID}'. A role name cannot be the same as a clientID.`,
+          'info'
+        )
+      }
+    }
+
     await ClientModelAPI.findByIdAndUpdate(clientId, clientData).exec()
     logger.info(
       `User ${ctx.authenticated.email} updated client with id ${clientId}`
@@ -228,20 +191,14 @@ export async function updateClient(ctx, clientId) {
 }
 
 export async function removeClient(ctx, clientId) {
-  // Test if the user is authorised
-  if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to removeClient denied.`,
-      'info'
-    )
-    return
-  }
-
   clientId = unescape(clientId)
 
   try {
+    // Test if the user is authorised
+    const authorised = await utils.checkUserPermission(ctx, 'removeClient', 'client-manage-all', 'client-manage-specified', clientId)
+
+    if (!authorised) return
+
     await ClientModelAPI.findByIdAndRemove(clientId).exec()
     ctx.body = `Successfully removed client with ID ${clientId}`
     logger.info(
@@ -257,19 +214,23 @@ export async function removeClient(ctx, clientId) {
 }
 
 export async function getClients(ctx) {
-  // Test if the user is authorised
-  if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to getClients denied.`,
-      'info'
-    )
-    return
-  }
-
   try {
-    let clients = await ClientModelAPI.find().lean().exec()
+    const authorised = await utils.checkUserPermission(ctx, 'getClients', 'client-view-all')
+
+    let clients = []
+
+    if (authorised) {
+      clients = await ClientModelAPI.find().lean().exec()
+    } else {
+      const roles = await RoleModelAPI.find({name: {$in: ctx.authenticated.groups}}).exec()
+      const specifiedClients = roles.reduce((prev, curr) =>
+        prev.concat(curr.permissions['client-view-specified']),
+        []
+      )
+
+      clients = await ClientModelAPI.find({_id: {$in: specifiedClients}}).lean().exec()
+    }
+
     // Remove the Custom Token IDs from response
     ctx.body = clients.map(client => {
       if (client.customTokenID) {

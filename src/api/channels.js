@@ -132,24 +132,18 @@ export function isMaxBodyDaysValid(channel) {
  * Creates a new channel
  */
 export async function addChannel(ctx) {
-  // Test if the user is authorised
-  if (authorisation.inGroup('admin', ctx.authenticated) === false) {
-    utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to addChannel denied.`,
-      'info'
-    )
-    return
-  }
-
-  // Get the values to use
-  const channelData = ctx.request.body
-
-  // Set the user creating the channel for auditing purposes
-  channelData.updatedBy = utils.selectAuditFields(ctx.authenticated)
-
   try {
+    // Test if the user is authorised
+    const authorised = await utils.checkUserPermission(ctx, 'addChannel', 'channel-manage-all')
+
+    if (!authorised) return
+
+    // Get the values to use
+    const channelData = ctx.request.body
+
+    // Set the user creating the channel for auditing purposes
+    channelData.updatedBy = utils.selectAuditFields(ctx.authenticated)
+
     const channel = new ChannelModel(channelData)
 
     if (!isPathValid(channel)) {
@@ -227,34 +221,18 @@ export async function getChannel(ctx, channelId) {
   const id = unescape(channelId)
 
   try {
-    // Try to get the channel
-    let result = null
-    let accessDenied = false
-    // if admin allow acces to all channels otherwise restrict result set
-    if (authorisation.inGroup('admin', ctx.authenticated) === false) {
-      result = await ChannelModel.findOne({
-        _id: id,
-        txViewAcl: {$in: ctx.authenticated.groups}
-      }).exec()
-      const adminResult = await ChannelModel.findById(id).exec()
-      if (adminResult != null) {
-        accessDenied = true
-      }
-    } else {
-      result = await ChannelModel.findById(id).exec()
-    }
+    // Test if the user is authorised
+    const authorised = await utils.checkUserPermission(ctx, 'getChannel', 'channel-view-all', 'channel-view-specified', id)
+
+    if (!authorised) return
+
+    const  result = await ChannelModel.findById(id).exec()
 
     // Test if the result if valid
     if (result === null) {
-      if (accessDenied) {
-        // Channel exists but this user doesn't have access
-        ctx.body = `Access denied to channel with Id: '${id}'.`
-        ctx.status = 403
-      } else {
-        // Channel not found! So inform the user
-        ctx.body = `We could not find a channel with Id:'${id}'.`
-        ctx.status = 404
-      }
+      // Channel not found! So inform the user
+      ctx.body = `We could not find a channel with Id:'${id}'.`
+      ctx.status = 404
     } else {
       // All ok! So set the result
       ctx.body = result
@@ -271,17 +249,12 @@ export async function getChannel(ctx, channelId) {
 }
 
 export async function getChannelAudits(ctx, channelId) {
-  if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to addChannel denied.`,
-      'info'
-    )
-    return
-  }
-
   try {
+    // Test if the user is authorised
+    const authorised = await utils.checkUserPermission(ctx, 'getChannelAudits', 'audit-trail-view')
+
+    if (!authorised) return
+
     const channel = await ChannelModel.findById(channelId).exec()
     if (channel) {
       ctx.body = await channel.patches
@@ -360,103 +333,97 @@ async function findChannelByIdAndUpdate(id, channelData) {
  * Updates the details for a specific channel
  */
 export async function updateChannel(ctx, channelId) {
-  // Test if the user is authorised
-  if (authorisation.inGroup('admin', ctx.authenticated) === false) {
-    utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to updateChannel denied.`,
-      'info'
-    )
-    return
-  }
-
-  // Get the values to use
-  const id = unescape(channelId)
-  const channelData = ctx.request.body
-
-  // Set the user updating the channel for auditing purposes
-  channelData.updatedBy = utils.selectAuditFields(ctx.authenticated)
-  const updatedChannel = await ChannelModel.findById(id)
-  // This is so you can see how the channel will look as a whole before saving
-  updatedChannel.set(channelData)
-
-  if (
-    !utils.isNullOrWhitespace(channelData.type) &&
-    utils.isNullOrEmpty(channelData.methods)
-  ) {
-    // Empty the methods if the type has changed from http
-    if (channelData.type !== 'http') {
-      channelData.methods = []
-    }
-  } else {
-    const {type} = updatedChannel
-    let {methods} = updatedChannel
-    let methodValidation = validateMethod({type, methods})
-
-    if (methodValidation != null) {
-      ctx.body = methodValidation
-      ctx.status = 400
-      return
-    }
-  }
-
-  if (!isTimeoutValid(channelData)) {
-    ctx.body = TIMEOUT_SECONDS_MESSAGE
-    ctx.status = 400
-    return
-  }
-
-  // Ignore _id if it exists, user cannot change the internal id
-  if (typeof channelData._id !== 'undefined') {
-    delete channelData._id
-  }
-
-  if (!isPathValid(channelData)) {
-    utils.logAndSetResponse(
-      ctx,
-      400,
-      'Channel cannot have both path and pathTransform. pathTransform must be of the form s/from/to[/g]',
-      'info'
-    )
-    return
-  }
-
-  if (channelData.priority != null && channelData.priority < 1) {
-    ctx.body = 'Channel priority cannot be below 1 (= Highest priority)'
-    ctx.status = 400
-    return
-  }
-
-  if (channelData.routes != null) {
-    const numPrimaries = routerMiddleware.numberOfPrimaryRoutes(
-      channelData.routes
-    )
-    if (numPrimaries === 0) {
-      ctx.body = 'Channel must have a primary route'
-      ctx.status = 400
-      return
-    }
-    if (numPrimaries > 1) {
-      ctx.body = 'Channel cannot have a multiple primary routes'
-      ctx.status = 400
-      return
-    }
-  }
-
-  if (!isTimeoutValid(updatedChannel)) {
-    ctx.body = TIMEOUT_SECONDS_MESSAGE
-    ctx.status = 400
-    return
-  }
-
-  if (!isMaxBodyDaysValid(updatedChannel)) {
-    ctx.body = MAX_BODY_AGE_MESSAGE
-    ctx.status = 400
-    return
-  }
-
   try {
+    // Test if the user is authorised
+    const authorised = await utils.checkUserPermission(ctx, 'updateChannel', 'channel-manage-all', 'channel-manage-specified', channelId)
+
+    if (!authorised) return
+
+    // Get the values to use
+    const id = unescape(channelId)
+    const channelData = ctx.request.body
+
+    // Set the user updating the channel for auditing purposes
+    channelData.updatedBy = utils.selectAuditFields(ctx.authenticated)
+    const updatedChannel = await ChannelModel.findById(id)
+    // This is so you can see how the channel will look as a whole before saving
+    updatedChannel.set(channelData)
+
+    if (
+      !utils.isNullOrWhitespace(channelData.type) &&
+      utils.isNullOrEmpty(channelData.methods)
+    ) {
+      // Empty the methods if the type has changed from http
+      if (channelData.type !== 'http') {
+        channelData.methods = []
+      }
+    } else {
+      const {type} = updatedChannel
+      let {methods} = updatedChannel
+      let methodValidation = validateMethod({type, methods})
+
+      if (methodValidation != null) {
+        ctx.body = methodValidation
+        ctx.status = 400
+        return
+      }
+    }
+
+    if (!isTimeoutValid(channelData)) {
+      ctx.body = TIMEOUT_SECONDS_MESSAGE
+      ctx.status = 400
+      return
+    }
+
+    // Ignore _id if it exists, user cannot change the internal id
+    if (typeof channelData._id !== 'undefined') {
+      delete channelData._id
+    }
+
+    if (!isPathValid(channelData)) {
+      utils.logAndSetResponse(
+        ctx,
+        400,
+        'Channel cannot have both path and pathTransform. pathTransform must be of the form s/from/to[/g]',
+        'info'
+      )
+      return
+    }
+
+    if (channelData.priority != null && channelData.priority < 1) {
+      ctx.body = 'Channel priority cannot be below 1 (= Highest priority)'
+      ctx.status = 400
+      return
+    }
+
+    if (channelData.routes != null) {
+      const numPrimaries = routerMiddleware.numberOfPrimaryRoutes(
+        channelData.routes
+      )
+      if (numPrimaries === 0) {
+        ctx.body = 'Channel must have a primary route'
+        ctx.status = 400
+        return
+      }
+      if (numPrimaries > 1) {
+        ctx.body = 'Channel cannot have a multiple primary routes'
+        ctx.status = 400
+        return
+      }
+    }
+
+    if (!isTimeoutValid(updatedChannel)) {
+      ctx.body = TIMEOUT_SECONDS_MESSAGE
+      ctx.status = 400
+      return
+    }
+
+    if (!isMaxBodyDaysValid(updatedChannel)) {
+      ctx.body = MAX_BODY_AGE_MESSAGE
+      ctx.status = 400
+      return
+    }
+
     const channel = await findChannelByIdAndUpdate(id, channelData)
 
     // All ok! So set the result
@@ -500,21 +467,15 @@ async function processPostDeleteTriggers(channel) {
  * Deletes a specific channels details
  */
 export async function removeChannel(ctx, channelId) {
-  // Test if the user is authorised
-  if (authorisation.inGroup('admin', ctx.authenticated) === false) {
-    utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to removeChannel denied.`,
-      'info'
-    )
-    return
-  }
-
   // Get the values to use
   const id = unescape(channelId)
 
   try {
+    // Test if the user is authorised
+    const authorised = await utils.checkUserPermission(ctx, 'removeChannel', 'channel-manage-all', 'channel-manage-specified', channelId)
+
+    if (!authorised) return
+
     let channel
     const numExistingTransactions = await TransactionModelAPI.countDocuments({
       channelID: id
@@ -552,17 +513,6 @@ export async function removeChannel(ctx, channelId) {
  * Manually Triggers Polling Channel
  */
 export async function triggerChannel(ctx, channelId) {
-  // Test if the user is authorised
-  if (authorisation.inGroup('admin', ctx.authenticated) === false) {
-    utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to removeChannel denied.`,
-      'info'
-    )
-    return
-  }
-
   // Get the values to use
   const id = unescape(channelId)
 
@@ -570,6 +520,11 @@ export async function triggerChannel(ctx, channelId) {
   ctx.status = 200
 
   try {
+    // Test if the user is authorised
+    const authorised = await utils.checkUserPermission(ctx, 'triggerChannel', 'channel-manage-all', 'channel-manage-specified', id)
+
+    if (!authorised) return
+
     const channel = await ChannelModel.findById(id).exec()
 
     // Test if the result if valid

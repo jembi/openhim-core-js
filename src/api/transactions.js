@@ -11,6 +11,7 @@ import {ChannelModelAPI} from '../model/channels'
 import {TransactionModelAPI} from '../model/transactions'
 import {TaskModelAPI} from '../model/tasks'
 import {config} from '../config'
+import { RoleModelAPI } from '../model/role'
 
 const apiConf = config.get('api')
 const taskTransactionsLength = config.get('rerun').taskTransactionsLength
@@ -116,6 +117,28 @@ function truncateTransactionDetails(trx) {
   }
 }
 
+// Trims transactions' bodies for channels user is not allowed to view the request and response bodies
+const trimTransactions = async (user, transactions) => {
+  const roles = await RoleModelAPI.find({name: {$in: user.groups}}).exec()
+
+  const channelsTotrim = roles.reduce((prev, role) => prev.concat(role.permissions['transaction-view-body-specified']), [])
+
+  transactions = transactions.map(trans => {
+    if (channelsTotrim.includes(trans.channelID)) {
+      delete trans.request.body
+      delete trans.response.body
+      trans.orchestrations = trans.orchestrations.map(orch => {
+        delete orch.request.body
+        delete trans.response.body
+      })
+    }
+
+    return trans
+  })
+
+  return transactions
+}
+
 /*
  * Returns intersection of user and channel roles/permission groups
  */
@@ -152,8 +175,10 @@ export async function getTransactions(ctx) {
     let filters =
       filtersObject.filters != null ? JSON.parse(filtersObject.filters) : {}
 
+    const adminAccess = await utils.checkUserPermission(ctx, 'getTransactions', 'channel-view-all')
+
     // Test if the user is authorised
-    if (!authorisation.inGroup('admin', ctx.authenticated)) {
+    if (!adminAccess) {
       // if not an admin, restrict by transactions that this user can view
       const fullViewChannels = await authorisation.getUserViewableChannels(
         ctx.authenticated,
@@ -207,6 +232,7 @@ export async function getTransactions(ctx) {
       .skip(filterSkip)
       .limit(parseInt(filterLimit, 10))
       .sort({'request.timestamp': -1})
+      .lean()
       .exec()
 
     if (filterRepresentation === 'bulkrerun') {
@@ -215,12 +241,13 @@ export async function getTransactions(ctx) {
         count
       }
     } else {
-      ctx.body = transactions
+      ctx.body = await trimTransactions(ctx.authenticated, transactions)
     }
 
     if (filterRepresentation === 'fulltruncate') {
       Array.from(ctx.body).map(trx => truncateTransactionDetails(trx))
     }
+    ctx.status = 200
   } catch (e) {
     utils.logAndSetResponse(
       ctx,
@@ -237,9 +264,10 @@ export async function rerunTransactions(ctx) {
     const {batchSize, pauseQueue} = filtersObject
 
     let filters = filtersObject.filters
+    const adminAccess = await utils.checkUserPermission(ctx, 'rerunTransactions', 'channel-view-all')
 
     // Test if the user is authorised
-    if (!authorisation.inGroup('admin', ctx.authenticated)) {
+    if (!adminAccess) {
       // if not an admin, restrict by transactions that this user can view
       const fullViewChannels = await authorisation.getUserViewableChannels(
         ctx.authenticated,
@@ -260,7 +288,22 @@ export async function rerunTransactions(ctx) {
           )
         }
       } else {
-        filters.channelID = {$in: getChannelIDsArray(allChannels)}
+        const roles = await RoleModelAPI.find({name: {$in: ctx.authenticated.groups}}).exec()
+        const canRerunAll = roles.find(role => role.permissions['transaction-rerun-all'])
+        let specificRerunChannels
+
+        if (!canRerunAll) {
+          specificRerunChannels = roles.reduce((prev, curr) => prev.push(curr.permissions['transaction-rerun-specific']))
+        }
+        if (!canRerunAll && !specificRerunChannels) {
+          return utils.logAndSetResponse(
+            ctx,
+            403,
+            `Forbidden: User not authorized to rerun transactions for any channel`,
+            'info'
+          )
+        }
+        filters.channelID = {$in: specificRerunChannels ? specificRerunChannels : getChannelIDsArray(allChannels)}
       }
     }
 
@@ -283,6 +326,7 @@ export async function rerunTransactions(ctx) {
       success: true,
       message: 'Tasks created for bulk rerun of transactions'
     }
+    ctx.status = 200
   } catch (e) {
     utils.logAndSetResponse(
       ctx,
@@ -517,22 +561,15 @@ function calculateTransactionBodiesByteLength(lengthObj, obj, ws) {
  * Adds an transaction
  */
 export async function addTransaction(ctx) {
-  // Test if the user is authorised
-  if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to addTransaction denied.`,
-      'info'
-    )
-    return
-  }
-
   try {
     // Get the values to use
     const transactionData = ctx.request.body
     const context = {primaryRequest: true}
     enforceMaxBodiesSize(context, transactionData, new WeakSet())
+
+    const authorised = await utils.checkUserPermission(ctx, 'addTransaction', 'channel-manage-all', 'channel-manage-specific', transactionData.channelID)
+
+    if (!authorised) return
 
     const tx = new TransactionModelAPI(transactionData)
 
@@ -573,9 +610,11 @@ export async function getTransactionById(ctx, transactionId) {
       filterRepresentation = 'full'
     }
 
+    const adminAccess = await utils.checkUserPermission(ctx, 'getTransactionById', 'channel-view-all')
+
     // --------------Check if user has permission to view full content----------------- #
     // if user NOT admin, determine their representation privileges.
-    if (!authorisation.inGroup('admin', ctx.authenticated)) {
+    if (!adminAccess) {
       // retrieve transaction channelID
       const txChannelID = await TransactionModelAPI.findById(
         transactionId,
@@ -616,7 +655,7 @@ export async function getTransactionById(ctx, transactionId) {
     const result = await TransactionModelAPI.findById(
       transactionId,
       projectionFiltersObject
-    ).exec()
+    ).lean().exec()
     if (result && filterRepresentation === 'fulltruncate') {
       truncateTransactionDetails(result)
     }
@@ -626,14 +665,15 @@ export async function getTransactionById(ctx, transactionId) {
       ctx.body = `Could not find transaction with ID: ${transactionId}`
       ctx.status = 404
       // Test if the user is authorised
-    } else if (!authorisation.inGroup('admin', ctx.authenticated)) {
+    } else if (!adminAccess) {
       const channels = await authorisation.getUserViewableChannels(
         ctx.authenticated
       )
       if (
         getChannelIDsArray(channels).indexOf(result.channelID.toString()) >= 0
       ) {
-        ctx.body = result
+        ctx.body = (await trimTransactions(ctx.authenticated, [result]))[0]
+        ctx.status = 200
       } else {
         return utils.logAndSetResponse(
           ctx,
@@ -644,6 +684,7 @@ export async function getTransactionById(ctx, transactionId) {
       }
     } else {
       ctx.body = result
+      ctx.status = 200
     }
   } catch (e) {
     utils.logAndSetResponse(
@@ -662,6 +703,8 @@ export async function findTransactionByClientId(ctx, clientId) {
   clientId = unescape(clientId)
 
   try {
+    const adminAccess = await utils.checkUserPermission(ctx, 'findTransactionByClientId', 'channel-view-all')
+
     // get projection object
     const projectionFiltersObject = getProjectionObject(
       ctx.request.query.filterRepresentation
@@ -670,7 +713,7 @@ export async function findTransactionByClientId(ctx, clientId) {
     const filtersObject = {clientID: clientId}
 
     // Test if the user is authorised
-    if (!authorisation.inGroup('admin', ctx.authenticated)) {
+    if (!adminAccess) {
       // if not an admin, restrict by transactions that this user can view
       const channels = await authorisation.getUserViewableChannels(
         ctx.authenticated
@@ -680,12 +723,16 @@ export async function findTransactionByClientId(ctx, clientId) {
     }
 
     // execute the query
-    ctx.body = await TransactionModelAPI.find(
+    const result = await TransactionModelAPI.find(
       filtersObject,
       projectionFiltersObject
     )
       .sort({'request.timestamp': -1})
+      .lean()
       .exec()
+
+    ctx.body = await trimTransactions(ctx.authenticated, result)
+    ctx.status = 200
   } catch (e) {
     utils.logAndSetResponse(
       ctx,
@@ -716,17 +763,6 @@ async function generateEvents(transaction, channelID) {
  * Updates a transaction record specified by transactionId
  */
 export async function updateTransaction(ctx, transactionId) {
-  // Test if the user is authorised
-  if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to updateTransaction denied.`,
-      'info'
-    )
-    return
-  }
-
   transactionId = unescape(transactionId)
   const updates = ctx.request.body
 
@@ -738,6 +774,7 @@ export async function updateTransaction(ctx, transactionId) {
       const channel = await ChannelModelAPI.findById(
         transaction.channelID
       ).exec()
+
       if (!autoRetryUtils.reachedMaxAttempts(transaction, channel)) {
         updates.autoRetry = true
         await autoRetryUtils.queueForRetry(transaction)
@@ -748,6 +785,10 @@ export async function updateTransaction(ctx, transactionId) {
       _id: transactionId
     }).exec()
     const transactionBodiesLength = {length: 0}
+
+    const adminAccess = await utils.checkUserPermission(ctx, 'updateTransaction', 'channel-manage-all', 'channel-manage-specified', transactionToUpdate.channelID)
+
+    if (!adminAccess) return
 
     calculateTransactionBodiesByteLength(
       transactionBodiesLength,
@@ -788,21 +829,16 @@ export async function updateTransaction(ctx, transactionId) {
  * Removes a transaction
  */
 export async function removeTransaction(ctx, transactionId) {
-  // Test if the user is authorised
-  if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to removeTransaction denied.`,
-      'info'
-    )
-    return
-  }
-
   // Get the values to use
   transactionId = unescape(transactionId)
 
   try {
+    const transaction = await TransactionModelAPI.findById(transactionId)
+
+    const adminAccess = await utils.checkUserPermission(ctx, 'removeTransaction', 'channel-manage-all', 'channel-manage-specified', transaction.channelID)
+
+    if (!adminAccess) return
+
     await TransactionModelAPI.findByIdAndRemove(transactionId).exec()
     ctx.body = 'Transaction successfully deleted'
     ctx.status = 200

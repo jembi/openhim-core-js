@@ -5,6 +5,7 @@
 import request from 'supertest'
 import {Types} from 'mongoose'
 import {promisify} from 'util'
+import should from 'should'
 
 import * as constants from '../constants'
 import * as server from '../../src/server'
@@ -13,6 +14,7 @@ import {AutoRetryModelAPI} from '../../src/model/autoRetry'
 import {ChannelModelAPI} from '../../src/model/channels'
 import {TaskModelAPI} from '../../src/model/tasks'
 import {TransactionModelAPI} from '../../src/model/transactions'
+import { RoleModelAPI } from '../../src/model/role'
 
 const {ObjectId} = Types
 
@@ -283,7 +285,8 @@ describe('API Integration Tests', () => {
     })
 
     let rootCookie = '',
-      nonRootCookie = ''
+      nonRootCookie = '',
+      nonRootCookie1 = ''
 
     before(async () => {
       await TaskModelAPI.deleteMany({})
@@ -314,6 +317,11 @@ describe('API Integration Tests', () => {
         request,
         BASE_URL,
         testUtils.nonRootUser
+      )
+      nonRootCookie1 = await testUtils.authenticate(
+        request,
+        BASE_URL,
+        testUtils.nonRootUser1
       )
     })
 
@@ -358,6 +366,34 @@ describe('API Integration Tests', () => {
           .expect(200)
 
         res.body.length.should.be.eql(3)
+      })
+
+      it('should fetch zero tasks for user without access to tasks', async () => {
+        const obj = {
+          filterPage: 0,
+          filterLimit: 10,
+          filters: {},
+          created: '2017/12/12'
+        }
+
+        let params = ''
+        for (const k in obj) {
+          let v = obj[k]
+          v = JSON.stringify(v)
+          if (params.length > 0) {
+            params += '&'
+          }
+          params += `${k}=${v}`
+        }
+
+        params = encodeURI(params)
+
+        const res = await request(BASE_URL)
+          .get(`/tasks?${params}`)
+          .set('Cookie', nonRootCookie)
+          .expect(200)
+
+        res.body.length.should.be.eql(0)
       })
 
       it('should fetch all tasks that are currently Paused', async () => {
@@ -435,9 +471,38 @@ describe('API Integration Tests', () => {
           ]
         }
 
+        await RoleModelAPI.findOneAndUpdate({name: 'test'}, {
+          name: 'test',
+          permissions: {
+            "channel-view-all": false,
+            "channel-manage-all": true,
+            "client-view-all": true,
+            "client-manage-all": true,
+            "client-role-view-all": true,
+            "client-role-manage-all": true,
+            "transaction-view-all": true,
+            "transaction-view-body-all": true,
+            "transaction-rerun-all": true,
+            "user-view": true,
+            "user-role-view": true,
+            "audit-trail-view": true,
+            "audit-trail-manage": true,
+            "contact-list-view": true,
+            "contact-list-manage": true,
+            "mediator-view-all": true,
+            "mediator-manage-all": true,
+            "certificates-view": true,
+            "certificates-manage": true,
+            "logs-view": true,
+            "import-export": true,
+            "app-view-all": true,
+            "app-manage-all": true
+          }
+        }, {upsert: true})
+
         await request(BASE_URL)
           .post('/tasks')
-          .set('Cookie', nonRootCookie)
+          .set('Cookie', nonRootCookie1)
           .send(newTask)
           .expect(201)
 
@@ -459,6 +524,21 @@ describe('API Integration Tests', () => {
         task.should.have.property('status', 'Queued')
         task.transactions.should.have.length(3)
         task.should.have.property('remainingTransactions', 3)
+      })
+
+      it("should fail to add task that has batchsize 0", async () => {
+        const tids = [
+          '888888888888888888888888',
+          '999999999999999999999999',
+          '101010101010101010101010'
+        ]
+        const newTask = {tids, batchSize: 0}
+
+        await request(BASE_URL)
+          .post('/tasks')
+          .set('Cookie', rootCookie)
+          .send(newTask)
+          .expect(400)
       })
 
       it("should add a new task and update the transactions' autoRetry attempt number", async () => {
@@ -514,6 +594,55 @@ describe('API Integration Tests', () => {
         await request(BASE_URL)
           .post('/tasks')
           .set('Cookie', nonRootCookie)
+          .send(newTask)
+          .expect(403)
+
+        await request(BASE_URL).post('/tasks').send(newTask).expect(401)
+      })
+
+      it('should NOT add a new task (non Admin user - No permission for one transaction 1)', async () => {
+        const newTask = {
+          tids: [
+            '112233445566778899101122',
+            '888888888888888888888888',
+            '999999999999999999999999',
+            '101010101010101010101010'
+          ]
+        }
+
+        await RoleModelAPI.findOneAndUpdate({name: 'test'}, {
+          name: 'test',
+          permissions: {
+            "channel-view-all": false,
+            "channel-manage-all": true,
+            "client-view-all": true,
+            "transaction_rerun-specified": [channel._id],
+            "client-manage-all": true,
+            "client-role-view-all": true,
+            "client-role-manage-all": true,
+            "transaction-view-all": true,
+            "transaction-view-body-all": true,
+            "transaction-rerun-all": false,
+            "user-view": true,
+            "user-role-view": true,
+            "audit-trail-view": true,
+            "audit-trail-manage": true,
+            "contact-list-view": true,
+            "contact-list-manage": true,
+            "mediator-view-all": true,
+            "mediator-manage-all": true,
+            "certificates-view": true,
+            "certificates-manage": true,
+            "logs-view": true,
+            "import-export": true,
+            "app-view-all": true,
+            "app-manage-all": true
+          }
+        }, {upsert: true})
+
+        await request(BASE_URL)
+          .post('/tasks')
+          .set('Cookie', nonRootCookie1)
           .send(newTask)
           .expect(403)
 
@@ -664,6 +793,75 @@ describe('API Integration Tests', () => {
         res.body.transactions.should.have.length(4)
       })
 
+      it('should fail to fetch a specific task by ID (no permission', async () => {
+        const obj = {
+          filterPage: 0,
+          filterLimit: 10,
+          filters: {}
+        }
+
+        let params = ''
+        for (const k in obj) {
+          let v = obj[k]
+          v = JSON.stringify(v)
+          if (params.length > 0) {
+            params += '&'
+          }
+          params += `${k}=${v}`
+        }
+
+        params = encodeURI(params)
+
+        await request(BASE_URL)
+          .get(`/tasks/aaa908908bbb98cc1d0809ee?${params}`)
+          .set('Cookie', nonRootCookie)
+          .expect(403)
+      })
+
+      it('should fail to fetch a specific task by ID (no permission 1', async () => {
+        const obj = {
+          filterPage: 0,
+          filterLimit: 10,
+          filters: {}
+        }
+
+        let params = ''
+        for (const k in obj) {
+          let v = obj[k]
+          v = JSON.stringify(v)
+          if (params.length > 0) {
+            params += '&'
+          }
+          params += `${k}=${v}`
+        }
+
+        params = encodeURI(params)
+
+        const newTask = await new TaskModelAPI({
+          status: 'Completed',
+          remainingTransactions: 0,
+          totalTransactions: 1,
+          transactions: [
+            {tid: transaction4._id, tstatus: 'Failed'},
+          ],
+          created: '2014-06-18T12:00:00.929Z',
+          completed: '12014-06-18T12:01:00.929Z',
+          user: 'root@openhim.org'
+        }).save()
+
+        await request(BASE_URL)
+          .get(`/tasks/${newTask._id}?${params}`)
+          .set('Cookie', nonRootCookie1)
+          .expect(403)
+      })
+
+      it('should fail to get task that does not exist', async () => {
+        await request(BASE_URL)
+          .get('/tasks/aaa777777bbb66cc5d4454ee')
+          .set('Cookie', rootCookie)
+          .expect(404)
+      })
+
       it('should fetch a specific task by ID with limit of first 10 records', async () => {
         const obj = {
           filterPage: 0,
@@ -804,6 +1002,7 @@ describe('API Integration Tests', () => {
     describe('*updateTask(taskId)', () => {
       it('should update a specific task by ID', async () => {
         const updates = {
+          _id: '123333',
           status: 'Completed',
           completed: '2014-06-18T13:30:00.929Z'
         }
@@ -820,23 +1019,86 @@ describe('API Integration Tests', () => {
         task.transactions.should.have.length(3)
       })
 
+      it('should fail to remove a specific task by ID when it contains a channel user does not have access to', async () => {
+        const newTask = await new TaskModelAPI({
+          status: 'Completed',
+          remainingTransactions: 0,
+          totalTransactions: 1,
+          transactions: [
+            {tid: transaction4._id, tstatus: 'Failed'},
+          ],
+          created: '2014-06-18T12:00:00.929Z',
+          completed: '12014-06-18T12:01:00.929Z',
+          user: 'root@openhim.org'
+        }).save()
+
+        await request(BASE_URL)
+          .put(`/tasks/${newTask._id}`)
+          .set('Cookie', nonRootCookie1)
+          .expect(403)
+      })
+
+      it('should fail to update task that does not exist', async () => {
+        await request(BASE_URL)
+          .put('/tasks/aaa777777bbb66cc5d4454ee')
+          .set('Cookie', rootCookie)
+          .expect(404)
+      })
+
       it('should not allow a non admin user to update a task', async () => {
         const updates = {}
 
-        request(BASE_URL)
-          .put('/tasks/890aaS0b93ccccc30dddddd0')
+        await request(BASE_URL)
+          .put('/tasks/aaa777777bbb66cc5d4444ee')
           .set('Cookie', nonRootCookie)
           .send(updates)
           .expect(403)
 
-        request(BASE_URL)
-          .put('/tasks/890aaS0b93ccccc30dddddd0')
+        await request(BASE_URL)
+          .put('/tasks/aaa777777bbb66cc5d4444ee')
           .send(updates)
           .expect(401)
       })
     })
 
     describe('*removeTask(taskId)', () => {
+      it('should not only allow a non admin user to remove a task', async () => {
+        await request(BASE_URL)
+          .del('/tasks/aaa777777bbb66cc5d4444ee')
+          .set('Cookie', nonRootCookie)
+          .expect(403)
+
+        await request(BASE_URL)
+          .del('/tasks/aaa777777bbb66cc5d4444ee')
+          .expect(401)
+      })
+
+      it('should fail to remove a specific task by ID when it contains a channel user does not have access to', async () => {
+        const newTask = await new TaskModelAPI({
+          status: 'Completed',
+          remainingTransactions: 0,
+          totalTransactions: 1,
+          transactions: [
+            {tid: transaction4._id, tstatus: 'Failed'},
+          ],
+          created: '2014-06-18T12:00:00.929Z',
+          completed: '12014-06-18T12:01:00.929Z',
+          user: 'root@openhim.org'
+        }).save()
+
+        await request(BASE_URL)
+          .del(`/tasks/${newTask._id}`)
+          .set('Cookie', nonRootCookie1)
+          .expect(403)
+      })
+
+      it('should fail to remove task that does not exist', async () => {
+        await request(BASE_URL)
+          .del('/tasks/aaa777777bbb66cc5d4454ee')
+          .set('Cookie', rootCookie)
+          .expect(404)
+      })
+
       it('should remove a specific task by ID', async () => {
         await request(BASE_URL)
           .del('/tasks/aaa777777bbb66cc5d4444ee')
@@ -847,17 +1109,6 @@ describe('API Integration Tests', () => {
           _id: 'aaa777777bbb66cc5d4444ee'
         })
         task.should.have.length(0)
-      })
-
-      it('should not only allow a non admin user to remove a task', async () => {
-        await request(BASE_URL)
-          .del('/tasks/890aaS0b93ccccc30dddddd0')
-          .set('Cookie', nonRootCookie)
-          .expect(403)
-
-        await request(BASE_URL)
-          .del('/tasks/890aaS0b93ccccc30dddddd0')
-          .expect(401)
       })
     })
   })

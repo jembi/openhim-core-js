@@ -209,6 +209,7 @@ describe('API Integration Tests', () => {
           contactGroupData
         ).save()
         const updates = {
+          _id: '123333',
           group: 'Group New Name',
           users: [
             {user: 'User 11111', method: 'sms', maxAlerts: 'no max'},

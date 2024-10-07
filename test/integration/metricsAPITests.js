@@ -11,6 +11,7 @@ import * as constants from '../constants'
 import * as server from '../../src/server'
 import * as testUtils from '../utils'
 import {ChannelModel, MetricModel} from '../../src/model'
+import { RoleModelAPI } from '../../src/model/role'
 
 const {SERVER_PORTS, BASE_URL} = constants
 
@@ -158,9 +159,38 @@ describe('API Metrics Tests', () =>
       })
 
       it('should fetch metrics for only the channels that a user can view', async () => {
-        const user = testUtils.nonRootUser
+        const user = testUtils.nonRootUser1
         const cookie = await testUtils.authenticate(request, BASE_URL, user)
 
+        await RoleModelAPI.findOneAndUpdate({name: 'test'}, {
+          name: 'test',
+          permissions: {
+            "channel-view-all": false,
+            "channel-manage-all": false,
+            "client-view-all": true,
+            "channel-view-specified": [channel1Doc._id],
+            "client-manage-all": true,
+            "client-role-view-all": true,
+            "client-role-manage-all": true,
+            "transaction-view-all": true,
+            "transaction-view-body-all": true,
+            "transaction-rerun-all": true,
+            "user-view": true,
+            "user-role-view": true,
+            "audit-trail-view": true,
+            "audit-trail-manage": true,
+            "contact-list-view": true,
+            "contact-list-manage": true,
+            "mediator-view-all": true,
+            "mediator-manage-all": true,
+            "certificates-view": true,
+            "certificates-manage": true,
+            "logs-view": true,
+            "import-export": true,
+            "app-view-all": true,
+            "app-manage-all": true
+          }
+        }, {upsert: true})
         const res = await request(BASE_URL)
           .get(
             '/metrics?startDate=2014-07-15T00:00:00.000Z&endDate=2014-07-19T00:00:00.000Z'

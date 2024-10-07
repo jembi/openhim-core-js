@@ -1,23 +1,30 @@
 'use strict'
 
 import {ChannelModelAPI} from '../model/channels'
+import { RoleModelAPI } from '../model/role'
 
 export function inGroup(group, user) {
   return user.groups.indexOf(group) >= 0
 }
 
+const getUserChannelsByPermissions = (user, allPermission, specifiedPermission) =>
+  RoleModelAPI.find({name: {$in: user.groups}}).then(roles => {
+    if (roles.find(role => role.permissions[allPermission] || role.permissions[allPermission.replace('view', 'manage')])) {
+      return ChannelModelAPI.find({}).exec()
+    }
+    const specifiedChannels = roles.reduce((prev, curr) =>
+      prev.concat(curr.permissions[specifiedPermission], curr.permissions[specifiedPermission.replace('view', 'manage')]),
+      []
+    )
+    return ChannelModelAPI.find({_id: {$in: specifiedChannels}}).exec()
+  })
+
 /**
  * A promise returning function that returns the list
  * of viewable channels for a user.
  */
-export function getUserViewableChannels(user, access = 'txViewAcl') {
-  // if admin find all channels
-  if (inGroup('admin', user)) {
-    return ChannelModelAPI.find({}).exec()
-  } else {
-    // otherwise only channels that this user has access to
-    return ChannelModelAPI.find({[access]: {$in: user.groups}}).exec()
-  }
+export function getUserViewableChannels(user) {
+  return getUserChannelsByPermissions(user, 'channel-view-all', 'channel-view-specified')
 }
 
 /**
@@ -25,11 +32,5 @@ export function getUserViewableChannels(user, access = 'txViewAcl') {
  * of rerunnable channels for a user.
  */
 export function getUserRerunableChannels(user) {
-  // if admin allow all channel
-  if (inGroup('admin', user)) {
-    return ChannelModelAPI.find({}).exec()
-  } else {
-    // otherwise figure out what this user can rerun
-    return ChannelModelAPI.find({txRerunAcl: {$in: user.groups}}).exec()
-  }
+  return getUserChannelsByPermissions(user, 'transaction-rerun-all', 'transaction-rerun-specified')
 }

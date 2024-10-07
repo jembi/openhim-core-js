@@ -511,43 +511,33 @@ describe('HTTP Router', () => {
 
       it('should be able to multicast to multiple endpoints and set the responses for non-primary routes in ctx.routes', async () => {
         servers = await Promise.all([
-          testUtils.createMockHttpServer(
-            'Non Primary 1',
-            NON_PRIMARY1_PORT,
-            200
-          ),
-          testUtils.createMockHttpServer(
-            'Non Primary 2',
-            NON_PRIMARY2_PORT,
-            400
-          ),
+          testUtils.createMockHttpServer('Non Primary 1', NON_PRIMARY1_PORT, 200),
+          testUtils.createMockHttpServer('Non Primary 2', NON_PRIMARY2_PORT, 400),
           testUtils.createMockHttpServer('Primary', PRIMARY_PORT, 201)
         ])
 
         const ctx = createContext(channel, '/test/multicasting')
         await promisify(router.route)(ctx)
-        await testUtils.setImmediatePromise()
+
+        // Wait for all routes to complete
+        await new Promise(resolve => setTimeout(resolve, 100))
 
         ctx.routes.length.should.be.exactly(3)
-        const nonPrimary1 = ctx.routes.find(
-          route => route.name === 'non_primary_1'
-        )
+        const nonPrimary1 = ctx.routes.find(route => route.name === 'non_primary_1')
         nonPrimary1.response.status.should.be.exactly(200)
         nonPrimary1.response.body.toString().should.be.eql('Non Primary 1')
         nonPrimary1.response.headers.should.be.ok
         nonPrimary1.request.path.should.be.exactly('/test/multicasting')
         nonPrimary1.request.timestamp.should.be.exactly(requestTimestamp)
-        const nonPrimary2 = ctx.routes.find(
-          route => route.name === 'non_primary_2'
-        )
+
+        const nonPrimary2 = ctx.routes.find(route => route.name === 'non_primary_2')
         nonPrimary2.response.status.should.be.exactly(400)
         nonPrimary2.response.body.toString().should.be.eql('Non Primary 2')
         nonPrimary2.response.headers.should.be.ok
         nonPrimary2.request.path.should.be.exactly('/test/multicasting')
         nonPrimary2.request.timestamp.should.be.exactly(requestTimestamp)
-        const nonPrimaryKafka = ctx.routes.find(
-          route => route.name === 'non_primary_kafka'
-        )
+
+        const nonPrimaryKafka = ctx.routes.find(route => route.name === 'non_primary_kafka')
         nonPrimaryKafka.response.status.should.be.exactly(200)
         nonPrimaryKafka.response.body.should.be.ok
         nonPrimaryKafka.request.timestamp.should.be.exactly(requestTimestamp)

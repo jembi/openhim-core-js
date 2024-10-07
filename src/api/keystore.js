@@ -3,7 +3,6 @@
 import pem from 'pem'
 import {promisify} from 'util'
 
-import * as authorisation from './authorisation'
 import * as utils from '../utils'
 import {KeystoreModelAPI} from '../model/keystore'
 import {config} from '../config'
@@ -11,18 +10,11 @@ import {config} from '../config'
 config.certificateManagement = config.get('certificateManagement')
 
 export async function getServerCert(ctx) {
-  // Must be admin
-  if (authorisation.inGroup('admin', ctx.authenticated) === false) {
-    utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to getServerCert denied.`,
-      'info'
-    )
-    return
-  }
-
   try {
+    const authorised = await utils.checkUserPermission(ctx, 'getServerCert', 'certificates-view')
+
+    if (!authorised) return
+
     const keystoreDoc = await KeystoreModelAPI.findOne().lean('cert').exec()
     keystoreDoc.cert.watchFSForCert =
       config.certificateManagement.watchFSForCert
@@ -38,18 +30,11 @@ export async function getServerCert(ctx) {
 }
 
 export async function getCACerts(ctx) {
-  // Must be admin
-  if (authorisation.inGroup('admin', ctx.authenticated) === false) {
-    utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to getCACerts denied.`,
-      'info'
-    )
-    return
-  }
-
   try {
+    const authorised = await utils.checkUserPermission(ctx, 'getCACerts', 'certificates-view')
+
+    if (!authorised) return
+
     const keystoreDoc = await KeystoreModelAPI.findOne().select('ca').exec()
     ctx.body = keystoreDoc.ca
   } catch (err) {
@@ -63,18 +48,11 @@ export async function getCACerts(ctx) {
 }
 
 export async function getCACert(ctx, certId) {
-  // Must be admin
-  if (authorisation.inGroup('admin', ctx.authenticated) === false) {
-    utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to getCACert by id denied.`,
-      'info'
-    )
-    return
-  }
-
   try {
+    const authorised = await utils.checkUserPermission(ctx, 'getCACert', 'certificates-view')
+
+    if (!authorised) return
+
     const keystoreDoc = await KeystoreModelAPI.findOne().select('ca').exec()
     const cert = keystoreDoc.ca.id(certId)
 
@@ -90,18 +68,11 @@ export async function getCACert(ctx, certId) {
 }
 
 export async function setServerPassphrase(ctx) {
-  // Must be admin
-  if (authorisation.inGroup('admin', ctx.authenticated) === false) {
-    utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to setServerPassphrase denied.`,
-      'info'
-    )
-    return
-  }
-
   try {
+    const authorised = await utils.checkUserPermission(ctx, 'setServerPassphrase', 'certificates-manage')
+
+    if (!authorised) return
+
     const {passphrase} = ctx.request.body
     const keystoreDoc = await KeystoreModelAPI.findOne().exec()
     keystoreDoc.passphrase = passphrase
@@ -118,18 +89,7 @@ export async function setServerPassphrase(ctx) {
 }
 
 export async function setServerCert(ctx) {
-  // Must be admin
   let err
-  if (authorisation.inGroup('admin', ctx.authenticated) === false) {
-    utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to setServerCert by id denied.`,
-      'info'
-    )
-    return
-  }
-
   if (config.certificateManagement.watchFSForCert) {
     utils.logAndSetResponse(
       ctx,
@@ -141,6 +101,10 @@ export async function setServerCert(ctx) {
   }
 
   try {
+    const authorised = await utils.checkUserPermission(ctx, 'setServerCert', 'certificates-manage')
+
+    if (!authorised) return
+
     let certInfo
     let fingerprint
     const {cert, passphrase} = ctx.request.body
@@ -179,18 +143,11 @@ export async function setServerCert(ctx) {
 }
 
 export async function setServerKey(ctx) {
-  // Must be admin
-  if (authorisation.inGroup('admin', ctx.authenticated) === false) {
-    utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to getServerKey by id denied.`,
-      'info'
-    )
-    return
-  }
-
   try {
+    const authorised = await utils.checkUserPermission(ctx, 'setServerKey', 'certificates-manage')
+
+    if (!authorised) return
+
     const {key, passphrase} = ctx.request.body
     const keystoreDoc = await KeystoreModelAPI.findOne().exec()
     keystoreDoc.key = key
@@ -208,19 +165,12 @@ export async function setServerKey(ctx) {
 }
 
 export async function addTrustedCert(ctx) {
-  // Must be admin
   let err
-  if (authorisation.inGroup('admin', ctx.authenticated) === false) {
-    utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to addTrustedCert by id denied.`,
-      'info'
-    )
-    return
-  }
-
   try {
+    const authorised = await utils.checkUserPermission(ctx, 'addTrustedCert', 'certificates-manage')
+
+    if (!authorised) return
+
     let invalidCert = false
     let chain = ctx.request.body.cert
 
@@ -287,18 +237,11 @@ export async function addTrustedCert(ctx) {
 }
 
 export async function removeCACert(ctx, certId) {
-  // Must be admin
-  if (authorisation.inGroup('admin', ctx.authenticated) === false) {
-    utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to removeCACert by id denied.`,
-      'info'
-    )
-    return
-  }
-
   try {
+    const authorised = await utils.checkUserPermission(ctx, 'removeCACert', 'certificates-manage')
+
+    if (!authorised) return
+
     const keystoreDoc = await KeystoreModelAPI.findOne().exec()
     keystoreDoc.ca.id(certId).remove()
     await keystoreDoc.save()
@@ -314,18 +257,11 @@ export async function removeCACert(ctx, certId) {
 }
 
 export async function verifyServerKeys(ctx) {
-  // Must be admin
-  if (authorisation.inGroup('admin', ctx.authenticated) === false) {
-    utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to verifyServerKeys.`,
-      'info'
-    )
-    return
-  }
-
   try {
+    const authorised = await utils.checkUserPermission(ctx, 'verifyServerKeys', 'certificates-manage')
+
+    if (!authorised) return
+
     let result
     try {
       result = await promisify(getCertKeyStatus)()

@@ -62,6 +62,20 @@ export const nonRootUser = {
   passwordSalt: '22a61686-66f6-483c-a524-185aac251fb0'
 }
 
+export const nonRootUser1 = {
+  firstname: 'Non',
+  surname: 'Root',
+  email: 'nonroot2@jembi.org',
+  password: 'password',
+  groups: ['test'],
+
+  // @deprecated
+  passwordAlgorithm: 'sha512',
+  passwordHash:
+    '669c981d4edccb5ed61f4d77f9fcc4bf594443e2740feb1a23f133bdaf80aae41804d10aa2ce254cfb6aca7c497d1a717f2dd9a794134217219d8755a84b6b4e',
+  passwordSalt: '22a61686-66f6-483c-a524-185aac251fb0'
+}
+
 export function secureSocketTest(portOrOptions, data, waitForResponse = true) {
   const options = {}
   if (typeof portOrOptions === 'number') {
@@ -130,7 +144,7 @@ export async function pollCondition(pollPredicate, pollBreak = 20) {
 }
 
 export async function setupTestUsers() {
-  const res = await Promise.all([createUser(rootUser), createUser(nonRootUser)])
+  const res = await Promise.all([createUser(rootUser), createUser(nonRootUser), createUser(nonRootUser1)])
 
   const errors = res
     .filter(r => r.error)
@@ -212,7 +226,7 @@ export function getAuthDetails() {
 
 export function cleanupTestUsers() {
   return UserModel.deleteMany({
-    email: {$in: [rootUser.email, nonRootUser.email]}
+    email: {$in: [rootUser.email, nonRootUser.email, nonRootUser1.email]}
   })
 }
 

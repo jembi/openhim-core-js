@@ -21,6 +21,7 @@ import {
 } from '../../src/model/transactions'
 import {config} from '../../src/config'
 import {TaskModel} from '../../src/model'
+import { RoleModelAPI } from '../../src/model/role'
 
 const ORIGINAL_API_CONFIG = config.api
 const ORIGINAL_APPLICATION_CONFIG = config.application
@@ -109,7 +110,8 @@ describe('API Integration Tests', () => {
   let channel2
   let channel3
   let rootCookie = ''
-  let nonRootCookie = ''
+  let nonRootCookie = '',
+      nonRootCookie1
 
   const channelDoc = {
     name: 'TestChannel1',
@@ -201,6 +203,7 @@ describe('API Integration Tests', () => {
     await Promise.all([
       testUtils.cleanupTestUsers(),
       ChannelModel.deleteMany({}),
+      AutoRetryModelAPI.deleteMany({}),
       promisify(server.stop)()
     ])
   })
@@ -215,6 +218,11 @@ describe('API Integration Tests', () => {
       request,
       BASE_URL,
       testUtils.nonRootUser
+    )
+    nonRootCookie1 = await testUtils.authenticate(
+      request,
+      BASE_URL,
+      testUtils.nonRootUser1
     )
   })
 
@@ -882,9 +890,38 @@ describe('API Integration Tests', () => {
             _id: '111111111111111111111112'
           })
         ).save()
+        await RoleModelAPI.findOneAndUpdate({name: 'test'}, {
+          name: 'test',
+          permissions: {
+            "channel-view-all": false,
+            "channel-manage-all": false,
+            "client-view-all": true,
+            "channel-view-specified": [channel._id],
+            "client-manage-all": true,
+            "client-role-view-all": true,
+            "client-role-manage-all": true,
+            "transaction-view-all": true,
+            "transaction-view-body-all": true,
+            "transaction-rerun-all": true,
+            "user-view": true,
+            "user-role-view": true,
+            "audit-trail-view": true,
+            "audit-trail-manage": true,
+            "contact-list-view": true,
+            "contact-list-manage": true,
+            "mediator-view-all": true,
+            "mediator-manage-all": true,
+            "certificates-view": true,
+            "certificates-manage": true,
+            "logs-view": true,
+            "import-export": true,
+            "app-view-all": true,
+            "app-manage-all": true
+          }
+        }, {upsert: true})
         const res = await request(BASE_URL)
           .get('/transactions')
-          .set('Cookie', nonRootCookie)
+          .set('Cookie', nonRootCookie1)
           .expect(200)
 
         res.body.should.have.length(1)
@@ -905,7 +942,7 @@ describe('API Integration Tests', () => {
 
         const res = await request(BASE_URL)
           .get(`/transactions?filters={"channelID":"${channel._id}"}`)
-          .set('Cookie', nonRootCookie)
+          .set('Cookie', nonRootCookie1)
           .expect(200)
 
         res.body.should.have.length(1)
@@ -924,6 +961,35 @@ describe('API Integration Tests', () => {
           })
         ).save()
 
+        await RoleModelAPI.findOneAndUpdate({name: 'group1'}, {
+          name: 'group1',
+          permissions: {
+            "channel-view-all": false,
+            "channel-manage-all": false,
+            "client-view-all": true,
+            "channel-view-specified": [channel3._id],
+            "client-manage-all": true,
+            "client-role-view-all": true,
+            "client-role-manage-all": true,
+            "transaction-view-all": true,
+            "transaction-view-body-all": true,
+            "transaction-rerun-all": true,
+            "user-view": true,
+            "user-role-view": true,
+            "audit-trail-view": true,
+            "audit-trail-manage": true,
+            "contact-list-view": true,
+            "contact-list-manage": true,
+            "mediator-view-all": true,
+            "mediator-manage-all": true,
+            "certificates-view": true,
+            "certificates-manage": true,
+            "logs-view": true,
+            "import-export": true,
+            "app-view-all": true,
+            "app-manage-all": true
+          }
+        }, {upsert: true})
         await new TransactionModel(
           Object.assign({}, transactionData, {
             channelID: channel3._id,
@@ -954,7 +1020,7 @@ describe('API Integration Tests', () => {
         ).save()
         await request(BASE_URL)
           .get(`/transactions?filters={"channelID":"${tx2.channelID}"}`)
-          .set('Cookie', nonRootCookie)
+          .set('Cookie', nonRootCookie1)
           .expect(403)
       })
 
@@ -988,7 +1054,7 @@ describe('API Integration Tests', () => {
           _id: '111111111111111111111111',
           status: 'Processing',
           clientID: '999999999999999999999999',
-          channelID: channel._id,
+          channelID: channel3._id,
           request: requestDoc,
           response: responseDoc,
           routes: [
@@ -1071,7 +1137,7 @@ describe('API Integration Tests', () => {
 
         const res = await request(BASE_URL)
           .get(`/transactions/${tx._id}`)
-          .set('Cookie', nonRootCookie)
+          .set('Cookie', nonRootCookie1)
           .expect(200)
 
         ;(res !== null).should.be.true
@@ -1160,7 +1226,7 @@ describe('API Integration Tests', () => {
       it('should do bulk rerun on specific channel', async () => {
         await request(BASE_URL)
           .post('/bulkrerun')
-          .set('Cookie', nonRootCookie)
+          .set('Cookie', nonRootCookie1)
           .send({
             batchSize: 1,
             filters: {
@@ -1237,7 +1303,7 @@ describe('API Integration Tests', () => {
 
         const res = await request(BASE_URL)
           .get(`/transactions/clients/${tx.clientID}`)
-          .set('Cookie', nonRootCookie)
+          .set('Cookie', nonRootCookie1)
           .expect(200)
 
         res.body[0].clientID.should.equal(tx.clientID.toString())
@@ -1264,7 +1330,8 @@ describe('API Integration Tests', () => {
       it('should only allow admin users to remove transactions', async () => {
         const {_id: transactionId} = await new TransactionModel(
           Object.assign({}, transactionData, {
-            clientID: '222222222222222222222222'
+            clientID: '222222222222222222222222',
+            channelID: channel3._id
           })
         ).save()
 

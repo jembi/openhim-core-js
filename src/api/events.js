@@ -5,15 +5,9 @@ import * as utils from '../utils'
 import {EventModelAPI} from '../model/events'
 
 export async function getLatestEvents(ctx, receivedTime) {
-  if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to events denied.`,
-      'info'
-    )
-    return
-  }
+  const authorised = await utils.checkUserPermission(ctx, 'getEvents', 'visualizer-view')
+
+  if (!authorised) return
 
   try {
     const rtDate = new Date(Number(receivedTime))

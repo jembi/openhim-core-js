@@ -225,7 +225,7 @@ describe('API Integration Tests', () => {
             .set('Cookie', rootCookie)
             .expect(200)
 
-          res.body[0].Users.length.should.equal(3) // Due to 3 auth test users
+          res.body[0].Users.length.should.equal(4) // Due to 3 auth test users
         })
       })
 
@@ -236,7 +236,7 @@ describe('API Integration Tests', () => {
             .set('Cookie', rootCookie)
             .expect(200)
 
-          res.body[0].Passports.length.should.equal(2)
+          res.body[0].Passports.length.should.equal(3)
         })
       })
 

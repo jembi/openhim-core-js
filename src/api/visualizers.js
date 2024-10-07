@@ -8,17 +8,11 @@ import {VisualizerModelAPI} from '../model/visualizer'
 
 // Endpoint that returns all visualizers
 export async function getVisualizers(ctx) {
-  // Must be admin
-  if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    return utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to getVisualizers denied.`,
-      'info'
-    )
-  }
-
   try {
+    const authorised = await utils.checkUserPermission(ctx, 'getVisualizers', 'visualizer-view')
+
+    if (!authorised) return
+
     ctx.body = await VisualizerModelAPI.find().exec()
   } catch (err) {
     utils.logAndSetResponse(
@@ -32,19 +26,13 @@ export async function getVisualizers(ctx) {
 
 // Endpoint that returns specific visualizer by visualizerId
 export async function getVisualizer(ctx, visualizerId) {
-  // Must be admin
-  if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    return utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to getVisualizer denied.`,
-      'info'
-    )
-  }
-
   visualizerId = unescape(visualizerId)
 
   try {
+    const authorised = await utils.checkUserPermission(ctx, 'getVisualizer', 'visualizer-view')
+
+    if (!authorised) return
+
     const result = await VisualizerModelAPI.findById(visualizerId).exec()
     if (!result) {
       ctx.body = `Visualizer with _id ${visualizerId} could not be found.`
@@ -64,15 +52,9 @@ export async function getVisualizer(ctx, visualizerId) {
 
 // Endpoint to add new visualizer
 export async function addVisualizer(ctx) {
-  // Must be admin user
-  if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    return utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to addVisualizer denied.`,
-      'info'
-    )
-  }
+  const authorised = await utils.checkUserPermission(ctx, 'addVisualizer', 'visualizer-manage')
+
+  if (!authorised) return
 
   if (!ctx.request.rawBody) {
     return utils.logAndSetResponse(
@@ -104,15 +86,9 @@ export async function addVisualizer(ctx) {
 
 // Endpoint to update specific visualizer by visualizerId
 export async function updateVisualizer(ctx, visualizerId) {
-  // Must be admin
-  if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    return utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to updateVisualizer denied.`,
-      'info'
-    )
-  }
+  const authorised = await utils.checkUserPermission(ctx, 'updateVisualizer', 'visualizer-manage')
+
+  if (!authorised) return
 
   if (!ctx.request.rawBody) {
     return utils.logAndSetResponse(
@@ -161,15 +137,9 @@ export async function updateVisualizer(ctx, visualizerId) {
 
 // Endpoint to remove specific visualizer by visualizerId
 export async function removeVisualizer(ctx, visualizerId) {
-  // Must be admin
-  if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    return utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to removeVisualizer denied.`,
-      'info'
-    )
-  }
+  const authorised = await utils.checkUserPermission(ctx, 'removeVisualizer', 'visualizer-manage')
+
+  if (!authorised) return
 
   visualizerId = unescape(visualizerId)
 

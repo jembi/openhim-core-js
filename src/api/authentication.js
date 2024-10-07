@@ -7,7 +7,7 @@ import os from 'os'
 import * as auditing from '../auditing'
 import * as authorisation from './authorisation'
 import passport from '../passport'
-import {logAndSetResponse} from '../utils'
+import {logAndSetResponse, checkUserPermission} from '../utils'
 import {config} from '../config'
 import {
   BASIC_AUTH_TYPE,
@@ -201,15 +201,9 @@ export async function authenticate(ctx, next) {
 }
 
 export async function getEnabledAuthenticationTypes(ctx, next) {
-  if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to get enabled authentication types denied.`,
-      'info'
-    )
-    return next()
-  }
+  const authorised = await checkUserPermission(ctx, 'getAuthType', 'client-manage-all')
+
+  if (!authorised) return
 
   if (!config.authentication || !Object.keys(config.authentication).length) {
     logAndSetResponse(

@@ -21,6 +21,7 @@ import {ClientModelAPI} from '../../src/model/clients'
 import {TransactionModelAPI} from '../../src/model/transactions'
 import {config} from '../../src/config'
 import {KafkaProducerManager} from '../../src/kafkaProducerManager'
+import { RoleModelAPI } from '../../src/model/role'
 
 const {SERVER_PORTS, BASE_URL} = constants
 let sandbox = sinon.createSandbox()
@@ -90,7 +91,8 @@ describe('API Integration Tests', () => {
     }
 
     let rootCookie = '',
-      nonRootCookie = ''
+      nonRootCookie = '',
+      nonRootCookie1 = ''
 
     before(async () => {
       await promisify(server.start)({
@@ -142,6 +144,11 @@ describe('API Integration Tests', () => {
         BASE_URL,
         testUtils.nonRootUser
       )
+      nonRootCookie1 = await testUtils.authenticate(
+        request,
+        BASE_URL,
+        testUtils.nonRootUser1
+      )
     })
 
     describe('*getChannels()', () => {
@@ -154,9 +161,38 @@ describe('API Integration Tests', () => {
       })
 
       it('should only allow non root user to fetch channel that they are allowed to view', async () => {
+        await RoleModelAPI.findOneAndUpdate({name: 'test'}, {
+          name: 'test',
+          permissions: {
+            "channel-view-all": false,
+            "channel-manage-all": false,
+            "client-view-all": true,
+            "channel-view-specified": [channel2._id],
+            "client-manage-all": true,
+            "client-role-view-all": true,
+            "client-role-manage-all": true,
+            "transaction-view-all": true,
+            "transaction-view-body-all": true,
+            "transaction-rerun-all": true,
+            "user-view": true,
+            "user-role-view": true,
+            "audit-trail-view": true,
+            "audit-trail-manage": true,
+            "contact-list-view": true,
+            "contact-list-manage": true,
+            "mediator-view-all": true,
+            "mediator-manage-all": true,
+            "certificates-view": true,
+            "certificates-manage": true,
+            "logs-view": true,
+            "import-export": true,
+            "app-view-all": true,
+            "app-manage-all": true
+          }
+        }, {upsert: true})
         const result = await request(BASE_URL)
           .get('/channels')
-          .set('Cookie', nonRootCookie)
+          .set('Cookie', nonRootCookie1)
           .expect(200)
         result.body.length.should.be.eql(1)
         result.body[0].name.should.be.eql('TestChannel2')
@@ -732,7 +768,7 @@ describe('API Integration Tests', () => {
       it('should allow a non admin user to fetch a channel they have access to by name', async () => {
         const res = await request(BASE_URL)
           .get(`/channels/${channel2._id}`)
-          .set('Cookie', nonRootCookie)
+          .set('Cookie', nonRootCookie1)
           .expect(200)
         res.body.should.have.property('name', 'TestChannel2')
         res.body.should.have.property('urlPattern', 'test/sample')
@@ -771,9 +807,39 @@ describe('API Integration Tests', () => {
       })
 
       it('should return a 404 if that channel doesnt exist', async () => {
+        const id = '999999999999999999999999'
+        await RoleModelAPI.findOneAndUpdate({name: 'test'}, {
+          name: 'test',
+          permissions: {
+            "channel-view-all": false,
+            "channel-manage-all": true,
+            "client-view-all": true,
+            "channel-view-specified": [channel2._id, id],
+            "client-manage-all": true,
+            "client-role-view-all": true,
+            "client-role-manage-all": true,
+            "transaction-view-all": true,
+            "transaction-view-body-all": true,
+            "transaction-rerun-all": true,
+            "user-view": true,
+            "user-role-view": true,
+            "audit-trail-view": true,
+            "audit-trail-manage": true,
+            "contact-list-view": true,
+            "contact-list-manage": true,
+            "mediator-view-all": true,
+            "mediator-manage-all": true,
+            "certificates-view": true,
+            "certificates-manage": true,
+            "logs-view": true,
+            "import-export": true,
+            "app-view-all": true,
+            "app-manage-all": true
+          }
+        }, {upsert: true})
         await request(BASE_URL)
-          .get('/channels/999999999999999999999999')
-          .set('Cookie', nonRootCookie)
+          .get(`/channels/${id}`)
+          .set('Cookie', nonRootCookie1)
           .expect(404)
       })
     })

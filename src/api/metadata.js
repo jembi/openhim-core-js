@@ -86,15 +86,9 @@ function buildResponseObject(model, doc, status, message, uid) {
 
 // API endpoint that returns metadata for export
 export async function getMetadata(ctx) {
-  // Test if the user is authorised
-  if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    return utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to getMetadata denied.`,
-      'info'
-    )
-  }
+  const authorised = await utils.checkUserPermission(ctx, 'getMetadata', 'import-export')
+
+  if (!authorised) return
 
   try {
     const exportObject = {}
@@ -123,15 +117,9 @@ export async function getMetadata(ctx) {
 }
 
 async function handleMetadataPost(ctx, action) {
-  // Test if the user is authorised
-  if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    return utils.logAndSetResponse(
-      ctx,
-      403,
-      `User ${ctx.authenticated.email} is not an admin, API access to importMetadata denied.`,
-      'info'
-    )
-  }
+  const authorised = await utils.checkUserPermission(ctx, 'addMetadata', 'import-export')
+
+  if (!authorised) return
 
   try {
     let status
