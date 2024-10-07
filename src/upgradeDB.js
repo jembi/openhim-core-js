@@ -314,17 +314,12 @@ upgradeFuncs.push({
         const users = await UserModel.find();
 
         const userPromises = users.map(async (user) => {
-          // Convert old boolean flags to new role system
           let newGroup = 'manager';
           if ((user.groups && user.groups.includes('admin')) || user.superUser) {
             newGroup = 'admin';
           }
-
           // Update user's groups
           user.groups = [newGroup];
-          
-          // Remove old superUser field
-          user.superUser = undefined;
 
           return user.save();
         });
