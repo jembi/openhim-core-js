@@ -548,18 +548,24 @@ describe('Upgrade DB Tests', () => {
     })
   })
 
-  describe(`updateFunction4 - Create default roles`, () => {
+  describe(`updateFunction4 - Create default roles with permissions and update user groups`, () => {
     const upgradeFunc = originalUpgradeFuncs[4].func
+
+    beforeEach(async () => {
+      await RoleModel.deleteMany({})
+      await UserModel.deleteMany({})
+    })
 
     afterEach(async () => {
       await RoleModel.deleteMany({})
+      await UserModel.deleteMany({})
     })
 
     it('should create default roles if they do not exist', async () => {
       await upgradeFunc()
 
       const roles = await RoleModel.find()
-      roles.length.should.be.exactly(4)
+      roles.length.should.be.exactly(3)
 
       const roleNames = roles.map(r => r.name)
       roleNames.should.containEql('manager')
@@ -568,8 +574,7 @@ describe('Upgrade DB Tests', () => {
     })
 
     it('should not create duplicate roles if they already exist', async () => {
-      // Create an existing role
-      await new RoleModel({ name: 'admin' }).save()
+      await new RoleModel({name: 'admin', permissions: {}}).save()
 
       await upgradeFunc()
 
@@ -583,92 +588,114 @@ describe('Upgrade DB Tests', () => {
     it('should set correct permissions for each role', async () => {
       await upgradeFunc()
 
-      const managerRole = await RoleModel.findOne({ name: 'manager' })
-      const adminRole = await RoleModel.findOne({ name: 'admin' })
-      const operatorRole = await RoleModel.findOne({ name: 'operator' })
+      const managerRole = await RoleModel.findOne({name: 'manager'})
+      const adminRole = await RoleModel.findOne({name: 'admin'})
+      const operatorRole = await RoleModel.findOne({name: 'operator'})
 
       // Helper function to check permissions
       const checkPermissions = (role, expectedPermissions) => {
+        console.log(`Checking permissions for role: ${role.name}`)
         Object.entries(expectedPermissions).forEach(([key, value]) => {
-          if (typeof value === 'boolean') {
-            should(role.permissions[key]).equal(value)
-          } else if (Array.isArray(value)) {
-            should(role.permissions[key]).deepEqual(value)
-          }
+          should(role.permissions[key]).equal(value)
         })
       }
 
       // Admin role permissions
       checkPermissions(adminRole, {
-        "channel-view-all": true,
-        "channel-manage-all": true,
-        "client-view-all": true,
-        "client-manage-all": true,
-        "transaction-view-all": true,
-        "transaction-view-body-all": true,
-        "transaction-rerun-all": true,
-        "user-view": true,
-        "user-manage": true,
-        "visualizer-manage": true,
-        "visualizer-view": true
+        'channel-view-all': true,
+        'channel-manage-all': true,
+        'client-view-all': true,
+        'client-manage-all': true,
+        'transaction-view-all': true,
+        'transaction-view-body-all': true,
+        'transaction-rerun-all': true,
+        'user-view': true,
+        'user-manage': true,
+        'visualizer-manage': true,
+        'visualizer-view': true
         // Add other admin permissions as needed
       })
 
       // Manager role permissions
       checkPermissions(managerRole, {
-        "channel-view-all": true,
-        "channel-manage-all": true,
-        "client-view-all": true,
-        "client-manage-all": true,
-        "transaction-view-all": true,
-        "transaction-view-body-all": true,
-        "transaction-rerun-all": true,
-        "user-view": true,
-        "visualizer-manage": true,
-        "visualizer-view": true
+        'channel-view-all': true,
+        'channel-manage-all': true,
+        'client-view-all': true,
+        'client-manage-all': true,
+        'transaction-view-all': true,
+        'transaction-view-body-all': true,
+        'transaction-rerun-all': true,
+        'user-view': true,
+        'visualizer-manage': true,
+        'visualizer-view': true
         // Add other manager permissions as needed
       })
 
       // Operator role permissions
       checkPermissions(operatorRole, {
-        "channel-view-all": true,
-        "transaction-view-all": true,
-        "transaction-view-body-all": true,
-        "transaction-rerun-all": true
+        'channel-view-all': true,
+        'transaction-view-all': true,
+        'transaction-view-body-all': true,
+        'transaction-rerun-all': true
         // Add other operator permissions as needed
       })
 
       // Check that operator doesn't have certain permissions
-      should(operatorRole.permissions["user-manage"]).be.false()
-      should(operatorRole.permissions["client-manage-all"]).be.false()
+      should(operatorRole.permissions['user-manage']).be.false()
+      should(operatorRole.permissions['client-manage-all']).be.false()
     })
 
-    it('should not create roles if they all already exist', async () => {
-      // Create all default roles beforehand
-      await Promise.all([
-        new RoleModel({ name: 'admin' }).save(),
-        new RoleModel({ name: 'manager' }).save(),
-        new RoleModel({ name: 'operator' }).save()
-      ])
+    it('should update user groups to admin for superUsers', async () => {
+      const superUser = new UserModel({
+        email: 'super@test.org',
+        groups: ['admin'],
+        firstname: 'Super',
+        surname: 'User'
+      })
+      await superUser.save()
 
       await upgradeFunc()
 
-      const roles = await RoleModel.find()
-      roles.length.should.be.exactly(3)
+      const updatedUser = await UserModel.findOne({email: 'super@test.org'})
+      updatedUser.groups.should.eql(['admin'])
     })
 
-    it('should handle partial existing roles', async () => {
-      // Create only one default role beforehand
-      await new RoleModel({ name: 'admin' }).save()
+    it('should handle mixed user types correctly', async () => {
+      const users = [
+        new UserModel({
+          email: 'regular@test.org',
+          groups: ['user'],
+          firstname: 'Regular',
+          surname: 'User'
+        }),
+        new UserModel({
+          email: 'admin@test.org',
+          groups: ['user', 'admin'],
+          firstname: 'Admin',
+          surname: 'User'
+        }),
+        new UserModel({
+          email: 'super@test.org',
+          groups: ['admin'],
+          firstname: 'Super',
+          surname: 'User'
+        }),
+        new UserModel({
+          email: 'another@test.org',
+          groups: ['operator'],
+          firstname: 'Another',
+          surname: 'User'
+        })
+      ]
+      await Promise.all(users.map(user => user.save()))
 
       await upgradeFunc()
 
-      const roles = await RoleModel.find()
-      roles.length.should.be.exactly(3)
-      const roleNames = roles.map(r => r.name)
-      roleNames.should.containEql('admin')
-      roleNames.should.containEql('manager')
-      roleNames.should.containEql('operator')
+      const updatedUsers = await UserModel.find().sort('email')
+      updatedUsers[0].groups.should.eql(['admin']) // admin@test.org
+      updatedUsers[1].groups.should.eql(['manager']) // another@test.org
+      updatedUsers[2].groups.should.eql(['manager']) // regular@test.org
+      updatedUsers[3].groups.should.eql(['admin']) // super@test.org
     })
   })
 })
