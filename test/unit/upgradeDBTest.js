@@ -642,5 +642,33 @@ describe('Upgrade DB Tests', () => {
       should(operatorRole.permissions["user-manage"]).be.false()
       should(operatorRole.permissions["client-manage-all"]).be.false()
     })
+
+    it('should not create roles if they all already exist', async () => {
+      // Create all default roles beforehand
+      await Promise.all([
+        new RoleModel({ name: 'admin' }).save(),
+        new RoleModel({ name: 'manager' }).save(),
+        new RoleModel({ name: 'operator' }).save()
+      ])
+
+      await upgradeFunc()
+
+      const roles = await RoleModel.find()
+      roles.length.should.be.exactly(3)
+    })
+
+    it('should handle partial existing roles', async () => {
+      // Create only one default role beforehand
+      await new RoleModel({ name: 'admin' }).save()
+
+      await upgradeFunc()
+
+      const roles = await RoleModel.find()
+      roles.length.should.be.exactly(3)
+      const roleNames = roles.map(r => r.name)
+      roleNames.should.containEql('admin')
+      roleNames.should.containEql('manager')
+      roleNames.should.containEql('operator')
+    })
   })
 })
