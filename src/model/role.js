@@ -137,7 +137,7 @@ const RoleSchema = new Schema({
 export const RoleModelAPI = connectionAPI.model('Role', RoleSchema)
 export const RoleModel = connectionDefault.model('Role', RoleSchema)
 
-const roles = {
+export const roles = {
   admin: {
     name: 'admin',
     permissions: {
