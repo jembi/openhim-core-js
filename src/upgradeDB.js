@@ -299,83 +299,54 @@ upgradeFuncs.push({
 
 upgradeFuncs.push({
   description: 'Create default roles with permissions and update user groups',
-  func() {
-    return new Promise(async (resolve, reject) => {
-      try {
-        // Fetch channels and get the role names with their associated channels
-        const channels = await ChannelModel.find()
-        const existingRoles = JSON.parse(JSON.stringify(roles)) // Deep clone the roles object
+  func: async () => {
+    try {
+      const channels = await ChannelModel.find()
+      const existingRoles = JSON.parse(JSON.stringify(roles)) // Deep clone the roles object
 
-        channels.forEach(channel => {
-          if (Array.isArray(channel.allow)) {
-            if (channel.txViewAcl && channel.txViewAcl.length > 0) {
-              channel.txViewAcl.forEach(role => {
-                if (!existingRoles[role]) {
-                  existingRoles[role] = { permissions: {} }
-                }
-                if (!existingRoles[role].permissions['transaction-view-specified']) {
-                  existingRoles[role].permissions['transaction-view-specified'] = []
-                }
-                existingRoles[role].permissions['transaction-view-specified'].push(channel.name)
-                if (!existingRoles[role].permissions['channel-view-specified']) {
-                  existingRoles[role].permissions['channel-view-specified'] = []
-                }
-                existingRoles[role].permissions['channel-view-specified'].push(channel.name)
-                existingRoles[role].permissions['client-view-all'] = true
-              })
-            }
-            if (channel.txRerunAcl && channel.txRerunAcl.length > 0) {
-              channel.txRerunAcl.forEach(role => {
-                if (!existingRoles[role]) {
-                  existingRoles[role] = { permissions: {} }
-                }
-                if (!existingRoles[role].permissions['transaction-rerun-specified']) {
-                  existingRoles[role].permissions['transaction-rerun-specified'] = []
-                }
-                existingRoles[role].permissions['transaction-rerun-specified'].push(channel.name)
-                if (!existingRoles[role].permissions['channel-view-specified']) {
-                  existingRoles[role].permissions['channel-view-specified'] = []
-                }
-                existingRoles[role].permissions['channel-view-specified'].push(channel.name)
-                existingRoles[role].permissions['client-view-all'] = true
-              })
-            }
-            if (channel.txViewFullAcl && channel.txViewFullAcl.length > 0) {
-              channel.txViewFullAcl.forEach(role => {
-                if (!existingRoles[role]) {
-                  existingRoles[role] = { permissions: {} }
-                }
-                if (!existingRoles[role].permissions['transaction-view-body-specified']) {
-                  existingRoles[role].permissions['transaction-view-body-specified'] = []
-                }
-                existingRoles[role].permissions['transaction-view-body-specified'].push(channel.name)
-                if (!existingRoles[role].permissions['channel-view-specified']) {
-                  existingRoles[role].permissions['channel-view-specified'] = []
-                }
-                existingRoles[role].permissions['channel-view-specified'].push(channel.name)
-                existingRoles[role].permissions['client-view-all'] = true
-              })
-            }
-          }
-        })
-
-        // Create or update roles
-        for (const [roleName, roleData] of Object.entries(existingRoles)) {
-          await RoleModel.findOneAndUpdate(
-            { name: roleName },
-            { name: roleName, permissions: roleData.permissions },
-            { upsert: true, new: true }
-          )
-          logger.info(`Role ${roleName} created or updated with permissions`)
+      const updateRolePermissions = (role, permissionType, channelName) => {
+        if (!existingRoles[role]) {
+          existingRoles[role] = { permissions: {} }
         }
-
-        logger.info('Successfully updated roles')
-        resolve()
-      } catch (err) {
-        logger.error(`Error updating roles: ${err}`)
-        reject(err)
+        if (!existingRoles[role].permissions[permissionType]) {
+          existingRoles[role].permissions[permissionType] = []
+        }
+        existingRoles[role].permissions[permissionType].push(channelName)
+        existingRoles[role].permissions['channel-view-specified'] = existingRoles[role].permissions['channel-view-specified'] || []
+        existingRoles[role].permissions['channel-view-specified'].push(channelName)
+        existingRoles[role].permissions['client-view-all'] = true
       }
-    })
+
+      channels.forEach(channel => {
+        if (Array.isArray(channel.allow)) {
+          const aclTypes = [
+            { acl: channel.txViewAcl, permissionType: 'transaction-view-specified' },
+            { acl: channel.txRerunAcl, permissionType: 'transaction-rerun-specified' },
+            { acl: channel.txViewFullAcl, permissionType: 'transaction-view-body-specified' }
+          ]
+
+          aclTypes.forEach(({ acl, permissionType }) => {
+            if (acl && acl.length > 0) {
+              acl.forEach(role => updateRolePermissions(role, permissionType, channel.name))
+            }
+          })
+        }
+      })
+
+      // Create or update roles
+      await Promise.all(Object.entries(existingRoles).map(([roleName, roleData]) =>
+        RoleModel.findOneAndUpdate(
+          { name: roleName },
+          { name: roleName, permissions: roleData.permissions },
+          { upsert: true, new: true }
+        )
+      ))
+
+      logger.info('Successfully updated roles')
+    } catch (err) {
+      logger.error(`Error updating roles: ${err}`)
+      throw err
+    }
   }
 })
 
@@ -389,7 +360,7 @@ async function upgradeDbInternal() {
     const dbVer =
       (await DbVersionModel.findOne()) ||
       new DbVersionModel({version: 0, lastUpdated: new Date()})
-      const upgradeFuncsToRun = upgradeFuncs.slice(dbVer.version)
+    const upgradeFuncsToRun = upgradeFuncs.slice(dbVer.version)
     for (const upgradeFunc of upgradeFuncsToRun) {
       await upgradeFunc.func()
       dbVer.version++

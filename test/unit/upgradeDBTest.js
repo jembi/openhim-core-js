@@ -579,10 +579,10 @@ describe('Upgrade DB Tests', () => {
 
       await upgradeFunc()
 
-      const roles = await RoleModel.find()
-      roles.length.should.be.exactly(Object.keys(roles).length)
+      const existingRoles = await RoleModel.find()
+      existingRoles.length.should.be.exactly(Object.keys(roles).length)
 
-      const adminRoles = roles.filter(r => r.name === 'admin')
+      const adminRoles = existingRoles.filter(r => r.name === 'admin')
       adminRoles.length.should.be.exactly(1)
     })
 
