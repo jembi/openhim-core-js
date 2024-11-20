@@ -166,5 +166,5 @@
     "certPath": "/etc/letsencrypt/live/openhim.jembi.org/cert.pem",
     "keyPath": "/etc/letsencrypt/live/openhim.jembi.org/privkey.pem"
   },
-  "openhimConsoleBaseUrl": "http://localhost:9000"
+  "openhimConsoleBaseUrl": "http://localhost:8080"
 }
