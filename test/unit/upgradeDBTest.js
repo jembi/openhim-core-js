@@ -13,9 +13,11 @@ import {
   KeystoreModel,
   PassportModel,
   UserModel,
-  VisualizerModel
+  VisualizerModel,
+  RoleModel,
+  ChannelModel,
+  roles
 } from '../../src/model'
-
 describe('Upgrade DB Tests', () => {
   const originalUpgradeFuncs = [...upgradeDB.upgradeFuncs]
   upgradeDB.upgradeFuncs.length = 0
@@ -544,6 +546,96 @@ describe('Upgrade DB Tests', () => {
 
       const passports = await PassportModel.find()
       passports.length.should.eql(2)
+    })
+  })
+
+  describe(`updateFunction4 - Create default roles with permissions`, () => {
+    const upgradeFunc = originalUpgradeFuncs[4].func
+
+    beforeEach(async () => {
+      await RoleModel.deleteMany({})
+      await ChannelModel.deleteMany({})
+    })
+
+    afterEach(async () => {
+      await RoleModel.deleteMany({})
+      await ChannelModel.deleteMany({})
+    })
+
+    it('should create default roles if they do not exist', async () => {
+      await upgradeFunc()
+
+      const existingRoles = await RoleModel.find()
+      existingRoles.length.should.be.exactly(Object.keys(roles).length)
+
+      const roleNames = existingRoles.map(r => r.name)
+      Object.keys(roles).forEach(roleName => {
+        roleNames.should.containEql(roleName)
+      })
+    })
+
+    it('should not create duplicate roles if they already exist', async () => {
+      await new RoleModel({name: 'admin', permissions: {}}).save()
+
+      await upgradeFunc()
+
+      const existingRoles = await RoleModel.find()
+      existingRoles.length.should.be.exactly(Object.keys(roles).length)
+
+      const adminRoles = existingRoles.filter(r => r.name === 'admin')
+      adminRoles.length.should.be.exactly(1)
+    })
+
+    it('should set correct permissions for each role', async () => {
+      // Create test channels
+      const channel1 = await new ChannelModel({
+        name: 'Channel 1',
+        urlPattern: '/channel1',
+        allow: ['admin', 'manager'],
+        txViewAcl: ['admin'],
+        txRerunAcl: ['admin'],
+        txViewFullAcl: ['admin']
+      }).save()
+
+      const channel2 = await new ChannelModel({
+        name: 'Channel 2',
+        urlPattern: '/channel2',
+        allow: ['admin', 'manager', 'operator'],
+        txViewAcl: ['admin', 'manager', 'operator'],
+        txRerunAcl: ['admin'],
+        txViewFullAcl: ['admin']
+      }).save()
+
+      await upgradeFunc()
+
+      const createdRoles = await RoleModel.find()
+      
+      for (const role of createdRoles) {
+        should.exist(role)
+
+        // Check default permissions
+        if (roles[role.name]) {
+          Object.entries(roles[role.name].permissions).forEach(([key, value]) => {
+            should(role.permissions[key]).eql(value)
+          })
+        }
+
+        // Check channel-specific permissions
+        if (role.name === 'admin') {
+          role.permissions['transaction-view-specified'].should.containEql('Channel 1')
+          role.permissions['transaction-view-specified'].should.containEql('Channel 2')
+          role.permissions['transaction-rerun-specified'].should.containEql('Channel 1')
+          role.permissions['transaction-rerun-specified'].should.containEql('Channel 2')
+          role.permissions['transaction-view-body-specified'].should.containEql('Channel 1')
+          role.permissions['transaction-view-body-specified'].should.containEql('Channel 2')
+        } else if (role.name === 'manager') {
+          role.permissions['transaction-view-specified'].should.not.containEql('Channel 1')
+          role.permissions['transaction-view-specified'].should.containEql('Channel 2')
+        } else if (role.name === 'operator') {
+          role.permissions['transaction-view-specified'].should.not.containEql('Channel 1')
+          role.permissions['transaction-view-specified'].should.containEql('Channel 2')
+        }
+      }
     })
   })
 })

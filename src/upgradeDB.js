@@ -9,6 +9,8 @@ import {KeystoreModel} from './model/keystore'
 import {UserModel} from './model/users'
 import {VisualizerModel} from './model/visualizer'
 import {PassportModel} from './model/passport'
+import {RoleModel, roles} from './model/role'
+import {ChannelModel} from './model/channels'
 
 function dedupName(name, names, num) {
   let newName
@@ -295,6 +297,59 @@ upgradeFuncs.push({
   }
 })
 
+upgradeFuncs.push({
+  description: 'Create default roles with permissions and update user groups',
+  func: async () => {
+    try {
+      const channels = await ChannelModel.find()
+      const existingRoles = JSON.parse(JSON.stringify(roles)) // Deep clone the roles object
+
+      const updateRolePermissions = (role, permissionType, channelName) => {
+        if (!existingRoles[role]) {
+          existingRoles[role] = { permissions: {} }
+        }
+        if (!existingRoles[role].permissions[permissionType]) {
+          existingRoles[role].permissions[permissionType] = []
+        }
+        existingRoles[role].permissions[permissionType].push(channelName)
+        existingRoles[role].permissions['channel-view-specified'] = existingRoles[role].permissions['channel-view-specified'] || []
+        existingRoles[role].permissions['channel-view-specified'].push(channelName)
+        existingRoles[role].permissions['client-view-all'] = true
+      }
+
+      channels.forEach(channel => {
+        if (Array.isArray(channel.allow)) {
+          const aclTypes = [
+            { acl: channel.txViewAcl, permissionType: 'transaction-view-specified' },
+            { acl: channel.txRerunAcl, permissionType: 'transaction-rerun-specified' },
+            { acl: channel.txViewFullAcl, permissionType: 'transaction-view-body-specified' }
+          ]
+
+          aclTypes.forEach(({ acl, permissionType }) => {
+            if (acl && acl.length > 0) {
+              acl.forEach(role => updateRolePermissions(role, permissionType, channel.name))
+            }
+          })
+        }
+      })
+
+      // Create or update roles
+      await Promise.all(Object.entries(existingRoles).map(([roleName, roleData]) =>
+        RoleModel.findOneAndUpdate(
+          { name: roleName },
+          { name: roleName, permissions: roleData.permissions },
+          { upsert: true, new: true }
+        )
+      ))
+
+      logger.info('Successfully updated roles')
+    } catch (err) {
+      logger.error(`Error updating roles: ${err}`)
+      throw err
+    }
+  }
+})
+
 if (process.env.NODE_ENV === 'test') {
   exports.upgradeFuncs = upgradeFuncs
   exports.dedupName = dedupName
@@ -306,7 +361,6 @@ async function upgradeDbInternal() {
       (await DbVersionModel.findOne()) ||
       new DbVersionModel({version: 0, lastUpdated: new Date()})
     const upgradeFuncsToRun = upgradeFuncs.slice(dbVer.version)
-
     for (const upgradeFunc of upgradeFuncsToRun) {
       await upgradeFunc.func()
       dbVer.version++
