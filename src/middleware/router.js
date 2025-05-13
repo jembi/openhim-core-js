@@ -386,7 +386,7 @@ function sendRequestToRoutes(ctx, routes, next) {
       firstPromises.push(promise)
     }
 
-    await Promise.all(firstPromises).catch(err => {
+    Promise.all(firstPromises).catch(err => {
       logger.error(err)
     })
 

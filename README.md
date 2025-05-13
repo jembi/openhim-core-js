@@ -1,6 +1,6 @@
 # OpenHIM Core Component
 
-[![Build Status](https://travis-ci.org/jembi/openhim-core-js.png?branch=master)](https://travis-ci.org/jembi/openhim-core-js) [![Dependency Status](https://david-dm.org/jembi/openhim-core-js.png)](https://david-dm.org/jembi/openhim-core-js) [![devDependency Status](https://david-dm.org/jembi/openhim-core-js/dev-status.png)](https://david-dm.org/jembi/openhim-core-js#info=devDependencies) [![codecov](https://codecov.io/gh/jembi/openhim-core-js/branch/master/graph/badge.svg)](https://codecov.io/gh/jembi/openhim-core-js)
+[![Build Status](https://github.com/jembi/openhim-core-js/actions/workflows/master.yml/badge.svg)](https://github.com/jembi/openhim-core-js/actions/workflows/master.yml) [![Depfu](https://badges.depfu.com/badges/replace-with-your-badge-id/overview.svg)](https://depfu.com/github/jembi/openhim-core-js?project_id=replace-with-your-project-id) [![codecov](https://codecov.io/gh/jembi/openhim-core-js/branch/master/graph/badge.svg)](https://codecov.io/gh/jembi/openhim-core-js)
 
 The OpenHIM core component is responsible for providing a single entry-point into an HIE as well as providing the following key features:
 
@@ -184,8 +184,8 @@ To contribute code, please fork the repository and submit a pull request. The ma
 
 All users downloading and using OpenHIM should note the following:
 
-* All message data sent to the OpenHIM is retained indefinitely within the OpenHIM’s MongoDB database. By default, this data is stored indefinitely in line with the function of a middleware software with audit & transaction replay capabilities.
+* All message data sent to the OpenHIM is retained indefinitely within the OpenHIM's MongoDB database. By default, this data is stored indefinitely in line with the function of a middleware software with audit & transaction replay capabilities.
 * All message data is stored in OpenHIM's MongoDB and is only accessible or viewable by a) An authorized admin-level user or a user that has been explicitly allowed to do so or; b) An authorized system administrator staff member having access to the server itself.
-* Access to the message data stored in OpenHIM’s MongoDB database is controlled by the organization hosting OpenHIM. This organisation must know its responsibilities as a ‘Data Controller’ and potentially other roles, as defined in standard data privacy regulations, such as the General Data Protection Regulation (GDPR) and the South African Protection of Personal Information Act (POPIA). The organisation using OpenHIM is responsible for having the required policies in place to ensure compliance with the applicable laws and regulations in the country where the software is being operated.
+* Access to the message data stored in OpenHIM's MongoDB database is controlled by the organization hosting OpenHIM. This organisation must know its responsibilities as a 'Data Controller' and potentially other roles, as defined in standard data privacy regulations, such as the General Data Protection Regulation (GDPR) and the South African Protection of Personal Information Act (POPIA). The organisation using OpenHIM is responsible for having the required policies in place to ensure compliance with the applicable laws and regulations in the country where the software is being operated.
 * All message data stored in OpenHIM's MongoDB may be purged at any time by direct commands to the MongoDB database or the use of the data retention feature of OpenHIM channels.
 * Basic data about OpenHIM users (name and email) is stored indefinately so that they may access the OpenHIM console. These users may be removed at any time if they are no longer needed.
