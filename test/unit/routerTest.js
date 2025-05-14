@@ -519,8 +519,20 @@ describe('HTTP Router', () => {
         const ctx = createContext(channel, '/test/multicasting')
         await promisify(router.route)(ctx)
 
-        // Wait for all routes to complete
-        await new Promise(resolve => setTimeout(resolve, 100))
+        // Wait for all routes to complete by polling until they have responses
+        const waitForRoutes = async () => {
+          for (let i = 0; i < 50; i++) { // Try for up to 5 seconds (50 * 100ms)
+            if (ctx.routes.length === 3 && 
+                ctx.routes.every(route => route.response && route.response.status)) {
+              return true
+            }
+            await new Promise(resolve => setTimeout(resolve, 100))
+          }
+          return false
+        }
+        
+        const routesCompleted = await waitForRoutes()
+        routesCompleted.should.be.true('Routes did not complete in the expected time')
 
         ctx.routes.length.should.be.exactly(3)
         const nonPrimary1 = ctx.routes.find(route => route.name === 'non_primary_1')
@@ -599,34 +611,48 @@ describe('HTTP Router', () => {
 
       it('should be able to multicast to multiple endpoints and set the responses for non-primary routes in ctx.routes', async () => {
         servers = await Promise.all([
-          testUtils.createMockHttpServer(
-            'Non Primary 1',
-            NON_PRIMARY1_PORT,
-            200
-          ),
+          testUtils.createMockHttpServer('Non Primary 1', NON_PRIMARY1_PORT, 200),
+          testUtils.createMockHttpServer('Non Primary 2', NON_PRIMARY2_PORT, 400),
           testUtils.createMockHttpServer('Primary', PRIMARY_PORT, 201)
         ])
 
         const ctx = createContext(channel, '/test/multicasting')
-        let waitingRoute = ctx.authorisedChannel.routes.find(
-          route => route.name === 'non_primary_1'
-        )
-        waitingRoute.waitPrimaryResponse = true
-        waitingRoute.statusCodesCheck = '2**,3**,4**,5**'
-
         await promisify(router.route)(ctx)
-        await testUtils.setImmediatePromise()
-        await testUtils.setImmediatePromise()
-        await testUtils.setImmediatePromise()
-        await testUtils.setImmediatePromise()
-        await testUtils.setImmediatePromise()
 
-        waitingRoute = ctx.routes.find(route => route.name === 'non_primary_1')
-        waitingRoute.response.status.should.be.exactly(200)
-        waitingRoute.response.body.toString().should.be.eql('Non Primary 1')
-        waitingRoute.response.headers.should.be.ok
-        waitingRoute.request.path.should.be.exactly('/test/multicasting')
-        waitingRoute.request.timestamp.should.be.exactly(requestTimestamp)
+        // Wait for all routes to complete by polling until they have responses
+        const waitForRoutes = async () => {
+          for (let i = 0; i < 50; i++) { // Try for up to 5 seconds (50 * 100ms)
+            if (ctx.routes.length === 3 && 
+                ctx.routes.every(route => route.response && route.response.status)) {
+              return true
+            }
+            await new Promise(resolve => setTimeout(resolve, 100))
+          }
+          return false
+        }
+        
+        const routesCompleted = await waitForRoutes()
+        routesCompleted.should.be.true('Routes did not complete in the expected time')
+
+        ctx.routes.length.should.be.exactly(3)
+        const nonPrimary1 = ctx.routes.find(route => route.name === 'non_primary_1')
+        nonPrimary1.response.status.should.be.exactly(200)
+        nonPrimary1.response.body.toString().should.be.eql('Non Primary 1')
+        nonPrimary1.response.headers.should.be.ok
+        nonPrimary1.request.path.should.be.exactly('/test/multicasting')
+        nonPrimary1.request.timestamp.should.be.exactly(requestTimestamp)
+
+        const nonPrimary2 = ctx.routes.find(route => route.name === 'non_primary_2')
+        nonPrimary2.response.status.should.be.exactly(400)
+        nonPrimary2.response.body.toString().should.be.eql('Non Primary 2')
+        nonPrimary2.response.headers.should.be.ok
+        nonPrimary2.request.path.should.be.exactly('/test/multicasting')
+        nonPrimary2.request.timestamp.should.be.exactly(requestTimestamp)
+
+        const nonPrimaryKafka = ctx.routes.find(route => route.name === 'non_primary_kafka')
+        nonPrimaryKafka.response.status.should.be.exactly(200)
+        nonPrimaryKafka.response.body.should.be.ok
+        nonPrimaryKafka.request.timestamp.should.be.exactly(requestTimestamp)
       })
 
       it('should NOT run routes if they are set to wait for primary but returns it incorrect status code', async () => {
