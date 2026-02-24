@@ -1,6 +1,6 @@
 'use strict'
 
-import cookie from 'cookie'
+import * as cookie from 'cookie'
 import http from 'http'
 import https from 'https'
 import logger from 'winston'
@@ -112,7 +112,7 @@ function setCookiesOnContext(ctx, value) {
     const cKey = value[cValue]
     const cOpts = {path: false, httpOnly: false} // clear out default values in cookie module
     const cVals = {}
-    const object = cookie.parse(cKey)
+    const object = cookie.parseCookie(cKey)
     for (const pKey in object) {
       pVal = object[pKey]
       const pKeyL = pKey.toLowerCase()
