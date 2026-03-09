@@ -8,7 +8,7 @@ const args = process.argv.slice(2)
 /* Check for version flag */
 if (args.includes('-v') || args.includes('--version')) {
   const pkg = JSON.parse(
-    fs.readFileSync(path.join(root, 'package.json'), 'utf8')
+    fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8')
   )
   console.log(`OpenHIM Core version ${pkg.version}`)
   process.exit(0)

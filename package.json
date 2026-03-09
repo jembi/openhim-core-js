@@ -22,7 +22,7 @@
   "scripts": {
     "build": "npm run clean && babel src --out-dir lib -s",
     "build:watch": "npm run build -- -w",
-    "clean": "rm -rf lib/",
+    "clean": "node -e \"require('fs').rmSync('lib', { recursive: true, force: true })\"",
     "coverage": "export $(cat .env.test | xargs) && cross-env c8 npm test",
     "prepare": "npm run build",
     "migrate:metrics": "node lib/migrateMetrics.js",
