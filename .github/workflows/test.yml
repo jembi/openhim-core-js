@@ -12,8 +12,8 @@ jobs:
       fail-fast: false
       matrix:
         node-version:
-          - '16.x'
           - '18.x'
+          - '20.x'
           - 'node'
 
     services:
