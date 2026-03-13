@@ -59,6 +59,8 @@ describe(`Auto Retry Integration Tests`, () => {
       httpPort: constants.SERVER_PORTS.httpPort,
       rerunHttpPort: constants.SERVER_PORTS.rerunPort
     })
+
+    await new Promise(r => setTimeout(r, 500))
   })
 
   after(async () => {
@@ -268,6 +270,8 @@ describe(`Auto Retry Integration Tests`, () => {
         new ClientModel(clientDoc).save(),
         new ChannelModel(channelDoc).save()
       ])
+
+      await new Promise(r => setTimeout(r, 500))
     })
 
     after(async () => {
