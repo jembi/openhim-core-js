@@ -436,6 +436,22 @@ describe('Auditing', () => {
       await utils.cleanupTestKeystore()
     })
 
+    function waitForSpy(spy, count = 1, timeout = 3000) {
+      return new Promise((resolve, reject) => {
+        const start = Date.now()
+
+        function check() {
+          if (spy.callCount >= count) return resolve()
+          if (Date.now() - start > timeout) {
+            return reject(new Error('Spy not called in time'))
+          }
+          setTimeout(check, 20)
+        }
+
+        check()
+      })
+    }
+
     it('should process audit internally', async () => {
       config.auditing.auditEvents.interface = 'internal'
       await promisify(auditing.sendAuditEvent)(testAuditMessage)
@@ -464,7 +480,7 @@ describe('Auditing', () => {
 
       await promisify(auditing.sendAuditEvent)(testString)
 
-      await new Promise(r => setTimeout(r, 1000))
+      await waitForSpy(spy)
 
       spy.callCount.should.equal(1)
       spy.calledWith(`${testString.length} ${testString}`)
@@ -476,7 +492,7 @@ describe('Auditing', () => {
 
       await promisify(auditing.sendAuditEvent)(testString)
 
-      await new Promise(r => setTimeout(r, 1000))
+      await waitForSpy(spy)
 
       spy.callCount.should.equal(1)
       spy.calledWith(`${testString.length} ${testString}`)
