@@ -464,7 +464,7 @@ describe('Auditing', () => {
 
       await promisify(auditing.sendAuditEvent)(testString)
 
-      await new Promise(resolve => setImmediate(resolve))
+      await new Promise(r => setTimeout(r, 1000))
 
       spy.callCount.should.equal(1)
       spy.calledWith(`${testString.length} ${testString}`)
@@ -476,7 +476,7 @@ describe('Auditing', () => {
 
       await promisify(auditing.sendAuditEvent)(testString)
 
-      await new Promise(resolve => setImmediate(resolve))
+      await new Promise(r => setTimeout(r, 1000))
 
       spy.callCount.should.equal(1)
       spy.calledWith(`${testString.length} ${testString}`)
