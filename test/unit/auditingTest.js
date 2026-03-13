@@ -464,6 +464,8 @@ describe('Auditing', () => {
 
       await promisify(auditing.sendAuditEvent)(testString)
 
+      await new Promise(resolve => setImmediate(resolve))
+
       spy.callCount.should.equal(1)
       spy.calledWith(`${testString.length} ${testString}`)
     })
@@ -473,6 +475,8 @@ describe('Auditing', () => {
       config.auditing.auditEvents.port = constants.TCP_PORT
 
       await promisify(auditing.sendAuditEvent)(testString)
+
+      await new Promise(resolve => setImmediate(resolve))
 
       spy.callCount.should.equal(1)
       spy.calledWith(`${testString.length} ${testString}`)
