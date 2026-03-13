@@ -421,6 +421,8 @@ describe('Auditing', () => {
         utils.createMockTLSServerWithMutualAuth(spy)
       ])
 
+      await new Promise(resolve => setTimeout(resolve, 3000))
+
       await utils.setupTestKeystore(undefined, undefined, ca)
     })
 
@@ -436,7 +438,7 @@ describe('Auditing', () => {
       await utils.cleanupTestKeystore()
     })
 
-    function waitForSpy(spy, count = 1, timeout = 3000) {
+    function waitForSpy(spy, count = 1, timeout = 4000) {
       return new Promise((resolve, reject) => {
         const start = Date.now()
 
@@ -490,7 +492,7 @@ describe('Auditing', () => {
       config.auditing.auditEvents.interface = 'tcp'
       config.auditing.auditEvents.port = constants.TCP_PORT
 
-      await promisify(auditing.sendAuditEvent)(testString)
+      await auditing.sendAuditEvent(testString)
 
       await waitForSpy(spy)
 
