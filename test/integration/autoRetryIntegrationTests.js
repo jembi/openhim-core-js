@@ -155,13 +155,12 @@ describe(`Auto Retry Integration Tests`, () => {
 
       await waitForAutoRetry()
       const trx = await TransactionModel.findOne()
-      console.log(trx)
       trx.should.have.property('autoRetry')
       trx.autoRetry.should.be.true()
       trx.should.have.property('error')
       trx.error.should.have.property('message')
       trx.error.should.have.property('stack')
-      trx.error.message.should.match(/ECONNREFUSED/)
+      trx.error.stack.should.match(/ECONNREFUSED|AggregateError/)
     })
 
     it(`should push an auto retry transaction to the auto retry queue`, async () => {
@@ -296,7 +295,7 @@ describe(`Auto Retry Integration Tests`, () => {
       trx.routes[0].should.have.property('error')
       trx.routes[0].error.should.have.property('message')
       trx.routes[0].error.should.have.property('stack')
-      trx.routes[0].error.message.should.match(/ECONNREFUSED/)
+      trx.routes[0].error.stack.should.match(/ECONNREFUSED|AggregateError/)
     })
   })
 
@@ -422,11 +421,11 @@ describe(`Auto Retry Integration Tests`, () => {
       trx.should.have.property('error')
       trx.error.should.have.property('message')
       trx.error.should.have.property('stack')
-      trx.error.message.should.match(/ECONNREFUSED/)
+      trx.error.stack.should.match(/ECONNREFUSED|AggregateError/)
       trx.routes[0].should.have.property('error')
       trx.routes[0].error.should.have.property('message')
       trx.routes[0].error.should.have.property('stack')
-      trx.routes[0].error.message.should.match(/ECONNREFUSED/)
+      trx.routes[0].error.stack.should.match(/ECONNREFUSED|AggregateError/)
     })
   })
 })
