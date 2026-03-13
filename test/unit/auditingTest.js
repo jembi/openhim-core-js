@@ -413,6 +413,7 @@ describe('Auditing', () => {
     let spy
 
     before(async () => {
+      process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
       _restore = JSON.stringify(config.auditing.auditEvents)
       spy = sinon.spy(data => data)
       servers = await Promise.all([
@@ -420,6 +421,10 @@ describe('Auditing', () => {
         utils.createMockTCPServer(spy),
         utils.createMockTLSServerWithMutualAuth(spy)
       ])
+
+      servers[2].on('tlsClientError', err => {
+        console.error('TLS client error:', err)
+      })
 
       await new Promise(resolve => setTimeout(resolve, 3000))
 
