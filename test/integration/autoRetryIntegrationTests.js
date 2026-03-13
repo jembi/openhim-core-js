@@ -155,6 +155,7 @@ describe(`Auto Retry Integration Tests`, () => {
 
       await waitForAutoRetry()
       const trx = await TransactionModel.findOne()
+      console.log(trx)
       trx.should.have.property('autoRetry')
       trx.autoRetry.should.be.true()
       trx.should.have.property('error')

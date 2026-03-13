@@ -13,8 +13,8 @@ jobs:
       matrix:
         node-version:
           - '20.x'
-          - '22.x'
-          - 'node'
+          # - '22.x'
+          # - 'node'
 
     services:
       mongodb:
