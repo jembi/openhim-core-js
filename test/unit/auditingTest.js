@@ -484,7 +484,7 @@ describe('Auditing', () => {
     it('should send an audit event via TLS', async () => {
       config.auditing.auditEvents.interface = 'tls'
       config.auditing.auditEvents.port = constants.TLS_PORT
-      config.auditing.auditEvents.host = '127.0.0.1'
+      config.auditing.auditEvents.host = 'localhost'
 
       await promisify(auditing.sendAuditEvent)(testString)
 
@@ -497,7 +497,7 @@ describe('Auditing', () => {
     it('should send an audit event via TCP', async () => {
       config.auditing.auditEvents.interface = 'tcp'
       config.auditing.auditEvents.port = constants.TCP_PORT
-      config.auditing.auditEvents.host = '127.0.0.1'
+      config.auditing.auditEvents.host = 'localhost'
 
       await auditing.sendAuditEvent(testString)
 
