@@ -13,7 +13,7 @@ jobs:
       matrix:
         node-version:
           - '16.x'
-          # - '22.x'
+          - '20.x'
           # - 'node'
 
     services:
