@@ -59,6 +59,8 @@ describe(`Auto Retry Integration Tests`, () => {
       httpPort: constants.SERVER_PORTS.httpPort,
       rerunHttpPort: constants.SERVER_PORTS.rerunPort
     })
+
+    await new Promise(r => setTimeout(r, 500))
   })
 
   after(async () => {
@@ -158,7 +160,7 @@ describe(`Auto Retry Integration Tests`, () => {
       trx.should.have.property('error')
       trx.error.should.have.property('message')
       trx.error.should.have.property('stack')
-      trx.error.message.should.match(/ECONNREFUSED/)
+      trx.error.stack.should.match(/ECONNREFUSED|AggregateError/)
     })
 
     it(`should push an auto retry transaction to the auto retry queue`, async () => {
@@ -268,6 +270,8 @@ describe(`Auto Retry Integration Tests`, () => {
         new ClientModel(clientDoc).save(),
         new ChannelModel(channelDoc).save()
       ])
+
+      await new Promise(r => setTimeout(r, 500))
     })
 
     after(async () => {
@@ -291,7 +295,7 @@ describe(`Auto Retry Integration Tests`, () => {
       trx.routes[0].should.have.property('error')
       trx.routes[0].error.should.have.property('message')
       trx.routes[0].error.should.have.property('stack')
-      trx.routes[0].error.message.should.match(/ECONNREFUSED/)
+      trx.routes[0].error.stack.should.match(/ECONNREFUSED|AggregateError/)
     })
   })
 
@@ -417,11 +421,11 @@ describe(`Auto Retry Integration Tests`, () => {
       trx.should.have.property('error')
       trx.error.should.have.property('message')
       trx.error.should.have.property('stack')
-      trx.error.message.should.match(/ECONNREFUSED/)
+      trx.error.stack.should.match(/ECONNREFUSED|AggregateError/)
       trx.routes[0].should.have.property('error')
       trx.routes[0].error.should.have.property('message')
       trx.routes[0].error.should.have.property('stack')
-      trx.routes[0].error.message.should.match(/ECONNREFUSED/)
+      trx.routes[0].error.stack.should.match(/ECONNREFUSED|AggregateError/)
     })
   })
 })

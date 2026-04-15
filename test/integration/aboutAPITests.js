@@ -11,9 +11,14 @@ import {BASE_URL, SERVER_PORTS} from '../constants'
 
 describe('API Integration Tests', () =>
   describe('About Information REST Api Testing', () => {
-    before(async () => {
-      await promisify(server.start)({apiPort: SERVER_PORTS.apiPort})
+    before(async function () {
+      this.timeout(10000)
+
+      await promisify(server.start)({ apiPort: SERVER_PORTS.apiPort })
       await testUtils.setupTestUsers()
+
+      // wait until server is actually listening
+      await new Promise(r => setTimeout(r, 500))
     })
 
     after(async () => {

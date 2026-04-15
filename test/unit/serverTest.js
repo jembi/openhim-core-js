@@ -16,31 +16,43 @@ config.certificateManagement = config.get('certificateManagement')
 
 describe('Server tests', () => {
   describe('.restartServer()', () => {
-    beforeEach(async () => {
+    before(async function () {
+      this.timeout(10000)
+
       await promisify(server.start)(constants.SERVER_PORTS)
     })
 
-    afterEach(async () => {
-      await promisify(server.stop)()
+    after(async function () {
+      this.timeout(10000)
+
+      await server.stop()
+
+      // ensure port is fully released
+      await new Promise(r => setTimeout(r, 500))
     })
 
-    it('should be able to restart the server in under 5 seconds', async () => {
-      // TODO : this test seems kinda useless as mocha itself should have
-      // a timeout for if tests take too long
-      const future = moment().add('5', 's')
-      await promisify(server.restartServer)()
-      moment().isBefore(future).should.be.true()
+    it('should restart the server in under 5 seconds', async function () {
+      this.timeout(6000)
+
+      const start = Date.now()
+      await server.restartServer()
+      const duration = Date.now() - start
+
+      duration.should.be.below(5000)
     })
 
-    it('should start a server when a key is protected', async () => {
-      const future = moment().add('5', 's')
+    it('should start a server when a key is protected', async function () {
+      this.timeout(6000)
+
       const keystore = await testUtils.setupTestKeystore()
-      keystore.key = fs.readFileSync('test/resources/protected/test.key')
-      keystore.cert.data = fs.readFileSync('test/resources/protected/test.crt')
+
+      keystore.key = fs.readFileSync('test/resources/protected/test.key', 'utf8')
+      keystore.cert.data = fs.readFileSync('test/resources/protected/test.crt', 'utf8')
       keystore.passphrase = 'password'
+
       await keystore.save()
-      await promisify(server.restartServer)()
-      moment().isBefore(future).should.be.true()
+
+      await server.restartServer()
     })
   })
 

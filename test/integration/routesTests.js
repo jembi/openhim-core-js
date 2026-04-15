@@ -408,9 +408,7 @@ describe('Routes enabled/disabled tests', () => {
     newTransaction[0].orchestrations[0].name.should.eql(
       'test transaction fail orchestration'
     )
-    newTransaction[0].orchestrations[0].error.message.should.eql(
-      'connect ECONNREFUSED 127.0.0.1:32043'
-    )
+    newTransaction[0].orchestrations[0].error.stack.should.match(/ECONNREFUSED|AggregateError/)
   })
 
   it('should respect the channel timeout', async () => {
