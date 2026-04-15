@@ -2,7 +2,7 @@ require('@babel/register')
 const { ClientModel, ChannelModel, TransactionModel, UserModel } = require('../src/model')
 const { dropTestDb, rootUser } = require('../test/utils')
 const Progress = require('progress')
-const faker = require('faker')
+const { faker } = require('@faker-js/faker')
 const { ObjectId } = require('mongodb')
 
 const DEFAULT_SEED = 9575

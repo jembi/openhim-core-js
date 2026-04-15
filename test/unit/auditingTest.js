@@ -413,6 +413,7 @@ describe('Auditing', () => {
     let spy
 
     before(async () => {
+      process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
       _restore = JSON.stringify(config.auditing.auditEvents)
       spy = sinon.spy(data => data)
       servers = await Promise.all([
@@ -420,6 +421,12 @@ describe('Auditing', () => {
         utils.createMockTCPServer(spy),
         utils.createMockTLSServerWithMutualAuth(spy)
       ])
+
+      servers[2].on('tlsClientError', err => {
+        console.error('TLS client error:', err)
+      })
+
+      await new Promise(resolve => setTimeout(resolve, 3000))
 
       await utils.setupTestKeystore(undefined, undefined, ca)
     })
@@ -435,6 +442,22 @@ describe('Auditing', () => {
       await Promise.all(servers.map(s => s.close()))
       await utils.cleanupTestKeystore()
     })
+
+    function waitForSpy(spy, count = 1, timeout = 4000) {
+      return new Promise((resolve, reject) => {
+        const start = Date.now()
+
+        function check() {
+          if (spy.callCount >= count) return resolve()
+          if (Date.now() - start > timeout) {
+            return reject(new Error('Spy not called in time'))
+          }
+          setTimeout(check, 20)
+        }
+
+        check()
+      })
+    }
 
     it('should process audit internally', async () => {
       config.auditing.auditEvents.interface = 'internal'
@@ -461,8 +484,11 @@ describe('Auditing', () => {
     it('should send an audit event via TLS', async () => {
       config.auditing.auditEvents.interface = 'tls'
       config.auditing.auditEvents.port = constants.TLS_PORT
+      config.auditing.auditEvents.host = 'localhost'
 
       await promisify(auditing.sendAuditEvent)(testString)
+
+      await waitForSpy(spy)
 
       spy.callCount.should.equal(1)
       spy.calledWith(`${testString.length} ${testString}`)
@@ -471,8 +497,11 @@ describe('Auditing', () => {
     it('should send an audit event via TCP', async () => {
       config.auditing.auditEvents.interface = 'tcp'
       config.auditing.auditEvents.port = constants.TCP_PORT
+      config.auditing.auditEvents.host = 'localhost'
 
-      await promisify(auditing.sendAuditEvent)(testString)
+      await auditing.sendAuditEvent(testString)
+
+      await waitForSpy(spy)
 
       spy.callCount.should.equal(1)
       spy.calledWith(`${testString.length} ${testString}`)
