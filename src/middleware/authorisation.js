@@ -43,7 +43,7 @@ function authoriseIP(channel, ctx) {
   if ((channel.whitelist != null ? channel.whitelist.length : undefined) > 0) {
     return Array.from(channel.whitelist).includes(ctx.ip)
   } else {
-    return true // whitelist auth not required
+    return false
   }
 }
 
@@ -52,8 +52,9 @@ export async function authorise(ctx, done) {
 
   if (
     channel != null &&
-    authoriseIP(channel, ctx) &&
-    (channel.authType === 'public' || authoriseClient(channel, ctx))
+    (channel.authType === 'public' ||
+      authoriseClient(channel, ctx) ||
+      authoriseIP(channel, ctx))
   ) {
     // authorisation succeeded
     ctx.authorisedChannel = channel

@@ -235,12 +235,12 @@ describe('Authorisation middleware', () => {
       return actual.should.be.false()
     })
 
-    it('should return true if there are no whitelist entires', () => {
+    it('should return false if there are no whitelist entires', () => {
       const ctx = {ip: '192.168.0.11'}
       const channel = {whitelist: null}
       const authoriseIP = authorisation.__get__('authoriseIP')
       const actual = authoriseIP(channel, ctx)
-      return actual.should.be.true()
+      return actual.should.be.false()
     })
   })
 })
