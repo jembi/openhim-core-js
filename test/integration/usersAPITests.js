@@ -164,25 +164,66 @@ describe('API Integration Tests', () => {
     })
 
     describe('*userPasswordResetRequest(email)', () => {
-      it('should return 403 when requesting root@openhim.org password reset', async () => {
-        await request(BASE_URL)
+      const passwordResetResponse =
+        'Please check your email for password reset instructions.'
+
+      it('should return a generic response when requesting root@openhim.org password reset', async () => {
+        const res = await request(BASE_URL)
           .get('/password-reset-request/root@openhim.org')
-          .expect(403)
+          .expect(201)
+
+        res.text.should.eql(passwordResetResponse)
       })
 
-      it('should return 403 when requesting a keycloak user password reset', async () => {
-        await request(BASE_URL)
+      it('should return a generic response when requesting a keycloak user password reset', async () => {
+        const userBefore = await UserModelAPI.findOne({
+          email: 'test@keycloak.net'
+        })
+
+        const res = await request(BASE_URL)
           .get('/password-reset-request/test@keycloak.net')
-          .expect(403)
+          .expect(201)
+
+        res.text.should.eql(passwordResetResponse)
+
+        const userAfter = await UserModelAPI.findOne({
+          email: 'test@keycloak.net'
+        })
+        userAfter.token.should.eql(userBefore.token)
+        userAfter.tokenType.should.eql(userBefore.tokenType)
+      })
+
+      it('should return a generic response for an inactive user account', async () => {
+        await UserModelAPI.findOneAndUpdate(
+          {email: 'bfm@crazy.net'},
+          {locked: true}
+        )
+        const userBefore = await UserModelAPI.findOne({email: 'bfm@crazy.net'})
+
+        const res = await request(BASE_URL)
+          .get('/password-reset-request/bfm@crazy.net')
+          .expect(201)
+
+        res.text.should.eql(passwordResetResponse)
+
+        const userAfter = await UserModelAPI.findOne({email: 'bfm@crazy.net'})
+        userAfter.token.should.eql(userBefore.token)
+        userAfter.tokenType.should.eql(userBefore.tokenType)
+        await UserModelAPI.findOneAndUpdate(
+          {email: 'bfm@crazy.net'},
+          {locked: false}
+        )
       })
 
       it('should update the user with a token and send reset email', async () => {
         const stubContact = await sinon.stub(contact, 'sendEmail')
         await stubContact.yields(null)
 
-        await request(BASE_URL)
+        const res = await request(BASE_URL)
           .get('/password-reset-request/r..@jembi.org')
           .expect(201)
+
+        res.text.should.eql(passwordResetResponse)
 
         const user = await UserModelAPI.findOne({email: 'r..@jembi.org'})
         user.should.have.property('firstname', 'Ryan')
@@ -197,9 +238,11 @@ describe('API Integration Tests', () => {
         const stubContact = await sinon.stub(contact, 'sendEmail')
         await stubContact.yields(null)
 
-        await request(BASE_URL)
+        const res = await request(BASE_URL)
           .get('/password-reset-request/R..@jembi.org')
           .expect(201)
+
+        res.text.should.eql(passwordResetResponse)
 
         const user = await UserModelAPI.findOne({email: user1.email})
         user.should.have.property('firstname', 'Ryan')
@@ -207,22 +250,30 @@ describe('API Integration Tests', () => {
         await stubContact.restore()
       })
 
-      it('should update the user with a token get a 500 error when nodemailer fails', async () => {
+      it('should update the user with a token and return a generic response when nodemailer fails', async () => {
         const stubContact = await sinon.stub(contact, 'sendEmail')
 
         await stubContact.yields('An error occurred trying to send the email.')
 
-        await request(BASE_URL)
+        const res = await request(BASE_URL)
           .get('/password-reset-request/r..@jembi.org')
-          .expect(500)
+          .expect(201)
+
+        res.text.should.eql(passwordResetResponse)
+
+        const user = await UserModelAPI.findOne({email: 'r..@jembi.org'})
+        user.should.have.property('tokenType', 'existingUser')
+        should.exist(user.token)
 
         await stubContact.restore()
       })
 
-      it('should return a not found error', async () => {
-        await request(BASE_URL)
+      it('should return a generic response for an unknown email address', async () => {
+        const res = await request(BASE_URL)
           .get('/password-reset-request/test@jembi.org')
-          .expect(404)
+          .expect(201)
+
+        res.text.should.eql(passwordResetResponse)
       })
     })
 
@@ -831,19 +882,48 @@ describe('API Integration Tests', () => {
     })
 
     describe('*userPasswordResetRequest(email)', () => {
-      it('should return 403 when requesting root@openhim.org password reset', async () => {
-        await request(BASE_URL)
+      const passwordResetResponse =
+        'Please check your email for password reset instructions.'
+
+      it('should return a generic response when requesting root@openhim.org password reset', async () => {
+        const res = await request(BASE_URL)
           .get('/password-reset-request/root@openhim.org')
-          .expect(403)
+          .expect(201)
+
+        res.text.should.eql(passwordResetResponse)
+      })
+
+      it('should return a generic response for an inactive user account', async () => {
+        await UserModelAPI.findOneAndUpdate(
+          {email: 'bfm@crazy.net'},
+          {locked: true}
+        )
+        const userBefore = await UserModelAPI.findOne({email: 'bfm@crazy.net'})
+
+        const res = await request(BASE_URL)
+          .get('/password-reset-request/bfm@crazy.net')
+          .expect(201)
+
+        res.text.should.eql(passwordResetResponse)
+
+        const userAfter = await UserModelAPI.findOne({email: 'bfm@crazy.net'})
+        userAfter.token.should.eql(userBefore.token)
+        userAfter.tokenType.should.eql(userBefore.tokenType)
+        await UserModelAPI.findOneAndUpdate(
+          {email: 'bfm@crazy.net'},
+          {locked: false}
+        )
       })
 
       it('should update the user with a token and send reset email', async () => {
         const stubContact = await sinon.stub(contact, 'sendEmail')
         await stubContact.yields(null)
 
-        await request(BASE_URL)
+        const res = await request(BASE_URL)
           .get('/password-reset-request/r..@jembi.org')
           .expect(201)
+
+        res.text.should.eql(passwordResetResponse)
 
         const user = await UserModelAPI.findOne({email: 'r..@jembi.org'})
         user.should.have.property('firstname', 'Ryan')
@@ -858,9 +938,11 @@ describe('API Integration Tests', () => {
         const stubContact = await sinon.stub(contact, 'sendEmail')
         await stubContact.yields(null)
 
-        await request(BASE_URL)
+        const res = await request(BASE_URL)
           .get('/password-reset-request/R..@jembi.org')
           .expect(201)
+
+        res.text.should.eql(passwordResetResponse)
 
         const user = await UserModelAPI.findOne({email: user1.email})
         user.should.have.property('firstname', 'Ryan')
@@ -868,22 +950,30 @@ describe('API Integration Tests', () => {
         await stubContact.restore()
       })
 
-      it('should update the user with a token get a 500 error when nodemailer fails', async () => {
+      it('should update the user with a token and return a generic response when nodemailer fails', async () => {
         const stubContact = await sinon.stub(contact, 'sendEmail')
 
         await stubContact.yields('An error occurred trying to send the email.')
 
-        await request(BASE_URL)
+        const res = await request(BASE_URL)
           .get('/password-reset-request/r..@jembi.org')
-          .expect(500)
+          .expect(201)
+
+        res.text.should.eql(passwordResetResponse)
+
+        const user = await UserModelAPI.findOne({email: 'r..@jembi.org'})
+        user.should.have.property('tokenType', 'existingUser')
+        should.exist(user.token)
 
         await stubContact.restore()
       })
 
-      it('should return a not found error', async () => {
-        await request(BASE_URL)
+      it('should return a generic response for an unknown email address', async () => {
+        const res = await request(BASE_URL)
           .get('/password-reset-request/test@jembi.org')
-          .expect(404)
+          .expect(201)
+
+        res.text.should.eql(passwordResetResponse)
       })
     })
 

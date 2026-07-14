@@ -137,6 +137,18 @@ export const logout = async function (ctx) {
  * Reset password Functions
  */
 
+const PASSWORD_RESET_REQUEST_MESSAGE =
+  'Please check your email for password reset instructions.'
+
+function sendPasswordResetRequestResponse(ctx) {
+  ctx.body = PASSWORD_RESET_REQUEST_MESSAGE
+  ctx.status = 201
+}
+
+function isPasswordResetEligible(user) {
+  return user.provider !== 'openid' && user.locked !== true
+}
+
 const passwordResetPlainMessageTemplate = (firstname, setPasswordLink) => `\
 <---------- Existing User - Reset Password ---------->
 Hi ${firstname},
@@ -163,52 +175,43 @@ function generateRandomToken() {
  */
 export async function userPasswordResetRequest(ctx, email) {
   email = unescape(email)
-  if (email === 'root@openhim.org') {
-    ctx.body = "Cannot request password reset for 'root@openhim.org'"
-    ctx.status = 403
-    return
-  }
-
-  // Generate the new user token here
-  // set expiry date = true
-  const token = generateRandomToken()
-  const {duration, durationType} = config.userPasswordResetExpiry
-  const expiry = moment().add(duration, durationType).utc().format()
-
-  const updateUserTokenExpiry = {
-    token,
-    tokenType: 'existingUser',
-    expiry
-  }
 
   try {
+    if (email === 'root@openhim.org') {
+      logger.info(`Password reset request declined for root user: ${email}`)
+      return sendPasswordResetRequestResponse(ctx)
+    }
+
     const user = await UserModelAPI.findOne({
       email: utils.caseInsensitiveRegex(email)
     })
     if (!user) {
-      ctx.body = `Tried to request password reset for invalid email address: ${email}`
-      ctx.status = 404
-      logger.info(
-        `Tried to request password reset for invalid email address: ${email}`
-      )
-      return
+      logger.info(`Password reset request for unknown email address: ${email}`)
+      return sendPasswordResetRequestResponse(ctx)
     }
 
-    if (user.provider === 'openid') {
-      ctx.body = `User supplied by OpenID Connect provider. Cannot request password reset.`
-      ctx.status = 403
-      logger.info(
-        `Tried to request password reset for a user supplied by OpenID Connect provider: ${email}`
-      )
-      return
+    if (!isPasswordResetEligible(user)) {
+      const reason =
+        user.provider === 'openid'
+          ? 'OpenID Connect user'
+          : 'inactive user account'
+      logger.info(`Password reset request declined for ${reason}: ${email}`)
+      return sendPasswordResetRequestResponse(ctx)
     }
 
-    await UserModelAPI.findByIdAndUpdate(user.id, updateUserTokenExpiry)
+    const token = generateRandomToken()
+    const {duration, durationType} = config.userPasswordResetExpiry
+    const expiry = moment().add(duration, durationType).utc().format()
+
+    await UserModelAPI.findByIdAndUpdate(user.id, {
+      token,
+      tokenType: 'existingUser',
+      expiry
+    })
 
     const {consoleURL} = config.alerts
     const setPasswordLink = `${consoleURL}/#!/set-password/${token}`
 
-    // Send email to user to reset password
     const plainMessage = passwordResetPlainMessageTemplate(
       user.firstname,
       setPasswordLink
@@ -227,26 +230,19 @@ export async function userPasswordResetRequest(ctx, email) {
       htmlMessage
     )
     if (sendEmailError) {
-      utils.logAndSetResponse(
-        ctx,
-        500,
-        `Could not send email to user via the API ${sendEmailError}`,
-        'error'
+      logger.error(
+        `Could not send password reset email to ${email}: ${sendEmailError}`
       )
-      return
+      return sendPasswordResetRequestResponse(ctx)
     }
 
-    logger.info('The email has been sent to the user')
-    ctx.body = 'Successfully set user token/expiry for password reset.'
-    ctx.status = 201
-    return logger.info(`User updated token/expiry for password reset ${email}`)
+    logger.info(`Password reset email sent for ${email}`)
+    return sendPasswordResetRequestResponse(ctx)
   } catch (error) {
-    utils.logAndSetResponse(
-      ctx,
-      500,
-      `Could not update user with email ${email} via the API ${error}`,
-      'error'
+    logger.error(
+      `Could not process password reset request for ${email}: ${error}`
     )
+    return sendPasswordResetRequestResponse(ctx)
   }
 }
 
