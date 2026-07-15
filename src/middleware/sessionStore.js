@@ -32,6 +32,14 @@ class MongooseStore {
     return session.deleteOne({_id: id})
   }
 
+  /**
+   * Invalidate every active session belonging to a user, e.g. after a password change.
+   */
+  async destroyAllForUser(email) {
+    const {session} = this
+    return session.deleteMany({'data.passport.user': email})
+  }
+
   async get(id) {
     const {session} = this
     const {data} = (await session.findById(id)) || {}

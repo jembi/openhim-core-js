@@ -663,6 +663,98 @@ describe('API Integration Tests', () => {
         user.groups.should.be.length(2)
         user.groups.should.not.containEql('admin')
       })
+
+      it('should reject a self password change with no currentPassword supplied', async () => {
+        const cookie = await testUtils.authenticate(
+          request,
+          BASE_URL,
+          testUtils.nonRootUser1
+        )
+
+        const res = await request(BASE_URL)
+          .put(`/users/${testUtils.nonRootUser1.email}`)
+          .set('Cookie', cookie)
+          .send({password: 'a-new-password'})
+          .expect(400)
+
+        res.text.should.match(/current password/i)
+
+        // password should not have been changed - old password still works
+        await testUtils.authenticate(request, BASE_URL, testUtils.nonRootUser1)
+      })
+
+      it('should reject a self password change with an incorrect currentPassword', async () => {
+        const cookie = await testUtils.authenticate(
+          request,
+          BASE_URL,
+          testUtils.nonRootUser1
+        )
+
+        await request(BASE_URL)
+          .put(`/users/${testUtils.nonRootUser1.email}`)
+          .set('Cookie', cookie)
+          .send({password: 'a-new-password', currentPassword: 'wrong-password'})
+          .expect(400)
+
+        // password should not have been changed - old password still works
+        await testUtils.authenticate(request, BASE_URL, testUtils.nonRootUser1)
+      })
+
+      it('should allow a self password change with the correct currentPassword, invalidate other sessions and notify the user', async () => {
+        const stubContact = sinon.stub(contact, 'sendEmail')
+        stubContact.yields(null)
+
+        // an existing session from another device/browser
+        const otherSessionCookie = await testUtils.authenticate(
+          request,
+          BASE_URL,
+          testUtils.nonRootUser1
+        )
+        await request(BASE_URL)
+          .get('/me')
+          .set('Cookie', otherSessionCookie)
+          .expect(200)
+
+        const cookie = await testUtils.authenticate(
+          request,
+          BASE_URL,
+          testUtils.nonRootUser1
+        )
+
+        await request(BASE_URL)
+          .put(`/users/${testUtils.nonRootUser1.email}`)
+          .set('Cookie', cookie)
+          .send({
+            password: 'a-new-password',
+            currentPassword: testUtils.nonRootUser1.password
+          })
+          .expect(200)
+
+        // the other, previously valid session should now be invalidated
+        await request(BASE_URL)
+          .get('/me')
+          .set('Cookie', otherSessionCookie)
+          .expect(404)
+
+        // a notification email should have been sent to the user
+        stubContact.called.should.be.true()
+
+        stubContact.restore()
+
+        // reset the password back so other tests relying on this fixture keep working
+        const newCookie = await testUtils.authenticate(request, BASE_URL, {
+          email: testUtils.nonRootUser1.email,
+          password: 'a-new-password'
+        })
+        await request(BASE_URL)
+          .put(`/users/${testUtils.nonRootUser1.email}`)
+          .set('Cookie', newCookie)
+          .send({
+            password: testUtils.nonRootUser1.password,
+            currentPassword: 'a-new-password'
+          })
+          .expect(200)
+      })
     })
 
     describe('*removeUser(email)', () => {

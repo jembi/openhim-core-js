@@ -17,6 +17,7 @@ import {
   updateTokenUser
 } from '../model/users'
 import {PassportModelAPI, createPassport} from '../model/passport'
+import MongooseStore from '../middleware/sessionStore'
 import {config} from '../config'
 
 config.newUserExpiry = config.get('newUserExpiry')
@@ -517,6 +518,21 @@ export async function addUser(ctx) {
   }
 }
 
+const passwordChangedPlainMessageTemplate = firstname => `\
+<---------- Password Changed ---------->
+Hi ${firstname},
+
+The password for your OpenHIM Console account on ${config.alerts.himInstance} has just been changed.
+If you did not make this change, please contact your OpenHIM administrator immediately.
+<---------- Password Changed ---------->\
+`
+
+const passwordChangedHtmlMessageTemplate = firstname => `\
+<h1>OpenHIM Password Changed</h1>
+<p>Hi ${firstname},<br/><br/>The password for your OpenHIM Console account on ${config.alerts.himInstance} has just been changed.</p>
+<p>If you did not make this change, please contact your OpenHIM administrator immediately.</p>\
+`
+
 /*
  * Retrieves the details of a specific user
  */
@@ -586,13 +602,38 @@ export async function updateUser(ctx, email) {
   }
 
   let {_doc: userData} = new UserModelAPI(ctx.request.body)
-  const {password} = ctx.request.body
+  const {password, currentPassword} = ctx.request.body
 
   // @deprecated
   const {passwordAlgorithm, passwordHash, passwordSalt} = ctx.request.body
 
+  const passwordChangeRequested = Boolean(
+    password || (passwordAlgorithm && passwordHash && passwordSalt)
+  )
+  const isSelfService = ctx.authenticated.email === email
+  const genericPasswordChangeError =
+    'Current password is required and must be correct to change your password.'
+
+  // A user changing their own password must re-confirm it server-side first.
+  // Client-side confirmation alone is not sufficient to prove they know the current password.
+  if (
+    passwordChangeRequested &&
+    isSelfService &&
+    userDetails.provider !== 'openid'
+  ) {
+    const currentPasswordValid = await utils.verifyCurrentPassword(
+      userDetails,
+      currentPassword
+    )
+
+    if (!currentPasswordValid) {
+      utils.logAndSetResponse(ctx, 400, genericPasswordChangeError, 'info')
+      return
+    }
+  }
+
   // reset token/locked/expiry when user is updated and password supplied
-  if (password || (passwordAlgorithm && passwordHash && passwordSalt)) {
+  if (passwordChangeRequested) {
     userData.token = null
     userData.tokenType = null
     userData.locked = false
@@ -651,6 +692,35 @@ export async function updateUser(ctx, email) {
       logger.info(
         `User ${ctx.authenticated.email} updated user ${userData.email}`
       )
+
+      if (passwordChangeRequested) {
+        logger.info(
+          `Password changed for user ${userDetails.email} by ${ctx.authenticated.email}`
+        )
+
+        try {
+          await new MongooseStore().destroyAllForUser(userDetails.email)
+        } catch (sessionError) {
+          logger.error(
+            `Could not invalidate existing sessions for ${userDetails.email} after password change ${sessionError}`
+          )
+        }
+
+        contact.contactUser(
+          'email',
+          userDetails.email,
+          'OpenHIM Console Password Changed',
+          passwordChangedPlainMessageTemplate(userDetails.firstname),
+          passwordChangedHtmlMessageTemplate(userDetails.firstname),
+          err => {
+            if (err) {
+              logger.error(
+                `Could not send password change notification email to ${userDetails.email} ${err}`
+              )
+            }
+          }
+        )
+      }
     } else {
       ctx.throw(500, error)
     }

@@ -9,6 +9,7 @@ import _ from 'lodash'
 import {ChannelModel} from './model/channels'
 import {RoleModelAPI} from './model/role'
 import {KeystoreModel} from './model/keystore'
+import {PassportModelAPI} from './model/passport'
 import {config} from './config'
 
 config.caching = config.get('caching')
@@ -208,6 +209,33 @@ export const validatePassword = function (passport, password, next) {
   } else {
     bcrypt.compare(password, passport.password, next)
   }
+}
+
+/**
+ * Verify that the supplied current password matches the password on record for a user.
+ *
+ * Used to re-authenticate a user server-side before allowing a password change,
+ * since client-side confirmation alone can be bypassed.
+ */
+export const verifyCurrentPassword = async function (user, currentPassword) {
+  if (!user || !currentPassword) {
+    return false
+  }
+
+  const passport = await PassportModelAPI.findOne({
+    protocol: user.provider === 'token' ? 'token' : 'local',
+    email: user.email
+  })
+
+  if (!passport) {
+    return false
+  }
+
+  return new Promise(resolve => {
+    validatePassword(passport, currentPassword, (err, res) => {
+      resolve(Boolean(!err && res))
+    })
+  })
 }
 
 /**
