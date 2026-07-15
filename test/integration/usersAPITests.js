@@ -207,8 +207,9 @@ describe('API Integration Tests', () => {
         res.text.should.eql(passwordResetResponse)
 
         const userAfter = await UserModelAPI.findOne({email: 'bfm@crazy.net'})
-        userAfter.token.should.eql(userBefore.token)
-        userAfter.tokenType.should.eql(userBefore.tokenType)
+        should.equal(userAfter.token, userBefore.token)
+        should.equal(userAfter.tokenType, userBefore.tokenType)
+        userAfter.locked.should.eql(true)
         await UserModelAPI.findOneAndUpdate(
           {email: 'bfm@crazy.net'},
           {locked: false}
@@ -907,8 +908,9 @@ describe('API Integration Tests', () => {
         res.text.should.eql(passwordResetResponse)
 
         const userAfter = await UserModelAPI.findOne({email: 'bfm@crazy.net'})
-        userAfter.token.should.eql(userBefore.token)
-        userAfter.tokenType.should.eql(userBefore.tokenType)
+        should.equal(userAfter.token, userBefore.token)
+        should.equal(userAfter.tokenType, userBefore.tokenType)
+        userAfter.locked.should.eql(true)
         await UserModelAPI.findOneAndUpdate(
           {email: 'bfm@crazy.net'},
           {locked: false}
