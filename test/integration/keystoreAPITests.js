@@ -370,6 +370,29 @@ describe('API Integration Tests', () => {
       res.body.valid.should.be.exactly(false)
     })
 
+    // Note: verifying a *correct* passphrase against a PKCS8-encrypted key
+    // (i.e. asserting valid: true) isn't covered here - the `pem` dependency
+    // can't compute the modulus of a PKCS8 encrypted key (only PKCS1 and
+    // unencrypted PKCS8), so that path still fails even with the right
+    // passphrase. Tracked as follow-up work, separate from this fix, which
+    // only ensures we don't silently skip the passphrase requirement for a
+    // PKCS8-encrypted key the way we would have before.
+    it('Should return false for when validating a PKCS8 protected key without a passphrase', async () => {
+      keystore.key = fs.readFileSync('test/resources/protected/test-pkcs8.key')
+      keystore.cert.data = fs.readFileSync(
+        'test/resources/protected/test-pkcs8.crt'
+      )
+      keystore.passphrase = undefined
+      await keystore.save()
+
+      const res = await request(BASE_URL)
+        .get('/keystore/validity')
+        .set('Cookie', rootCookie)
+        .expect(200)
+
+      res.body.valid.should.be.exactly(false)
+    })
+
     it('Should set passphrase', async () => {
       keystore.key = fs.readFileSync('test/resources/protected/test.key')
       keystore.cert.data = fs.readFileSync('test/resources/protected/test.crt')

@@ -293,8 +293,13 @@ export function getCertKeyStatus(callback) {
     }
 
     // if the key is encrypted but no passphrase is supplied, return  false instantly
+    // supports both legacy PKCS1 ('Proc-Type: 4,ENCRYPTED') and PKCS8
+    // ('BEGIN ENCRYPTED PRIVATE KEY') encrypted key formats
+    const isEncryptedKey =
+      /Proc-Type:.*ENCRYPTED/.test(keystoreDoc.key) ||
+      /BEGIN ENCRYPTED PRIVATE KEY/.test(keystoreDoc.key)
     if (
-      /Proc-Type:.*ENCRYPTED/.test(keystoreDoc.key) &&
+      isEncryptedKey &&
       (keystoreDoc.passphrase == null || keystoreDoc.passphrase.length === 0)
     ) {
       return callback(null, false)

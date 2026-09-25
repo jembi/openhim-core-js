@@ -20,10 +20,11 @@ See the [development road-map](http://openhim.org/docs/introduction/roadmap) for
 
 Currently supported versions of NodeJS LTS are
 
-| NodeJS (LTS) | MongoDB                    |
-| ------------ | -------------------------- |
-|  14.2x.x     | >= 3.6 &#124;&#124; <= 4.2 |
-|  15.x        | >= 3.6 &#124;&#124; <= 4.2 |
+| NodeJS (LTS) | MongoDB |
+| ------------ | ------- |
+|  20.x        | >= 6.0  |
+|  22.x        | >= 6.0  |
+|  24.x        | >= 6.0  |
 
 
 - [NodeJS Release Versions](https://github.com/nodejs/Release)
@@ -52,7 +53,7 @@ Clone the `https://github.com/jembi/openhim-core-js.git` repository.
 
 Ensure you have the following installed:
 
-- [Node.js](http://nodejs.org/) **v10(LTS) && != 10.15.1 || v12(LTS)**
+- [Node.js](http://nodejs.org/) **v24 (LTS)**
 - [NPM](https://www.npmjs.com/)
 - [MongoDB](http://www.mongodb.org/) (in Ubuntu run `sudo apt install mongodb`, in OSX using [Homebrew](http://brew.sh), run `brew update` followed by `brew install mongodb`)
 
