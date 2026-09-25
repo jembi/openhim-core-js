@@ -1,4 +1,4 @@
-FROM node:20-alpine AS build
+FROM node:24-alpine AS build
 
 WORKDIR /build
 
@@ -6,7 +6,7 @@ COPY . .
 
 RUN npm install && npm run build
 
-FROM node:14.21.3-alpine
+FROM node:24-alpine
 
 ENV NODE_ENV=production
 
