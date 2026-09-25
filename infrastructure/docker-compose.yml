@@ -3,9 +3,14 @@ networks:
   openhim:
 
 services:
+  # NOTE: upgrading an existing deployment's mongo-data volume from an
+  # older major version requires a sequential upgrade (e.g. 4.0->4.2->4.4->5.0->6.0)
+  # with featureCompatibilityVersion set at each step - see
+  # https://www.mongodb.com/docs/manual/release-notes/6.0-upgrade-standalone/
+  # Swapping this tag in place against pre-existing 4.0 data will not work.
   mongo-db:
     container_name: mongo-db
-    image: mongo:4.0
+    image: mongo:6
     networks:
       - openhim
     volumes:
