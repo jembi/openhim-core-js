@@ -379,7 +379,9 @@ describe('API Integration Tests', () => {
     // PKCS8-encrypted key the way we would have before.
     it('Should return false for when validating a PKCS8 protected key without a passphrase', async () => {
       keystore.key = fs.readFileSync('test/resources/protected/test-pkcs8.key')
-      keystore.cert.data = fs.readFileSync('test/resources/protected/test-pkcs8.crt')
+      keystore.cert.data = fs.readFileSync(
+        'test/resources/protected/test-pkcs8.crt'
+      )
       keystore.passphrase = undefined
       await keystore.save()
 

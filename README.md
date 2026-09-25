@@ -20,10 +20,11 @@ See the [development road-map](http://openhim.org/docs/introduction/roadmap) for
 
 Currently supported versions of NodeJS LTS are
 
-| NodeJS (LTS) | MongoDB                    |
-| ------------ | -------------------------- |
-|  14.2x.x     | >= 3.6 &#124;&#124; <= 4.2 |
-|  15.x        | >= 3.6 &#124;&#124; <= 4.2 |
+| NodeJS (LTS) | MongoDB |
+| ------------ | ------- |
+|  20.x        | >= 6.0  |
+|  22.x        | >= 6.0  |
+|  24.x        | >= 6.0  |
 
 
 - [NodeJS Release Versions](https://github.com/nodejs/Release)
